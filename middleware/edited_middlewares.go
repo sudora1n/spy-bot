@@ -61,7 +61,8 @@ func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update)
 
 	for _, msg := range msgs {
 		if oldMsg == nil {
-			if (result.OldDateIsEdit && msg.EditDate == result.OldDate) || (!result.OldDateIsEdit && msg.Date == result.OldDate) {
+			if (result.OldDateIsEdit && msg.EditDate == result.OldDate) ||
+				(!result.OldDateIsEdit && msg.Date == result.OldDate && msg.EditDate == 0) {
 				oldMsg = msg
 			}
 		}
@@ -73,6 +74,10 @@ func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update)
 		if oldMsg != nil && newMsg != nil {
 			break
 		}
+	}
+
+	if oldMsg == nil || newMsg == nil {
+		utils.OnDataError(c, query.ID, loc)
 	}
 
 	c = c.WithValue("chatID", data.ChatID)
