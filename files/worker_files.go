@@ -142,7 +142,6 @@ func (w Worker) createInputMediaLocal(file *telego.File) (result telego.InputFil
 	if err != nil {
 		return result, nil, fmt.Errorf("open local file failed: %v", err)
 	}
-	defer f.Close()
 
 	result = tu.File(f)
 	return result, f, nil
