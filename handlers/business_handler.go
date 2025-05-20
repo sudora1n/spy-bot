@@ -207,14 +207,26 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 		return err
 	}
 
+	name := format.Name(
+		message.Chat.FirstName,
+		message.Chat.LastName,
+	)
+
+	h.service.UpdateChatName(
+		c,
+		message.Chat.ID,
+		name,
+	)
+
 	diffText := strings.Join(changes, "\n\n")
 	editedAt := time.Unix(int64(message.EditDate), 0).Format(consts.DATETIME_FOR_MESSAGE)
 	formattedText := loc.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "business.edited.message",
 		TemplateData: map[string]any{
-			"ChatID": message.Chat.ID,
-			"Date":   editedAt,
-			"Diff":   diffText,
+			"ChatID":           message.Chat.ID,
+			"Date":             editedAt,
+			"Diff":             diffText,
+			"ResolvedChatName": name,
 		},
 	})
 
@@ -280,8 +292,9 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.messageOverflow",
 				TemplateData: map[string]any{
-					"ChatID": message.Chat.ID,
-					"Date":   editedAt,
+					"ChatID":           message.Chat.ID,
+					"Date":             editedAt,
+					"ResolvedChatName": name,
 				},
 			}),
 		).
