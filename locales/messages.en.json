@@ -1,0 +1,103 @@
+{
+  "arrow": {
+    "forward": "→",
+    "backward": "←"
+  },
+  "errors": {
+    "couldNotRetrieveData": "error: could not retrieve data.",
+    "errorSendingFiles": "error: could not send files.",
+    "errorFileTooBig": "error: file weighs {{.FileSize}}, current limit for restricted files {{.FileLimit}}"
+  },
+  "mediaTypes": {
+    "photo": "📷 photo",
+    "video": "🎬 video",
+    "animation": "🎭 GIF",
+    "audio": "🎵 audio",
+    "voice": "🎤 voice message",
+    "document": "📄 document",
+    "video_note": "📄 video message",
+    "sticker": "🎨 sticker",
+    "location": "📍 location"
+  },
+  "back": "back",
+  "hide": "hide",
+  "start": {
+    "message": "hello, {{.Name}}\nstatus: <i>{{if .Enabled}}connected!{{else}}not connected :({{end}}</i>",
+    "buttons": {
+      "language": "сhange language"
+    }
+  },
+  "github": {
+    "message": "github bot page",
+    "buttons": {
+      "open": "open"
+    }
+  },
+  "language": "select your language bellow",
+  "languageChange": "done! you can back to start",
+  "business": {
+    "restrictedMedia": "<b>protected content found!</b>",
+    "connection": {
+      "on": "done, {{.Name}}\nnow from now on the bot will send you deleted and modified messages and multimedia to you in a private message",
+      "off": ":(\nthe bot has been disconnected from the account, so it will no longer be able to log changes"
+    },
+    "deleted": {
+      "fullMessages": "get JSON",
+      "files": {
+        "one": "get {{.Count}} file",
+        "other": "get {{.Count}} files"
+      },
+      "overflowDescription": "...\n\nfull report on request below",
+      "messageItem": "{{.Count}} message",
+      "format": {
+        "message": {
+          "one": "<b>deleted message:</b>\n\n{{.Result}}",
+          "many": "<b>{{.Count}} deleted messages:</b>\n\n{{.Result}}",
+          "other": "<b>{{.Count}} deleted messages:</b>\n\n{{.Result}}"
+        },
+        "messageItem": "<b>message #{{.Count}}:</b>\n{{.Message}}\n\n",
+        "forwardInfo": {
+          "isForwarded": "↪️ <b>forwarded message</b>",
+          "isForwardedWithInfo": "↪️ <b>forwarded from:</b> {{.Info}}",
+
+          "user": "👤 {{.Name}} (@{{.Username}})",
+          "hiddenUser": "👤 {{.Name}}",
+          "chat": "💬 {{.Title}} (ID: {{.ID}})",
+          "channel": "📣 {{.Title}} (@{{.Username}})",
+          "hiddenChannel": "📣 {{.Title}}"
+        },
+        "text": "📝 <b>text:</b> {{.Text}}",
+        "media": "<b>{{.Media}}</b>",
+        "location": "📍 location: {{.Latitude}} {{.Longitude}}",
+        "empty": "<b>empty or unknown message was deleted</b>"
+      },
+      "request": {
+        "message": "<b>full deleted messages</b>\n{{if .WithEdits}}summary and latest versions (JSON) (JSON) {{else}}summary, latest versions (JSON), and all versions with edits (JSON){{end}]",
+        "oneDetails": "get JSON",
+        "file": "get file",
+        "files": {
+          "one": "get {{.Count}} file",
+          "other": "get {{.Count}} files"
+        }
+      }
+    },
+    "edited": {
+      "message": "<b>message edited</b>\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\n\n{{.Diff}}",
+      "messageOverflow": "<b>message edited</b>\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\nToo many details, please see log via the button below...",
+      "buttons": {
+        "log": "get JSON",
+        "getFile": "get file"
+      },
+      "text": {
+        "added": "📝 <b>text added:</b> {{.New}}",
+        "removed": "📝 <b>text removed:</b> {{.New}}",
+        "changed": "📝 <b>text changed:</b>\n- old: {{.Old}}\n+ new: {{.New}}"
+      },
+      "media": {
+        "added": "<b>{{.MediaType}} added</b>",
+        "removed": "<b>{{.MediaType}} removed</b>"
+      },
+      "request": "<b>full edited messages</b>\n{{if .WithEdits}}diff and both messages (JSON) (JSON) {{else}}diff, both messages (JSON), and all versions with edits (JSON){{end}]"
+    }
+  }
+}
