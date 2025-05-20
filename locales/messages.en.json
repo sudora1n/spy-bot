@@ -51,9 +51,9 @@
       "messageItem": "{{.Count}} message",
       "format": {
         "message": {
-          "one": "<b>deleted message:</b>\n\n{{.Result}}",
-          "many": "<b>{{.Count}} deleted messages:</b>\n\n{{.Result}}",
-          "other": "<b>{{.Count}} deleted messages:</b>\n\n{{.Result}}"
+          "one": "<b>deleted message:</b>\nchat: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "many": "<b>{{.Count}} deleted messages:</b>\nchat: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "other": "<b>{{.Count}} deleted messages:</b>\nchat: {{.ResolvedChatName}}\n\n{{.Result}}"
         },
         "messageItem": "<b>message #{{.Count}}:</b>\n{{.Message}}\n\n",
         "forwardInfo": {
@@ -82,8 +82,8 @@
       }
     },
     "edited": {
-      "message": "<b>message edited</b>\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\n\n{{.Diff}}",
-      "messageOverflow": "<b>message edited</b>\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\nToo many details, please see log via the button below...",
+      "message": "<b>message edited</b>\nchat: {{.ResolvedChatName}}\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\n\n{{.Diff}}",
+      "messageOverflow": "<b>message edited</b>\nchat: {{.ResolvedChatName}}\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\nToo many details, please see log via the button below...",
       "buttons": {
         "log": "get JSON",
         "getFile": "get file"

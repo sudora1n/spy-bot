@@ -53,10 +53,10 @@
       "messageItem": "{{.Count}} сообщение",
       "format": {
         "message": {
-          "one": "<b>удалённое сообщение:</b>\n\n{{.Result}}",
-          "few": "<b>{{.Count}} удалённых сообщения:</b>\n\n{{.Result}}",
-          "many": "<b>{{.Count}} удалённых сообщений:</b>\n\n{{.Result}}",
-          "other": "<b>{{.Count}} удалённых сообщений:</b>\n\n{{.Result}}"
+          "one": "<b>удалённое сообщение:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "few": "<b>{{.Count}} удалённых сообщения:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "many": "<b>{{.Count}} удалённых сообщений:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "other": "<b>{{.Count}} удалённых сообщений:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}"
         },
         "messageItem": "<b>сообщение №{{.Count}}:</b>\n{{.Message}}\n\n",
         "forwardInfo": {
@@ -87,8 +87,8 @@
       }
     },
     "edited": {
-      "message": "<b>отредактированное сообщение</b>\n<i>chatID: {{.ChatID}}</i>\n<i>время редактирования: {{.Date}}</i>\n\n{{.Diff}}",
-      "messageOverflow": "<b>сообщение отредактировано</b>\n<i>ID чата: {{.ChatID}}</i>\n<i>время редактирования: {{.Date}}</i>\nСлишком много деталей, пожалуйста, смотрите детали по кнопке ниже...",
+      "message": "<b>отредактированное сообщение</b>\nчат: {{.ResolvedChatName}}\n<i>chatID: {{.ChatID}}</i>\n<i>время редактирования: {{.Date}}</i>\n\n{{.Diff}}",
+      "messageOverflow": "<b>сообщение отредактировано</b>\nчат: {{.ResolvedChatName}}\n<i>ID чата: {{.ChatID}}</i>\n<i>время редактирования: {{.Date}}</i>\nСлишком много деталей, пожалуйста, смотрите детали по кнопке ниже...",
       "buttons": {
         "log": "получить JSON",
         "getFile": {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -69,7 +70,16 @@ func (h *Handler) HandleDeletedPagination(c *th.Context, query telego.CallbackQu
 		return nil
 	}
 
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, loc)
+	var name string
+	chatResolve, err := h.service.FindChatName(c, data.ChatID)
+	if err != nil {
+		name = strconv.FormatInt(data.ChatID, 10)
+
+	} else {
+		name = chatResolve.Name
+	}
+
+	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc)
 	tempText := strings.ReplaceAll(summaryText, "\n", " ")
 	if len(tempText) > consts.MAX_LEN {
 		description := loc.MustLocalize(&i18n.LocalizeConfig{
@@ -132,7 +142,15 @@ func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) er
 		return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 	}
 
-	summaryText := format.SummarizeDeletedMessages(msgs, loc)
+	var name string
+	chatResolve, err := h.service.FindChatName(c, data.ChatID)
+	if err != nil {
+		name = strconv.FormatInt(data.ChatID, 10)
+	} else {
+		name = chatResolve.Name
+	}
+
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
 	summaryReader := strings.NewReader(summaryText)
 
 	filteredMsgs := format.FilterMessagesByDate(msgs)
@@ -281,7 +299,15 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, query telego.Callba
 		return err
 	}
 
-	summaryText := format.SummarizeDeletedMessages(msgs, loc)
+	var name string
+	chatResolve, err := h.service.FindChatName(c, data.ChatID)
+	if err != nil {
+		name = strconv.FormatInt(data.ChatID, 10)
+	} else {
+		name = chatResolve.Name
+	}
+
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
 	summaryReader := strings.NewReader(summaryText)
 
 	latestMsg := format.FilterMessagesByDate(msgs)
