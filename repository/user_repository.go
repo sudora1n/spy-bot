@@ -157,7 +157,6 @@ func (r *MongoRepository) UpdateUser(
 		"$setOnInsert": bson.M{
 			"created_at":    time.Now().Unix(),
 			"language_code": languageCode,
-			"send_messages": true,
 		},
 	}
 

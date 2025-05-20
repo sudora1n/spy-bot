@@ -56,6 +56,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			LastName:             update.BusinessConnection.User.LastName,
 			LanguageCode:         update.BusinessConnection.User.LanguageCode,
 			BusinessConnectionID: update.BusinessConnection.ID,
+			SendMessages:         true,
 		}
 		break
 	case update.BusinessMessage != nil:

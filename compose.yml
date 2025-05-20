@@ -58,14 +58,14 @@ services:
   bot:
     restart: unless-stopped
     container_name: ssuspy-bot
-    build: ./bot
+    build: ./
     environment:
       - MONGO_HOST=mongodb
       - MONGO_PORT=27017
       - MONGO_USERNAME
       - MONGO_PASSWORD
       - MONGO_DB
-      - DEV_MODE=true
+      - DEV_MODE
       - REDIS_HOST=redis
       - REDIS_USERNAME
       - REDIS_PASSWORD
@@ -75,7 +75,7 @@ services:
       - TELEGRAM_API_URL
       - GITHUB_URL
     volumes:
-      - ./bot/locales:/home/appuser/app/locales
+      - ./locales:/home/appuser/app/locales
       - telegram-bot-api-data:/var/lib/telegram-bot-api/
     depends_on:
       mongodb:
