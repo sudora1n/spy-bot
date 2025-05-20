@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -103,7 +104,39 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		return nil
 	}
 
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, loc)
+	var (
+		dataID int64
+		name   string
+	)
+	if itsCallbackQuery {
+		dataID = c.Value("dataID").(int64)
+		chatResolve, err := h.service.FindChatName(c, chatID)
+		if err != nil {
+			name = strconv.FormatInt(chatID, 10)
+		} else {
+			name = chatResolve.Name
+		}
+	} else {
+		dataID, err = h.service.SetDataDeleted(context.TODO(), user.ID, messageIDs)
+		if err != nil {
+			return err
+		}
+
+		name = format.Name(
+			update.DeletedBusinessMessages.Chat.FirstName,
+			update.DeletedBusinessMessages.Chat.LastName,
+		)
+
+		h.service.UpdateChatName(
+			c,
+			chatID,
+			name,
+		)
+	}
+
+	rows := utils.DeletedRows(chatID, user, loc, oldMsgs, pagination, 0, dataID)
+
+	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc)
 	tempText := strings.ReplaceAll(summaryText, "\n", " ")
 	if len(tempText) > consts.MAX_LEN {
 		description := loc.MustLocalize(&i18n.LocalizeConfig{
@@ -111,18 +144,6 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		})
 		summaryText = summaryText[:consts.MAX_LEN-len(strings.ReplaceAll(description, "\n", " "))] + description
 	}
-
-	var dataID int64
-	if itsCallbackQuery {
-		dataID = c.Value("dataID").(int64)
-	} else {
-		dataID, err = h.service.SetDataDeleted(context.TODO(), user.ID, messageIDs)
-		if err != nil {
-			return err
-		}
-	}
-
-	rows := utils.DeletedRows(chatID, user, loc, oldMsgs, pagination, 0, dataID)
 
 	if itsCallbackQuery {
 		_, err = c.Bot().EditMessageText(c, tu.EditMessageText(

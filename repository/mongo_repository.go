@@ -18,6 +18,7 @@ type MongoRepository struct {
 	callbackDataDeleted *mongo.Collection
 	callbackDataEdited  *mongo.Collection
 	filesExists         *mongo.Collection
+	chatResolve         *mongo.Collection
 	counters            *mongo.Collection
 }
 
@@ -61,6 +62,7 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		return nil, err
 	}
 
+	chatResolveCollection := client.Database(cfg.Database).Collection("chats_resolve")
 	countersCollection := client.Database(cfg.Database).Collection("counters")
 
 	return &MongoRepository{
@@ -70,6 +72,7 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		callbackDataDeleted: callbackDataDeletedCollection,
 		callbackDataEdited:  callbackDataEditedCollection,
 		filesExists:         filesExistsCollection,
+		chatResolve:         chatResolveCollection,
 		counters:            countersCollection,
 	}, nil
 }

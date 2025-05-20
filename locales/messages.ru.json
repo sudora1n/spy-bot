@@ -53,10 +53,10 @@
       "messageItem": "{{.Count}} сообщение",
       "format": {
         "message": {
-          "one": "<b>удалённое сообщение:</b>\n\n{{.Result}}",
-          "few": "<b>{{.Count}} удалённых сообщения:</b>\n\n{{.Result}}",
-          "many": "<b>{{.Count}} удалённых сообщений:</b>\n\n{{.Result}}",
-          "other": "<b>{{.Count}} удалённых сообщений:</b>\n\n{{.Result}}"
+          "one": "<b>удалённое сообщение:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "few": "<b>{{.Count}} удалённых сообщения:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "many": "<b>{{.Count}} удалённых сообщений:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
+          "other": "<b>{{.Count}} удалённых сообщений:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}"
         },
         "messageItem": "<b>сообщение №{{.Count}}:</b>\n{{.Message}}\n\n",
         "forwardInfo": {
