@@ -3,8 +3,6 @@ services:
     image: mongo:latest
     container_name: ssuspy-mongodb
     restart: always
-    ports:
-      - "27017:27017"
     environment:
       - MONGO_USERNAME
       - MONGO_PASSWORD
@@ -38,8 +36,6 @@ services:
       - TELEGRAM_STAT=true
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
-    expose:
-      - "8081:8081"
     healthcheck:
       test:
         [
@@ -56,6 +52,7 @@ services:
       start_period: 5s
 
   bot:
+    image: ghcr.io/sudora1n/spy-bot:latest
     restart: unless-stopped
     container_name: ssuspy-bot
     build: ./
