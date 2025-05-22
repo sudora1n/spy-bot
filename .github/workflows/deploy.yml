@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: SSH and Deploy
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1
         env:
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
         with:
