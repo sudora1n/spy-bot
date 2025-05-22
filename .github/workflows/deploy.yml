@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: SSH and Deploy
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1
         env:
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
         with:
@@ -42,6 +42,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          envs: REMOTE_USER
           script: |
             cd /home/$REMOTE_USER
             docker compose pull
