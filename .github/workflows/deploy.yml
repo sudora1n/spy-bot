@@ -4,6 +4,24 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "cmd/**"
+      - "config/**"
+      - "handlers/**"
+      - "bundle_i18n/**"
+      - "repository/**"
+      - "format/**"
+      - "middleware/**"
+      - "consts/**"
+      - "utils/**"
+      - "types/**"
+      - "callbacks/**"
+      - "files/**"
+      - "redis/**"
+      - "go.mod"
+      - "go.sum"
+      - ".dockerignore"
+      - "Dockerfile"
 
 jobs:
   build_and_push:

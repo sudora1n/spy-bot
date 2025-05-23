@@ -32,6 +32,20 @@ func (h *Handler) HandleMessage(c *th.Context, message telego.Message) error {
 		return nil
 	}
 
+	name := format.Name(
+		message.Chat.FirstName,
+		message.Chat.LastName,
+	)
+
+	err = h.service.UpdateChatName(
+		c,
+		message.Chat.ID,
+		name,
+	)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed save/update chat name")
+	}
+
 	replyToMessage := message.ReplyToMessage
 	if replyToMessage == nil {
 		return nil
@@ -126,12 +140,6 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			update.DeletedBusinessMessages.Chat.FirstName,
 			update.DeletedBusinessMessages.Chat.LastName,
 		)
-
-		h.service.UpdateChatName(
-			c,
-			chatID,
-			name,
-		)
 	}
 
 	rows := utils.DeletedRows(chatID, user, loc, oldMsgs, pagination, 0, dataID)
@@ -210,12 +218,6 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 	name := format.Name(
 		message.Chat.FirstName,
 		message.Chat.LastName,
-	)
-
-	h.service.UpdateChatName(
-		c,
-		message.Chat.ID,
-		name,
 	)
 
 	diffText := strings.Join(changes, "\n\n")
