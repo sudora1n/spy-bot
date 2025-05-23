@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ChatResolve struct {
@@ -26,7 +27,9 @@ func (r *MongoRepository) UpdateChatName(ctx context.Context, chatID int64, name
 		},
 	}
 
-	_, err := r.chatResolve.UpdateOne(ctx, filter, update)
+	opts := options.Update().SetUpsert(true)
+
+	_, err := r.chatResolve.UpdateOne(ctx, filter, update, opts)
 	return err
 }
 

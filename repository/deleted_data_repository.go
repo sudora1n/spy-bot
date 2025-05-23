@@ -12,7 +12,8 @@ type DataDeleted struct {
 	ID         int64 `bson:"_id"`
 	MessageIDs []int `bson:"message_ids"`
 	UserID     int64 `bson:"user_id"`
-	CreatedAt  int64 `bson:"created_at"`
+
+	CreatedAt time.Time `bson:"created_at"`
 }
 
 func (r *MongoRepository) SetDataDeleted(ctx context.Context, userID int64, messageIDs []int) (int64, error) {
@@ -28,7 +29,7 @@ func (r *MongoRepository) SetDataDeleted(ctx context.Context, userID int64, mess
 		ID:         id.Value,
 		MessageIDs: messageIDs,
 		UserID:     userID,
-		CreatedAt:  time.Now().Unix(),
+		CreatedAt:  time.Now(),
 	}
 
 	_, err = r.callbackDataDeleted.InsertOne(ctx, row)
