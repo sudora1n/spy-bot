@@ -15,7 +15,8 @@ type DataEdited struct {
 	OldDate       int64 `bson:"old_date"`
 	OldDateIsEdit bool  `bson:"old_date_is_edit"`
 	NewDate       int64 `bson:"new_date"`
-	CreatedAt     int64 `bson:"created_at"`
+
+	CreatedAt time.Time `bson:"created_at"`
 }
 
 type SetDataEditedOptions struct {
@@ -42,7 +43,7 @@ func (r *MongoRepository) SetDataEdited(ctx context.Context, options *SetDataEdi
 		OldDate:       options.OldDate,
 		OldDateIsEdit: options.OldDateIsEdit,
 		NewDate:       options.NewDate,
-		CreatedAt:     time.Now().Unix(),
+		CreatedAt:     time.Now(),
 	}
 
 	_, err = r.callbackDataEdited.InsertOne(ctx, row)

@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"ssuspy-bot/config"
+	"ssuspy-bot/consts"
 )
 
 type MongoRepository struct {
@@ -47,7 +48,21 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 	telegramMessages := client.Database(cfg.Database).Collection("telegram_messages")
 	userCollection := client.Database(cfg.Database).Collection("users")
 	callbackDataDeletedCollection := client.Database(cfg.Database).Collection("callback_data_deleted")
+	idxTTLMonth := mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "created_at", Value: 1},
+		},
+		Options: options.Index().SetExpireAfterSeconds(consts.MonthInSeconds),
+	}
+	_, err = callbackDataDeletedCollection.Indexes().CreateOne(ctx, idxTTLMonth)
+	if err != nil {
+		return nil, err
+	}
 	callbackDataEditedCollection := client.Database(cfg.Database).Collection("callback_data_edited")
+	_, err = callbackDataEditedCollection.Indexes().CreateOne(ctx, idxTTLMonth)
+	if err != nil {
+		return nil, err
+	}
 	filesExistsCollection := client.Database(cfg.Database).Collection("files_exists")
 	idxModel := mongo.IndexModel{
 		Keys: bson.D{
