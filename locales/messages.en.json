@@ -97,7 +97,7 @@
         "added": "<b>{{.MediaType}} added</b>",
         "removed": "<b>{{.MediaType}} removed</b>"
       },
-      "request": "<b>full edited messages</b>\n{{if .WithEdits}}diff, both messages (JSON), and all versions with edits (JSON){{else}}diff and both messages (JSON) (JSON){{end}]"
+      "request": "<b>full edited messages</b>\n{{if .WithEdits}}diff, both messages (JSON), and all versions with edits (JSON){{else}}diff and both messages (JSON) (JSON){{end}}"
     }
   }
 }
