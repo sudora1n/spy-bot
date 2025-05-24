@@ -70,13 +70,12 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) strin
 		}
 	}
 
-	text := ""
-	if message.Text != "" {
-		text = TruncateText(message.Text, 100)
-	}
-
-	if message.Caption != "" {
-		text = TruncateText(message.Caption, 100)
+	var text string
+	switch {
+	case message.Text != "":
+		text = message.Text
+	case message.Caption != "":
+		text = message.Caption
 	}
 
 	if text != "" {
@@ -85,7 +84,9 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) strin
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.deleted.format.text",
 				TemplateData: map[string]string{
-					"Text": text,
+					"Text": html.EscapeString(
+						TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN),
+					),
 				},
 			}),
 		)
