@@ -72,7 +72,7 @@
         "empty": "<b>empty or unknown message was deleted</b>"
       },
       "request": {
-        "message": "<b>full deleted messages</b>\n{{if .WithEdits}}summary and latest versions (JSON) (JSON) {{else}}summary, latest versions (JSON), and all versions with edits (JSON){{end}]",
+        "message": "<b>full deleted messages</b>\n{{if .WithEdits}}summary, latest versions (JSON), and all versions with edits (JSON){{else}}summary and latest versions (JSON) (JSON){{end}]",
         "oneDetails": "get JSON",
         "file": "get file",
         "files": {
@@ -97,7 +97,7 @@
         "added": "<b>{{.MediaType}} added</b>",
         "removed": "<b>{{.MediaType}} removed</b>"
       },
-      "request": "<b>full edited messages</b>\n{{if .WithEdits}}diff and both messages (JSON) (JSON) {{else}}diff, both messages (JSON), and all versions with edits (JSON){{end}]"
+      "request": "<b>full edited messages</b>\n{{if .WithEdits}}diff, both messages (JSON), and all versions with edits (JSON){{else}}diff and both messages (JSON) (JSON){{end}]"
     }
   }
 }
