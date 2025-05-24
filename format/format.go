@@ -301,6 +301,10 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 }
 
 func TruncateText(text string, maxLength int) (result string) {
+	return CustomTruncateText(text, maxLength, "...")
+}
+
+func CustomTruncateText(text string, maxLength int, endString string) (result string) {
 	text = strings.ReplaceAll(text, "\n", " ")
 
 	if maxLength <= 0 {
@@ -312,8 +316,10 @@ func TruncateText(text string, maxLength int) (result string) {
 	}
 
 	runes := []rune(text)
-	result = string(runes[:maxLength-3])
-	return result + "..."
+
+	endStringLen := utf8.RuneCountInString(endString)
+	result = string(runes[:maxLength-endStringLen])
+	return result + endString
 }
 
 func getForwardInfo(msg *telego.Message, loc *i18n.Localizer) string {
