@@ -3,10 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
-	bundlei18n "ssuspy-bot/bundle_i18n"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
+	"ssuspy-bot/locales"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
 
@@ -96,7 +96,7 @@ func HandleLanguage(c *th.Context, query telego.CallbackQuery) error {
 	}
 
 	tags := display.Tags(userLang)
-	for _, i18nTag := range bundlei18n.Bundle.LanguageTags() {
+	for _, i18nTag := range locales.Bundle.LanguageTags() {
 		langName := tags.Name(i18nTag)
 		rows = append(
 			rows,
@@ -131,7 +131,7 @@ func (h *Handler) HandleLanguageChange(c *th.Context, query telego.CallbackQuery
 		return err
 	}
 
-	loc := bundlei18n.NewLocalizer(parts[1])
+	loc := locales.NewLocalizer(parts[1])
 
 	text := buildStartText(loc, user, internalUser.FirstName, internalUser.LastName)
 	replyMarkup := buildStartReplyMarkup(loc)
