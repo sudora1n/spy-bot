@@ -101,6 +101,7 @@
         "changed": "📝 <b>text changed:</b>\n- old: {{.Old}}\n+ new: {{.New}}"
       },
       "media": {
+        "updated": "<b>{{.MediaType}} updated</b>",
         "added": "<b>{{.MediaType}} added</b>",
         "removed": "<b>{{.MediaType}} removed</b>"
       },

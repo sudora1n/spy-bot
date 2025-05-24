@@ -84,9 +84,7 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) strin
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.deleted.format.text",
 				TemplateData: map[string]string{
-					"Text": html.EscapeString(
-						TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN),
-					),
+					"Text": Text(text),
 				},
 			}),
 		)
@@ -201,8 +199,8 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.changed",
 				TemplateData: map[string]string{
-					"Old": TruncateText(oldMsg.Text, 100),
-					"New": TruncateText(newMsg.Text, 100),
+					"Old": Text(oldMsg.Text),
+					"New": Text(newMsg.Text),
 				},
 			}),
 		)
@@ -212,7 +210,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.added",
 				TemplateData: map[string]string{
-					"New": TruncateText(newMsg.Text, 100),
+					"New": Text(newMsg.Text),
 				},
 			}),
 		)
@@ -222,7 +220,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.removed",
 				TemplateData: map[string]string{
-					"New": TruncateText(oldMsg.Text, 100),
+					"New": Text(oldMsg.Text),
 				},
 			}),
 		)
@@ -238,8 +236,8 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.changed",
 				TemplateData: map[string]string{
-					"Old": TruncateText(oldMsg.Caption, 100),
-					"New": TruncateText(newMsg.Caption, 100),
+					"Old": Text(oldMsg.Caption),
+					"New": Text(newMsg.Caption),
 				},
 			}),
 		)
@@ -249,7 +247,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.added",
 				TemplateData: map[string]string{
-					"New": TruncateText(newMsg.Caption, 100),
+					"New": Text(newMsg.Caption),
 				},
 			}),
 		)
@@ -259,7 +257,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.removed",
 				TemplateData: map[string]string{
-					"New": TruncateText(oldMsg.Caption, 100),
+					"New": Text(oldMsg.Caption),
 				},
 			}),
 		)
@@ -269,28 +267,32 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 	newMedia := utils.GetFile(newMsg)
 	mediaDiff := CompareMedia(oldMedia, newMedia)
 
-	if mediaDiff.Added != nil {
-		mediaType := loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: fmt.Sprintf("mediaTypes.%s", mediaDiff.Added.Type),
+	if mediaDiff.Added != nil || mediaDiff.Removed != nil {
+		var (
+			msgID     string
+			mediaType string
+		)
+
+		switch {
+		case (mediaDiff.Added != nil && mediaDiff.Removed != nil) && (mediaDiff.Added.Type == mediaDiff.Removed.Type):
+			msgID = "business.edited.media.updated"
+			mediaType = mediaDiff.Added.Type
+		case mediaDiff.Added != nil:
+			msgID = "business.edited.media.added"
+			mediaType = mediaDiff.Added.Type
+		case mediaDiff.Removed != nil:
+			msgID = "business.edited.media.removed"
+			mediaType = mediaDiff.Removed.Type
+		}
+
+		locMediaType := loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: fmt.Sprintf("mediaTypes.%s", mediaType),
 		})
 
 		changes = append(changes, loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "business.edited.media.added",
+			MessageID: msgID,
 			TemplateData: map[string]string{
-				"MediaType": mediaType,
-			},
-		}))
-	}
-
-	if mediaDiff.Removed != nil {
-		mediaType := loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: fmt.Sprintf("mediaTypes.%s", mediaDiff.Removed.Type),
-		})
-
-		changes = append(changes, loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "business.edited.media.removed",
-			TemplateData: map[string]string{
-				"MediaType": mediaType,
+				"MediaType": locMediaType,
 			},
 		}))
 	}
@@ -420,4 +422,10 @@ func Name(name string, lastName string) string {
 	)
 
 	return name
+}
+
+func Text(text string) string {
+	return html.EscapeString(
+		TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN),
+	)
 }
