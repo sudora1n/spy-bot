@@ -3,6 +3,7 @@ package format
 import (
 	"fmt"
 	"html"
+	"ssuspy-bot/consts"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
 	"strconv"
@@ -320,10 +321,7 @@ func getForwardInfo(msg *telego.Message, loc *i18n.Localizer) string {
 	switch origin := msg.ForwardOrigin.(type) {
 	case *telego.MessageOriginUser:
 		u := origin.SenderUser
-		name := u.FirstName
-		if u.LastName != "" {
-			name += " " + u.LastName
-		}
+		name := Name(u.FirstName, u.LastName)
 		if u.Username != "" {
 			return loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.deleted.format.forwardInfo.user",
@@ -417,7 +415,7 @@ func Name(name string, lastName string) string {
 		name += fmt.Sprintf(" %s", lastName)
 	}
 	name = html.EscapeString(
-		TruncateText(name, 128),
+		TruncateText(name, consts.MAX_NAME_LEN),
 	)
 
 	return name
