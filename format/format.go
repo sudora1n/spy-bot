@@ -7,6 +7,7 @@ import (
 	"ssuspy-bot/utils"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/mymmrac/telego"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -295,12 +296,20 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 	return changes, mediaDiff
 }
 
-func TruncateText(text string, maxLen int) string {
+func TruncateText(text string, maxLength int) (result string) {
 	text = strings.ReplaceAll(text, "\n", " ")
-	if len(text) > maxLen {
-		return text[:maxLen-3] + "..."
+
+	if maxLength <= 0 {
+		return ""
 	}
-	return text
+
+	if utf8.RuneCountInString(text) <= maxLength {
+		return text
+	}
+
+	runes := []rune(text)
+	result = string(runes[:maxLength-3])
+	return result + "..."
 }
 
 func getForwardInfo(msg *telego.Message, loc *i18n.Localizer) string {
