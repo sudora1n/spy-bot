@@ -435,3 +435,9 @@ func Text(text string) string {
 		TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN),
 	)
 }
+
+func Caption(text string) string {
+	return html.EscapeString(
+		TruncateText(text, consts.MAX_MEDIA_CAPTION_LEN),
+	)
+}

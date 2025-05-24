@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
+	"ssuspy-bot/format"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/utils"
@@ -116,7 +117,13 @@ func (w Worker) process(job *redis.Job) (err error) {
 	}
 	defer closer.Close()
 
-	inputMedia := utils.CreateInputMediaFromFileInfoByFile(file, job.File.Type, job.Caption)
+	caption := job.Loc.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "sendMediaInGroups.caption",
+		TemplateData: map[string]string{
+			"Text": format.Caption(job.Caption),
+		},
+	})
+	inputMedia := utils.CreateInputMediaFromFileInfoByFile(file, job.File.Type, caption)
 
 	return utils.SendMediaInGroups(w.bot, ctx, job.UserID, []telego.InputMedia{inputMedia}, job.MessageID)
 }
