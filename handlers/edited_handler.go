@@ -84,24 +84,20 @@ func (h *Handler) HandleEditedFiles(c *th.Context, query telego.CallbackQuery) e
 	oldMedia := utils.GetFile(oldMsg)
 	mediaDiff := format.CompareMedia(oldMedia, newMedia)
 
-	var file telego.InputMedia
-	if mediaDiff.Removed != nil {
-		caption := ""
-		if oldMsg.Caption != "" {
-			caption = oldMsg.Caption
-		}
-
-		inputMedia := utils.CreateInputMediaFromFileInfo(mediaDiff.Removed.FileID, mediaDiff.Removed.Type, caption)
-		file = inputMedia
+	if mediaDiff.Removed == nil {
+		utils.OnDataError(c, query.ID, loc)
+		return fmt.Errorf("HandleEditedFiles error: no file found")
 	}
 
-	if file != nil {
+	caption := ""
+	if oldMsg.Caption != "" {
+		caption = oldMsg.Caption
+	}
+
+	file := utils.CreateInputMediaFromFileInfo(mediaDiff.Removed.FileID, mediaDiff.Removed.Type, caption)
+	if err := utils.SendMediaInGroups(c.Bot(), c, user.ID, []telego.InputMedia{file}, query.Message.GetMessageID()); err != nil {
 		utils.OnDataError(c, query.ID, loc)
-	} else {
-		if err := utils.SendMediaInGroups(c.Bot(), c, user.ID, []telego.InputMedia{file}, query.Message.GetMessageID()); err != nil {
-			utils.OnDataError(c, query.ID, loc)
-			return err
-		}
+		return err
 	}
 
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
