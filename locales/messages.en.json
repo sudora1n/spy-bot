@@ -21,6 +21,9 @@
   },
   "back": "back",
   "hide": "hide",
+  "sendMediaInGroups": {
+    "caption": "<b>text</b>: {{.Text}}"
+  },
   "start": {
     "message": "hello, {{.Name}}\nstatus: <i>{{if .Enabled}}connected!{{else}}not connected :({{end}}</i>",
     "onNew": {
@@ -101,6 +104,7 @@
         "changed": "📝 <b>text changed:</b>\n- old: {{.Old}}\n+ new: {{.New}}"
       },
       "media": {
+        "updated": "<b>{{.MediaType}} updated</b>",
         "added": "<b>{{.MediaType}} added</b>",
         "removed": "<b>{{.MediaType}} removed</b>"
       },

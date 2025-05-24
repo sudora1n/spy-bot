@@ -145,13 +145,13 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	rows := utils.DeletedRows(chatID, user, loc, oldMsgs, pagination, 0, dataID)
 
 	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc)
-	tempText := strings.ReplaceAll(summaryText, "\n", " ")
-	if len(tempText) > consts.MAX_LEN {
-		description := loc.MustLocalize(&i18n.LocalizeConfig{
+	summaryText = format.CustomTruncateText(
+		summaryText,
+		consts.MAX_LEN,
+		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.deleted.overflowDescription",
-		})
-		summaryText = summaryText[:consts.MAX_LEN-len(strings.ReplaceAll(description, "\n", " "))] + description
-	}
+		}),
+	)
 
 	if itsCallbackQuery {
 		_, err = c.Bot().EditMessageText(c, tu.EditMessageText(

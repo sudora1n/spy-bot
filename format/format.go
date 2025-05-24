@@ -3,6 +3,7 @@ package format
 import (
 	"fmt"
 	"html"
+	"ssuspy-bot/consts"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
 	"strconv"
@@ -69,13 +70,12 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) strin
 		}
 	}
 
-	text := ""
-	if message.Text != "" {
-		text = TruncateText(message.Text, 100)
-	}
-
-	if message.Caption != "" {
-		text = TruncateText(message.Caption, 100)
+	var text string
+	switch {
+	case message.Text != "":
+		text = message.Text
+	case message.Caption != "":
+		text = message.Caption
 	}
 
 	if text != "" {
@@ -84,7 +84,7 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) strin
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.deleted.format.text",
 				TemplateData: map[string]string{
-					"Text": text,
+					"Text": Text(text),
 				},
 			}),
 		)
@@ -199,8 +199,8 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.changed",
 				TemplateData: map[string]string{
-					"Old": TruncateText(oldMsg.Text, 100),
-					"New": TruncateText(newMsg.Text, 100),
+					"Old": Text(oldMsg.Text),
+					"New": Text(newMsg.Text),
 				},
 			}),
 		)
@@ -210,7 +210,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.added",
 				TemplateData: map[string]string{
-					"New": TruncateText(newMsg.Text, 100),
+					"New": Text(newMsg.Text),
 				},
 			}),
 		)
@@ -220,7 +220,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.removed",
 				TemplateData: map[string]string{
-					"New": TruncateText(oldMsg.Text, 100),
+					"New": Text(oldMsg.Text),
 				},
 			}),
 		)
@@ -236,8 +236,8 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.changed",
 				TemplateData: map[string]string{
-					"Old": TruncateText(oldMsg.Caption, 100),
-					"New": TruncateText(newMsg.Caption, 100),
+					"Old": Text(oldMsg.Caption),
+					"New": Text(newMsg.Caption),
 				},
 			}),
 		)
@@ -247,7 +247,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.added",
 				TemplateData: map[string]string{
-					"New": TruncateText(newMsg.Caption, 100),
+					"New": Text(newMsg.Caption),
 				},
 			}),
 		)
@@ -257,7 +257,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.removed",
 				TemplateData: map[string]string{
-					"New": TruncateText(oldMsg.Caption, 100),
+					"New": Text(oldMsg.Caption),
 				},
 			}),
 		)
@@ -267,28 +267,32 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 	newMedia := utils.GetFile(newMsg)
 	mediaDiff := CompareMedia(oldMedia, newMedia)
 
-	if mediaDiff.Added != nil {
-		mediaType := loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: fmt.Sprintf("mediaTypes.%s", mediaDiff.Added.Type),
+	if mediaDiff.Added != nil || mediaDiff.Removed != nil {
+		var (
+			msgID     string
+			mediaType string
+		)
+
+		switch {
+		case (mediaDiff.Added != nil && mediaDiff.Removed != nil) && (mediaDiff.Added.Type == mediaDiff.Removed.Type):
+			msgID = "business.edited.media.updated"
+			mediaType = mediaDiff.Added.Type
+		case mediaDiff.Added != nil:
+			msgID = "business.edited.media.added"
+			mediaType = mediaDiff.Added.Type
+		case mediaDiff.Removed != nil:
+			msgID = "business.edited.media.removed"
+			mediaType = mediaDiff.Removed.Type
+		}
+
+		locMediaType := loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: fmt.Sprintf("mediaTypes.%s", mediaType),
 		})
 
 		changes = append(changes, loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "business.edited.media.added",
+			MessageID: msgID,
 			TemplateData: map[string]string{
-				"MediaType": mediaType,
-			},
-		}))
-	}
-
-	if mediaDiff.Removed != nil {
-		mediaType := loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: fmt.Sprintf("mediaTypes.%s", mediaDiff.Removed.Type),
-		})
-
-		changes = append(changes, loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "business.edited.media.removed",
-			TemplateData: map[string]string{
-				"MediaType": mediaType,
+				"MediaType": locMediaType,
 			},
 		}))
 	}
@@ -297,6 +301,10 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 }
 
 func TruncateText(text string, maxLength int) (result string) {
+	return CustomTruncateText(text, maxLength, "...")
+}
+
+func CustomTruncateText(text string, maxLength int, endString string) (result string) {
 	text = strings.ReplaceAll(text, "\n", " ")
 
 	if maxLength <= 0 {
@@ -308,8 +316,10 @@ func TruncateText(text string, maxLength int) (result string) {
 	}
 
 	runes := []rune(text)
-	result = string(runes[:maxLength-3])
-	return result + "..."
+
+	endStringLen := utf8.RuneCountInString(endString)
+	result = string(runes[:maxLength-endStringLen])
+	return result + endString
 }
 
 func getForwardInfo(msg *telego.Message, loc *i18n.Localizer) string {
@@ -320,10 +330,7 @@ func getForwardInfo(msg *telego.Message, loc *i18n.Localizer) string {
 	switch origin := msg.ForwardOrigin.(type) {
 	case *telego.MessageOriginUser:
 		u := origin.SenderUser
-		name := u.FirstName
-		if u.LastName != "" {
-			name += " " + u.LastName
-		}
+		name := Name(u.FirstName, u.LastName)
 		if u.Username != "" {
 			return loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.deleted.format.forwardInfo.user",
@@ -417,8 +424,20 @@ func Name(name string, lastName string) string {
 		name += fmt.Sprintf(" %s", lastName)
 	}
 	name = html.EscapeString(
-		TruncateText(name, 128),
+		TruncateText(name, consts.MAX_NAME_LEN),
 	)
 
 	return name
+}
+
+func Text(text string) string {
+	return html.EscapeString(
+		TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN),
+	)
+}
+
+func Caption(text string) string {
+	return html.EscapeString(
+		TruncateText(text, consts.MAX_MEDIA_CAPTION_LEN),
+	)
 }
