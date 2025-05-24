@@ -72,7 +72,6 @@ services:
       - TELEGRAM_API_URL
       - GITHUB_URL
     volumes:
-      - ./locales:/home/appuser/app/locales
       - telegram-bot-api-data:/var/lib/telegram-bot-api/
     depends_on:
       mongodb:

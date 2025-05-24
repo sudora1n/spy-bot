@@ -13,11 +13,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/text/language"
 
-	bundlei18n "ssuspy-bot/bundle_i18n"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/files"
 	"ssuspy-bot/handlers"
+	"ssuspy-bot/locales"
 	"ssuspy-bot/middleware"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
@@ -49,7 +49,7 @@ func main() {
 		},
 	}).With().Timestamp().Caller().Logger().Level(logLvl)
 
-	if err := bundlei18n.Init("locales", language.English); err != nil {
+	if err := locales.Init(language.English); err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize i18n")
 	}
 

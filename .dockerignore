@@ -2,7 +2,7 @@
 !/cmd
 !/config
 !/handlers
-!/bundle_i18n
+!/locales
 !/repository
 !/format
 !/middleware

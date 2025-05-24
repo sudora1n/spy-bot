@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	bundlei18n "ssuspy-bot/bundle_i18n"
 	"ssuspy-bot/callbacks"
+	"ssuspy-bot/locales"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
 
@@ -79,9 +79,9 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 
 	var loc *i18n.Localizer
 	if user == nil {
-		loc = bundlei18n.NewLocalizer(internalUser.LanguageCode)
+		loc = locales.NewLocalizer(internalUser.LanguageCode)
 	} else {
-		loc = bundlei18n.NewLocalizer(user.LanguageCode)
+		loc = locales.NewLocalizer(user.LanguageCode)
 	}
 	ctx = ctx.WithValue("loc", loc)
 

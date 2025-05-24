@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
-	bundlei18n "ssuspy-bot/bundle_i18n"
+	"ssuspy-bot/locales"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
@@ -158,7 +158,7 @@ func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update
 		}
 	}
 
-	loc := bundlei18n.NewLocalizer(i18nLang)
+	loc := locales.NewLocalizer(i18nLang)
 	c = c.WithValue("loc", loc)
 	c = c.WithValue("languageCode", i18nLang)
 	c = c.WithValue("user", user)
