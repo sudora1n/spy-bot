@@ -23,6 +23,13 @@
   "hide": "скрыть",
   "start": {
     "message": "привет, {{.Name}}\nстатус: <i>{{if .Enabled}}подключено!{{else}}не подключено :( {{end}}</i>",
+    "onNew": {
+      "message": "<b>вы можете прочитать нашу статью о подключении бота</b>\n(только для пользователей telegram premium)",
+      "buttons": {
+        "open": "открыть"
+      },
+      "link": "https://teletype.in/@ssuspy/setup-bot-ru"
+    },
     "buttons": {
       "language": "Изменить язык"
     }

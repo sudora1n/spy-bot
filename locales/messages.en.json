@@ -23,6 +23,13 @@
   "hide": "hide",
   "start": {
     "message": "hello, {{.Name}}\nstatus: <i>{{if .Enabled}}connected!{{else}}not connected :({{end}}</i>",
+    "onNew": {
+      "message": "<b>you can read our article on how to connect the bot</b>\n(telegram premium users only)",
+      "buttons": {
+        "open": "open"
+      },
+      "link": "https://teletype.in/@ssuspy/setup-bot-en"
+    },
     "buttons": {
       "language": "сhange language"
     }

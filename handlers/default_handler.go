@@ -53,6 +53,7 @@ func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
 func HandleStart(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
+	userIsNew := c.Value("userIsNew").(bool)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	var (
@@ -67,10 +68,46 @@ func HandleStart(c *th.Context, update telego.Update) error {
 	text := buildStartText(loc, user, internalUser.FirstName, internalUser.LastName)
 	replyMarkup := buildStartReplyMarkup(loc)
 	if queryID == "" {
-		_, err := c.Bot().SendMessage(c, tu.Message(
+		startMessage, err := c.Bot().SendMessage(c, tu.Message(
 			tu.ID(internalUser.ID),
 			text,
 		).WithReplyMarkup(replyMarkup).WithParseMode(telego.ModeHTML))
+
+		if err != nil {
+			return err
+		}
+
+		if !userIsNew {
+			return nil
+		}
+
+		_, err = c.Bot().SendMessage(c, tu.Message(
+			tu.ID(internalUser.ID),
+			loc.MustLocalize(&i18n.LocalizeConfig{
+				MessageID: "start.onNew.message",
+			}),
+		).WithReplyMarkup(
+			tu.InlineKeyboard(
+				tu.InlineKeyboardRow(
+					tu.InlineKeyboardButton(
+						loc.MustLocalize(&i18n.LocalizeConfig{
+							MessageID: "start.onNew.buttons.open",
+						}),
+					).WithURL(
+						loc.MustLocalize(&i18n.LocalizeConfig{
+							MessageID: "start.onNew.link",
+						}),
+					),
+				),
+			),
+		).WithReplyParameters(
+			&telego.ReplyParameters{
+				MessageID:                startMessage.MessageID,
+				ChatID:                   tu.ID(user.ID),
+				AllowSendingWithoutReply: true,
+			},
+		).WithParseMode(telego.ModeHTML))
+
 		return err
 	}
 
