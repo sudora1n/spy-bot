@@ -10,7 +10,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	htmltomarkdown "github.com/JohannesKaufmann/html-to-markdown/v2"
 	"github.com/mymmrac/telego"
+	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -385,6 +387,19 @@ func getForwardInfo(msg *telego.Message, loc *i18n.Localizer) string {
 	default:
 		return ""
 	}
+}
+
+func GetMDInputFile(text string, fileName string) telego.InputFile {
+	newText, err := htmltomarkdown.ConvertString(text)
+	if err == nil {
+		fileName += ".md"
+	} else {
+		fileName += ".txt"
+		newText = text
+	}
+
+	reader := strings.NewReader(newText)
+	return tu.FileFromReader(reader, fileName)
 }
 
 func FilterMessagesByDate(msgs []*telego.Message) []*telego.Message {

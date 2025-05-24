@@ -36,25 +36,22 @@ func (h *Handler) HandleEditedLog(c *th.Context, query telego.CallbackQuery) err
 		return nil
 	}
 
-	diffText := strings.Join(changes, "\n\n")
-	diffReader := strings.NewReader(diffText)
-
 	result := map[string]any{
 		"oldMessage": oldMsg,
 		"newMessage": newMsg,
 	}
 
-	jsonBytes, _ := json.MarshalIndent(result, "", "  ")
-
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
+	diffText := strings.Join(changes, "\n\n")
 	files := []telego.InputMedia{
-		tu.MediaDocument(tu.FileFromReader(diffReader, fmt.Sprintf("%d-diff-%s.txt", chatID, now))),
+		tu.MediaDocument(format.GetMDInputFile(diffText, fmt.Sprintf("%d-diff-%s", chatID, now))),
 	}
 	if len(msgs) > 2 {
 		jsonBytesWithAll, _ := json.MarshalIndent(msgs, "", "  ")
 		files = append(files, tu.MediaDocument(tu.FileFromBytes(jsonBytesWithAll, fmt.Sprintf("%d-all-json-%s.json", chatID, now))))
 	}
 
+	jsonBytes, _ := json.MarshalIndent(result, "", "  ")
 	files = append(files, tu.MediaDocument(tu.FileFromBytes(jsonBytes, fmt.Sprintf("%d-json-%s.json", chatID, now))).
 		WithCaption(
 			loc.MustLocalize(&i18n.LocalizeConfig{
