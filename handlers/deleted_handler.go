@@ -150,16 +150,13 @@ func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) er
 		name = chatResolve.Name
 	}
 
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
-	summaryReader := strings.NewReader(summaryText)
-
-	filteredMsgs := format.FilterMessagesByDate(msgs)
-
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
 	files := []telego.InputMedia{
-		tu.MediaDocument(tu.FileFromReader(summaryReader, fmt.Sprintf("%d-summary-%s.txt", data.ChatID, now))),
+		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("%d-summary-%s", data.ChatID, now))),
 	}
 
+	filteredMsgs := format.FilterMessagesByDate(msgs)
 	withEdits := len(filteredMsgs) != len(msgs)
 	if withEdits {
 		jsonBytesWithEdits, _ := json.MarshalIndent(msgs, "", "  ")
@@ -307,21 +304,18 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, query telego.Callba
 		name = chatResolve.Name
 	}
 
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
-	summaryReader := strings.NewReader(summaryText)
-
-	latestMsg := format.FilterMessagesByDate(msgs)
-	jsonBytesLatest, _ := json.MarshalIndent(latestMsg, "", "  ")
-
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
 	files := []telego.InputMedia{
-		tu.MediaDocument(tu.FileFromReader(summaryReader, fmt.Sprintf("msg-%d-summary-%s.txt", data.MessageID, now))),
+		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("msg-%d-summary-%s", data.MessageID, now))),
 	}
 	if len(msgs) > 1 {
 		jsonBytesAllEdits, _ := json.MarshalIndent(msgs, "", "  ")
 		files = append(files, tu.MediaDocument(tu.FileFromBytes(jsonBytesAllEdits, fmt.Sprintf("msg-%d-all-json-%s.json", data.MessageID, now))))
 	}
 
+	latestMsg := format.FilterMessagesByDate(msgs)
+	jsonBytesLatest, _ := json.MarshalIndent(latestMsg, "", "  ")
 	files = append(
 		files,
 		tu.MediaDocument(tu.FileFromBytes(jsonBytesLatest, fmt.Sprintf("msg-%d-latest-%s.json", data.MessageID, now))).
