@@ -27,7 +27,7 @@ func (h *Handler) HandleEditedLog(c *th.Context, query telego.CallbackQuery) err
 	newMsg := c.Value("editedMessage").(*telego.Message)
 	oldMsg := c.Value("oldEditedMessage").(*telego.Message)
 
-	changes, _ := format.EditedDiff(oldMsg, newMsg, loc)
+	changes, _ := format.EditedDiff(oldMsg, newMsg, loc, false)
 	if len(changes) == 0 {
 		log.Warn().
 			Int64("chat_id", newMsg.Chat.ID).
