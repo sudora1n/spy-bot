@@ -89,7 +89,7 @@ func (h *Handler) HandleEditedFiles(c *th.Context, query telego.CallbackQuery) e
 	caption := ""
 	if oldMsg.Caption != "" {
 		caption = loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "sendMediaInGroups.caption",
+			MessageID: "sendMediaInGroups",
 			TemplateData: map[string]string{
 				"Text": format.Caption(oldMsg.Caption),
 			},
