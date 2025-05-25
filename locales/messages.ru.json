@@ -21,9 +21,7 @@
   },
   "back": "назад",
   "hide": "скрыть",
-  "sendMediaInGroups": {
-    "caption": "<b>текст</b>: {{.Text}}"
-  },
+  "sendMediaInGroups": "<b>текст</b>: {{.Result}}",
   "start": {
     "message": "привет, {{.Name}}\nстатус: <i>{{if .Enabled}}подключено!{{else}}не подключено :( {{end}}</i>",
     "onNew": {

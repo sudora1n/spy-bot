@@ -74,12 +74,12 @@ func (h *Handler) HandleMessage(c *th.Context, message telego.Message) error {
 	}
 
 	err = h.rdb.EnqueueJob(c, consts.REDIS_QUEUE_FILES, redis.Job{
-		Loc:       loc,
-		File:      file,
-		UserID:    user.ID,
-		ChatID:    message.Chat.ID,
-		MessageID: protectedMessage.MessageID,
-		Caption:   replyToMessage.Caption,
+		File:             file,
+		UserID:           user.ID,
+		ChatID:           message.Chat.ID,
+		MessageID:        protectedMessage.MessageID,
+		Caption:          replyToMessage.Caption,
+		UserLanguageCode: user.LanguageCode,
 	})
 	if err != nil {
 		return err
