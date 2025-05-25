@@ -21,7 +21,8 @@ import (
 	"ssuspy-bot/utils"
 )
 
-func (h *Handler) HandleMessage(c *th.Context, message telego.Message) error {
+func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
+	message := update.Message
 	err := h.service.SaveMessage(context.Background(), message)
 	if err != nil {
 		log.Warn().
@@ -185,7 +186,8 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	return err
 }
 
-func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
+func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
+	message := update.Message
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 	log := c.Value("log").(*zerolog.Logger)
@@ -209,7 +211,7 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 		return err
 	}
 
-	changes, mediaDiff := format.EditedDiff(oldMsg, &message, loc, true)
+	changes, mediaDiff := format.EditedDiff(oldMsg, message, loc, true)
 
 	if len(changes) == 0 {
 		err = h.service.SaveMessage(context.Background(), message)
@@ -326,10 +328,11 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 	return err
 }
 
-func (h *Handler) HandleConnection(c *th.Context, connection telego.BusinessConnection) error {
+func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
+	connection := update.BusinessConnection
 	loc := c.Value("loc").(*i18n.Localizer)
 
-	err := h.service.UpdateUserConnection(context.Background(), &connection)
+	err := h.service.UpdateUserConnection(context.Background(), connection)
 	if err != nil {
 		return err
 	}

@@ -46,7 +46,7 @@ type PaginationAnswer struct {
 	Backward bool
 }
 
-func (r *MongoRepository) SaveMessage(ctx context.Context, message telego.Message) error {
+func (r *MongoRepository) SaveMessage(ctx context.Context, message *telego.Message) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

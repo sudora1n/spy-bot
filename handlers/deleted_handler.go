@@ -22,7 +22,8 @@ import (
 	"ssuspy-bot/utils"
 )
 
-func (h *Handler) HandleDeletedPagination(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleDeletedPagination(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 	log := c.Value("log").(*zerolog.Logger)
@@ -84,7 +85,8 @@ func (h *Handler) HandleDeletedPagination(c *th.Context, query telego.CallbackQu
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
 
-func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 	log := c.Value("log").(*zerolog.Logger)
@@ -169,7 +171,8 @@ func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) er
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
 
-func (h *Handler) HandleDeletedMessage(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 	log := c.Value("log").(*zerolog.Logger)
@@ -247,7 +250,8 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, query telego.CallbackQuery
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
 
-func (h *Handler) HandleDeletedMessageDetails(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleDeletedMessageDetails(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 	log := c.Value("log").(*zerolog.Logger)
@@ -317,7 +321,8 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, query telego.Callba
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
 
-func (h *Handler) HandleGetDeletedFiles(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	user := c.Value("user").(*repository.User)
 	loc := c.Value("loc").(*i18n.Localizer)
 

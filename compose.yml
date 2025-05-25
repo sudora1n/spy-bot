@@ -19,6 +19,7 @@ services:
 
   redis:
     image: redis:7
+    container_name: ssuspy-redis
     volumes:
       - redis-data:/data
     healthcheck:
@@ -29,6 +30,7 @@ services:
 
   telegram-bot-api:
     image: aiogram/telegram-bot-api:latest
+    container_name: ssuspy-telegram-bot-api
     environment:
       - TELEGRAM_API_ID
       - TELEGRAM_API_HASH
@@ -73,6 +75,8 @@ services:
       - GITHUB_URL
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api/
+    ports:
+      - 8080:8080
     depends_on:
       mongodb:
         condition: service_healthy
@@ -81,7 +85,42 @@ services:
       telegram-bot-api:
         condition: service_healthy
 
+  # infra
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ssuspy-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: ssuspy-node-exporter
+    expose:
+      - "9100:9100"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ssuspy-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
 volumes:
   telegram-bot-api-data:
   redis-data:
   mongo-data:
+  prometheus-data:
+  grafana-data:

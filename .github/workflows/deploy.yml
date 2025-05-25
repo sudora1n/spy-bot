@@ -18,6 +18,7 @@ on:
       - "callbacks/**"
       - "files/**"
       - "redis/**"
+      - "prom/**"
       - "go.mod"
       - "go.sum"
       - ".dockerignore"

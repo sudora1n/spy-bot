@@ -7,10 +7,13 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/ziflex/lecho/v3"
 	"golang.org/x/text/language"
 
 	"ssuspy-bot/config"
@@ -21,6 +24,7 @@ import (
 	"ssuspy-bot/middleware"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/utils"
 )
 
 func main() {
@@ -133,7 +137,7 @@ func main() {
 	bh.Use(middlewareGroup.GetInternalUserMiddleware)
 
 	handlerGroup := handlers.NewHandlerGroup(mongoRepo, &rdb)
-	bh.HandleMyChatMemberUpdated(handlerGroup.HandleBlocked)
+	bh.Handle(utils.WithProm("handleBlocked", handlerGroup.HandleBlocked), th.AnyMyChatMember())
 
 	{
 		starndard := bh.Group(th.Or(
@@ -149,32 +153,36 @@ func main() {
 			QueueSize: 3,
 		}))
 		starndard.Use(middlewareGroup.SyncUserMiddleware)
-		starndard.Handle(handlers.HandleStart, th.Or(
+		starndard.Handle(utils.WithProm("handleStart", handlers.HandleStart), th.Or(
 			th.CallbackDataEqual(consts.CALLBACK_PREFIX_BACK_TO_START),
 			th.CommandEqual("start"),
 		))
 		if hasGithub {
-			starndard.HandleMessage(handlers.HandleGithub, th.CommandEqual("github"))
+			starndard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"), th.AnyMessage())
 		}
-		starndard.HandleCallbackQuery(handlers.HandleLanguage, th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG))
-		starndard.HandleCallbackQuery(handlerGroup.HandleLanguageChange, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_LANG_CHANGE))
+		starndard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(
+			utils.WithProm("handleLanguageChange", handlerGroup.HandleLanguageChange),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_LANG_CHANGE),
+			th.AnyCallbackQueryWithMessage(),
+		)
 
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedLog, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG))
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedMessage, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE))
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedMessageDetails, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS))
-		starndard.HandleCallbackQuery(handlerGroup.HandleGetDeletedFiles, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES))
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedPagination, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_PAGINATION))
+		starndard.Handle(utils.WithProm("handleDeletedLog", handlerGroup.HandleDeletedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleDeletedMessage", handlerGroup.HandleDeletedMessage), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleDeletedMessageDetails", handlerGroup.HandleDeletedMessageDetails), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleGetDeletedFiles", handlerGroup.HandleGetDeletedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleDeletedPagination", handlerGroup.HandleDeletedPagination), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_PAGINATION), th.AnyCallbackQueryWithMessage())
 		edited := starndard.Group(th.AnyCallbackQueryWithMessage())
 		edited.Use(middlewareGroup.EditedGetMessages)
-		edited.HandleCallbackQuery(handlerGroup.HandleEditedLog, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG))
-		edited.HandleCallbackQuery(handlerGroup.HandleEditedFiles, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_FILES))
+		edited.Handle(utils.WithProm("handleEditedLog", handlerGroup.HandleEditedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG), th.AnyCallbackQueryWithMessage())
+		edited.Handle(utils.WithProm("handleEditedFiles", handlerGroup.HandleEditedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_FILES), th.AnyCallbackQueryWithMessage())
 	}
 
 	{
 		businessConnection := bh.Group(th.AnyBusinessConnection())
 		businessConnection.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION, 5))
 		businessConnection.Use(middlewareGroup.SyncUserMiddleware)
-		businessConnection.HandleBusinessConnection(handlerGroup.HandleConnection, th.AnyBusinessConnection())
+		businessConnection.Handle(utils.WithProm("handleConnection", handlerGroup.HandleConnection), th.AnyBusinessConnection())
 	}
 
 	{
@@ -189,24 +197,34 @@ func main() {
 		business.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS, 20))
 		business.Use(middlewareGroup.BusinessGetUserMiddleware)
 		business.Handle(
-			handlerGroup.HandleDeleted,
+			utils.WithProm("handleDeleted", handlerGroup.HandleDeleted),
 			th.Or(
 				th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED),
 				th.AnyDeletedBusinessMessages(),
 			))
-		business.HandleEditedBusinessMessage(handlerGroup.HandleEdited, th.AnyEditedBusinessMessage())
+		business.Handle(utils.WithProm("handleEdited", handlerGroup.HandleEdited), th.AnyEditedBusinessMessage())
 	}
 
 	{
 		businessMessage := bh.Group(th.AnyBusinessMessage())
 		businessMessage.Use(middlewareGroup.BusinessGetUserMiddleware)
-		businessMessage.HandleBusinessMessage(handlerGroup.HandleMessage, th.AnyBusinessMessage())
+		businessMessage.Handle(utils.WithProm("handleMessage", handlerGroup.HandleMessage), th.AnyBusinessMessage())
 	}
 
 	filesWorker := files.NewWorker(mongoRepo, &rdb, bot)
 	for i := range cfg.FilesWorkers {
 		go filesWorker.Work(ctx, i+1)
 	}
+
+	e := echo.New()
+	e.Logger = lecho.From(log.Logger)
+
+	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+	go func() {
+		if err := e.Start(":8080"); err != nil {
+			log.Fatal().Err(err).Msg("echo/labstack is down")
+		}
+	}()
 
 	if err = bh.Start(); err != nil {
 		log.Fatal().Err(err).Msg("bot error while process")
