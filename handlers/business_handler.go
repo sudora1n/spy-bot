@@ -151,6 +151,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.deleted.overflowDescription",
 		}),
+		false,
 	)
 
 	if itsCallbackQuery {
