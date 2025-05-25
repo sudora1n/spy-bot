@@ -163,7 +163,7 @@ func main() {
 		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedMessage, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE))
 		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedMessageDetails, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS))
 		starndard.HandleCallbackQuery(handlerGroup.HandleGetDeletedFiles, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES))
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedPagination, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_PAGINATION))
+		// starndard.HandleCallbackQuery(handlerGroup.HandleDeletedPagination, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_PAGINATION))
 		edited := starndard.Group(th.AnyCallbackQueryWithMessage())
 		edited.Use(middlewareGroup.EditedGetMessages)
 		edited.HandleCallbackQuery(handlerGroup.HandleEditedLog, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG))

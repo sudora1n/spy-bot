@@ -23,6 +23,7 @@ func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update)
 
 	data, err := callbacks.NewHandleEditedLogDataFromString(query.Data)
 	if err != nil {
+		log.Warn().Err(err).Str("data", query.Data).Msg("invalid callback data")
 		utils.OnDataError(c, query.ID, loc)
 		return fmt.Errorf("invalid callback data")
 	}

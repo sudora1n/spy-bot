@@ -40,7 +40,7 @@ type HandleDeletedPaginationData struct {
 }
 
 func (h HandleDeletedPaginationData) ToString() string {
-	return fmt.Sprintf("%s|%d|%d|%d|%s", consts.CALLBACK_PREFIX_DELETED_PAGINATION, h.DataID, h.ChatID, h.Offset, h.TypeOfPagination)
+	return fmt.Sprintf("%s|%d|%d|%d|%s", consts.CALLBACK_PREFIX_DELETED, h.DataID, h.ChatID, h.Offset, h.TypeOfPagination)
 }
 
 type HandleDeletedLogData struct {

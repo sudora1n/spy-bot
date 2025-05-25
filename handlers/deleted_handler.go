@@ -22,68 +22,6 @@ import (
 	"ssuspy-bot/utils"
 )
 
-func (h *Handler) HandleDeletedPagination(c *th.Context, query telego.CallbackQuery) error {
-	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
-	log := c.Value("log").(*zerolog.Logger)
-
-	data, err := callbacks.NewHandleDeletedPaginationDataFromString(query.Data)
-	if err != nil {
-		log.Warn().Err(err).Str("data", query.Data).Msg("invalid callback data")
-		utils.OnDataError(c, query.ID, loc)
-		return fmt.Errorf("invalid callback data")
-	}
-
-	result, err := h.service.GetDataDeleted(context.Background(), user.ID, data.DataID)
-	if err != nil {
-		log.Warn().Err(err).Int64("dataID", data.ChatID).Msg("failed GetDataFullDeletedLogByUUID")
-		utils.OnDataError(c, query.ID, loc)
-
-		return err
-	}
-
-	var offset int
-	if data.TypeOfPagination == "f" {
-		offset = data.Offset + consts.MAX_BUTTONS
-	} else if data.TypeOfPagination == "b" {
-		offset = max(data.Offset-consts.MAX_BUTTONS, 0)
-	}
-
-	messageID := query.Message.GetMessageID()
-	oldMsgs, pagination, err := h.service.GetMessages(
-		context.Background(),
-		&repository.GetMessagesOptions{
-			ChatID:        data.ChatID,
-			MessageIDs:    result.MessageIDs,
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
-			Offset:        offset,
-			Limit:         consts.MAX_BUTTONS,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	if len(oldMsgs) == 0 {
-		log.Warn().Int64("chatID", data.ChatID).Ints("messageIDs", result.MessageIDs).Msg("no messages found in the database")
-		return nil
-	}
-
-	rows := utils.DeletedRows(data.ChatID, user, loc, oldMsgs, pagination, offset, data.DataID)
-
-	if _, err := c.Bot().EditMessageReplyMarkup(c, tu.EditMessageReplayMarkup(
-		tu.ID(user.ID),
-		messageID,
-		tu.InlineKeyboard(rows...),
-	)); err != nil {
-		log.Warn().Err(err).Msg("Error sending media to user")
-		utils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
-		return err
-	}
-
-	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
-}
-
 func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
@@ -223,16 +161,18 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, query telego.CallbackQuery
 		))
 	}
 
-	callbackData := types.HandleBusinessData{
-		DataID: data.DataID,
-		ChatID: data.ChatID,
+	callbackData := types.HandleDeletedPaginationData{
+		DataID:           data.DataID,
+		ChatID:           data.ChatID,
+		Offset:           0,
+		TypeOfPagination: "",
 	}
 	buttons = append(buttons, tu.InlineKeyboardRow(
 		tu.InlineKeyboardButton(
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "back",
 			}),
-		).WithCallbackData(callbackData.ToString(types.HandleBusinessDataTypeDeleted)),
+		).WithCallbackData(callbackData.ToString()),
 	))
 
 	summaryText := format.SummarizeDeletedMessage(msg, loc, true)
