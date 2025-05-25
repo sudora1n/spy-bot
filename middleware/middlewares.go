@@ -40,7 +40,6 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			LanguageCode: update.Message.From.LanguageCode,
 			SendMessages: true,
 		}
-		break
 	case update.CallbackQuery != nil:
 		internalUser = types.InternalUser{
 			ID:           update.CallbackQuery.From.ID,
@@ -48,7 +47,6 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			LastName:     update.CallbackQuery.From.LastName,
 			LanguageCode: update.CallbackQuery.From.LanguageCode,
 		}
-		break
 	case update.BusinessConnection != nil:
 		internalUser = types.InternalUser{
 			ID:                   update.BusinessConnection.User.ID,
@@ -58,7 +56,6 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			BusinessConnectionID: update.BusinessConnection.ID,
 			SendMessages:         true,
 		}
-		break
 	case update.BusinessMessage != nil:
 		user = h.processBusiness(update.BusinessMessage.BusinessConnectionID, 0)
 		if user == nil {
@@ -71,7 +68,6 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			BusinessConnectionID: update.BusinessMessage.BusinessConnectionID,
 			SendMessages:         user.SendMessages,
 		}
-		break
 	case update.DeletedBusinessMessages != nil:
 		user = h.processBusiness(update.DeletedBusinessMessages.BusinessConnectionID, 0)
 		if user == nil {
@@ -84,7 +80,6 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			BusinessConnectionID: update.DeletedBusinessMessages.BusinessConnectionID,
 			SendMessages:         user.SendMessages,
 		}
-		break
 	case update.EditedBusinessMessage != nil:
 		user = h.processBusiness(update.EditedBusinessMessage.BusinessConnectionID, 0)
 		if user == nil {
@@ -97,7 +92,14 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			BusinessConnectionID: update.EditedBusinessMessage.BusinessConnectionID,
 			SendMessages:         user.SendMessages,
 		}
-		break
+	case update.MyChatMember != nil:
+		internalUser = types.InternalUser{
+			ID:           update.MyChatMember.From.ID,
+			FirstName:    update.MyChatMember.From.FirstName,
+			LastName:     update.MyChatMember.From.LastName,
+			LanguageCode: update.MyChatMember.From.LanguageCode,
+			SendMessages: false,
+		}
 	default:
 		return errors.New("userID not found")
 	}
