@@ -302,12 +302,14 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 	return changes, mediaDiff
 }
 
-func TruncateText(text string, maxLength int) (result string) {
-	return CustomTruncateText(text, maxLength, "...")
+func TruncateText(text string, maxLength int, replaceN bool) (result string) {
+	return CustomTruncateText(text, maxLength, "...", replaceN)
 }
 
-func CustomTruncateText(text string, maxLength int, endString string) (result string) {
-	text = strings.ReplaceAll(text, "\n", " ")
+func CustomTruncateText(text string, maxLength int, endString string, replaceN bool) (result string) {
+	if replaceN {
+		text = strings.ReplaceAll(text, "\n", " ")
+	}
 
 	if maxLength <= 0 {
 		return ""
@@ -439,7 +441,7 @@ func Name(name string, lastName string) string {
 		name += fmt.Sprintf(" %s", lastName)
 	}
 	name = html.EscapeString(
-		TruncateText(name, consts.MAX_NAME_LEN),
+		TruncateText(name, consts.MAX_NAME_LEN, true),
 	)
 
 	return name
@@ -447,12 +449,12 @@ func Name(name string, lastName string) string {
 
 func Text(text string) string {
 	return html.EscapeString(
-		TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN),
+		TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN, true),
 	)
 }
 
 func Caption(text string) string {
 	return html.EscapeString(
-		TruncateText(text, consts.MAX_MEDIA_CAPTION_LEN),
+		TruncateText(text, consts.MAX_MEDIA_CAPTION_LEN, false),
 	)
 }
