@@ -82,7 +82,7 @@
         "empty": "<b>empty or unknown message was deleted</b>"
       },
       "request": {
-        "message": "<b>full deleted messages</b>\n{{if .WithEdits}}summary, latest versions (JSON), and all versions with edits (JSON){{else}}summary and latest versions (JSON) (JSON){{end}]",
+        "message": "<b>full deleted messages</b>\n{{if .WithEdits}}summary, latest versions (JSON), and all versions with edits (JSON){{else}}summary and latest versions (JSON) (JSON){{end}}",
         "oneDetails": "get JSON",
         "file": "get file",
         "files": {
