@@ -94,11 +94,6 @@ func (w Worker) process(job *redis.Job) (err error) {
 		return err
 	}
 
-	fileExists, err := w.service.CreateFileIfNotExists(ctx, job.File.FileID, job.UserID, job.ChatID)
-	if err != nil || !fileExists {
-		return err
-	}
-
 	fileNetPath, err := w.bot.GetFile(ctx, &telego.GetFileParams{FileID: job.File.FileID})
 	if err != nil {
 		return err

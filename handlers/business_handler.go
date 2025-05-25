@@ -63,6 +63,11 @@ func (h *Handler) HandleMessage(c *th.Context, message telego.Message) error {
 		return nil
 	}
 
+	fileExists, err := h.service.CreateFileIfNotExists(c, file.FileID, user.ID, message.Chat.ID)
+	if err != nil || !fileExists {
+		return err
+	}
+
 	protectedMessage, err := c.Bot().SendMessage(c, tu.Message(
 		tu.ID(user.ID),
 		loc.MustLocalize(&i18n.LocalizeConfig{
