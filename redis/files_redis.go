@@ -7,17 +7,16 @@ import (
 	"ssuspy-bot/types"
 	"time"
 
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	goredis "github.com/redis/go-redis/v9"
 )
 
 type Job struct {
-	Loc       *i18n.Localizer
-	File      *types.MediaItem
-	UserID    int64
-	ChatID    int64
-	MessageID int
-	Caption   string
+	File             *types.MediaItem
+	UserID           int64
+	UserLanguageCode string
+	ChatID           int64
+	MessageID        int
+	Caption          string
 }
 
 func (r *Redis) EnqueueJob(ctx context.Context, queueKey string, job Job) error {

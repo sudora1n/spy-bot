@@ -21,9 +21,7 @@
   },
   "back": "back",
   "hide": "hide",
-  "sendMediaInGroups": {
-    "caption": "<b>text</b>: {{.Text}}"
-  },
+  "sendMediaInGroups": "<b>text</b>: {{.Result}}",
   "start": {
     "message": "hello, {{.Name}}\nstatus: <i>{{if .Enabled}}connected!{{else}}not connected :({{end}}</i>",
     "onNew": {

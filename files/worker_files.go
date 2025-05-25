@@ -10,6 +10,7 @@ import (
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
+	"ssuspy-bot/locales"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/utils"
@@ -62,6 +63,7 @@ func (w Worker) Work(ctx context.Context, workerI int) {
 
 func (w Worker) process(job *redis.Job) (err error) {
 	ctx := context.TODO()
+	loc := locales.NewLocalizer(job.UserLanguageCode)
 
 	var (
 		fileLimit uint64
@@ -77,7 +79,7 @@ func (w Worker) process(job *redis.Job) (err error) {
 	if job.File.FileSize > int64(fileLimit) {
 		_, err = w.bot.SendMessage(ctx, tu.Message(
 			tu.ID(job.UserID),
-			job.Loc.MustLocalize(&i18n.LocalizeConfig{
+			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "errors.errorFileTooBig",
 				TemplateData: map[string]any{
 					"FileSize":  job.File.FileSize,
@@ -117,12 +119,15 @@ func (w Worker) process(job *redis.Job) (err error) {
 	}
 	defer closer.Close()
 
-	caption := job.Loc.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "sendMediaInGroups.caption",
-		TemplateData: map[string]string{
-			"Text": format.Caption(job.Caption),
-		},
-	})
+	var caption string
+	if job.Caption != "" {
+		caption = loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "sendMediaInGroups",
+			TemplateData: map[string]string{
+				"Result": format.Caption(job.Caption),
+			},
+		})
+	}
 	inputMedia := utils.CreateInputMediaFromFileInfoByFile(file, job.File.Type, caption)
 
 	return utils.SendMediaInGroups(w.bot, ctx, job.UserID, []telego.InputMedia{inputMedia}, job.MessageID)
