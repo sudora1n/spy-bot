@@ -47,7 +47,7 @@ func CompareMedia(oldMedia, newMedia *types.MediaItem) (diff types.MediaDiff) {
 	return diff
 }
 
-func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) string {
+func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer, truncate bool) string {
 	var summary []string
 
 	if message.ForwardOrigin != nil {
@@ -86,7 +86,7 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) strin
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.deleted.format.text",
 				TemplateData: map[string]string{
-					"Text": Text(text),
+					"Text": formatText(text, truncate),
 				},
 			}),
 		)
@@ -152,13 +152,13 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer) strin
 	return strings.Join(summary, "\n")
 }
 
-func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n.Localizer) string {
+func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n.Localizer, truncate bool) string {
 	messagesLen := len(messages)
 	if messagesLen == 1 {
 		return loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.deleted.format.message",
 			TemplateData: map[string]string{
-				"Result":           SummarizeDeletedMessage(messages[0], loc),
+				"Result":           SummarizeDeletedMessage(messages[0], loc, truncate),
 				"ResolvedChatName": name,
 			},
 			PluralCount: messagesLen,
@@ -167,7 +167,7 @@ func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n
 
 	var result strings.Builder
 	for i, message := range messages {
-		summarize := SummarizeDeletedMessage(message, loc)
+		summarize := SummarizeDeletedMessage(message, loc, truncate)
 		result.WriteString(loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.deleted.format.messageItem",
 			TemplateData: map[string]any{
@@ -188,7 +188,7 @@ func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n
 	})
 }
 
-func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Localizer) ([]string, types.MediaDiff) {
+func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Localizer, truncate bool) ([]string, types.MediaDiff) {
 	var changes []string
 
 	oldHasText := oldMsg.Text != ""
@@ -201,8 +201,8 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.changed",
 				TemplateData: map[string]string{
-					"Old": Text(oldMsg.Text),
-					"New": Text(newMsg.Text),
+					"Old": formatText(oldMsg.Text, truncate),
+					"New": formatText(newMsg.Text, truncate),
 				},
 			}),
 		)
@@ -212,7 +212,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.added",
 				TemplateData: map[string]string{
-					"New": Text(newMsg.Text),
+					"New": formatText(newMsg.Text, truncate),
 				},
 			}),
 		)
@@ -222,7 +222,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.removed",
 				TemplateData: map[string]string{
-					"New": Text(oldMsg.Text),
+					"New": formatText(oldMsg.Text, truncate),
 				},
 			}),
 		)
@@ -238,8 +238,8 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.changed",
 				TemplateData: map[string]string{
-					"Old": Text(oldMsg.Caption),
-					"New": Text(newMsg.Caption),
+					"Old": formatText(oldMsg.Caption, truncate),
+					"New": formatText(newMsg.Caption, truncate),
 				},
 			}),
 		)
@@ -249,7 +249,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.added",
 				TemplateData: map[string]string{
-					"New": Text(newMsg.Caption),
+					"New": formatText(newMsg.Caption, truncate),
 				},
 			}),
 		)
@@ -259,7 +259,7 @@ func EditedDiff(oldMsg *telego.Message, newMsg *telego.Message, loc *i18n.Locali
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.text.removed",
 				TemplateData: map[string]string{
-					"New": Text(oldMsg.Caption),
+					"New": formatText(oldMsg.Caption, truncate),
 				},
 			}),
 		)
@@ -448,9 +448,12 @@ func Name(name string, lastName string) string {
 	return name
 }
 
-func Text(text string) string {
+func formatText(text string, truncate bool) string {
+	if truncate {
+		text = TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN, true)
+	}
 	return html.EscapeString(
-		TruncateText(text, consts.MAX_MESSAGE_TEXT_LEN, true),
+		text,
 	)
 }
 

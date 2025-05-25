@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -68,24 +67,6 @@ func (h *Handler) HandleDeletedPagination(c *th.Context, query telego.CallbackQu
 	if len(oldMsgs) == 0 {
 		log.Warn().Int64("chatID", data.ChatID).Ints("messageIDs", result.MessageIDs).Msg("no messages found in the database")
 		return nil
-	}
-
-	var name string
-	chatResolve, err := h.service.FindChatName(c, data.ChatID)
-	if err != nil {
-		name = strconv.FormatInt(data.ChatID, 10)
-
-	} else {
-		name = chatResolve.Name
-	}
-
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc)
-	tempText := strings.ReplaceAll(summaryText, "\n", " ")
-	if len(tempText) > consts.MAX_LEN {
-		description := loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "business.deleted.overflowDescription",
-		})
-		summaryText = summaryText[:consts.MAX_LEN-len(strings.ReplaceAll(description, "\n", " "))] + description
 	}
 
 	rows := utils.DeletedRows(data.ChatID, user, loc, oldMsgs, pagination, offset, data.DataID)
@@ -151,7 +132,7 @@ func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) er
 	}
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false)
 	files := []telego.InputMedia{
 		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("%d-summary-%s", data.ChatID, now))),
 	}
@@ -254,7 +235,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, query telego.CallbackQuery
 		).WithCallbackData(callbackData.ToString(types.HandleBusinessDataTypeDeleted)),
 	))
 
-	summaryText := format.SummarizeDeletedMessage(msg, loc)
+	summaryText := format.SummarizeDeletedMessage(msg, loc, true)
 	if _, err := c.Bot().EditMessageText(c, tu.EditMessageText(tu.ID(query.From.ID), query.Message.GetMessageID(), summaryText).
 		WithParseMode(telego.ModeHTML).
 		WithReplyMarkup(tu.InlineKeyboard(buttons...)),
@@ -305,7 +286,7 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, query telego.Callba
 	}
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false)
 	files := []telego.InputMedia{
 		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("msg-%d-summary-%s", data.MessageID, now))),
 	}

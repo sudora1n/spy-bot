@@ -144,7 +144,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 	rows := utils.DeletedRows(chatID, user, loc, oldMsgs, pagination, 0, dataID)
 
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc)
+	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true)
 	summaryText = format.CustomTruncateText(
 		summaryText,
 		consts.MAX_LEN,
@@ -204,7 +204,7 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 		return err
 	}
 
-	changes, mediaDiff := format.EditedDiff(oldMsg, &message, loc)
+	changes, mediaDiff := format.EditedDiff(oldMsg, &message, loc, true)
 
 	if len(changes) == 0 {
 		err = h.service.SaveMessage(context.Background(), message)
