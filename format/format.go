@@ -392,6 +392,7 @@ func getForwardInfo(msg *telego.Message, loc *i18n.Localizer) string {
 }
 
 func GetMDInputFile(text string, fileName string) telego.InputFile {
+	text = strings.ReplaceAll(text, "\n", "<br>")
 	newText, err := htmltomarkdown.ConvertString(text)
 	if err == nil {
 		fileName += ".md"
