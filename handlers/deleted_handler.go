@@ -335,7 +335,7 @@ func (h *Handler) HandleGetDeletedFiles(c *th.Context, query telego.CallbackQuer
 				}
 
 				caption := ""
-				if i == 0 {
+				if i == 0 && groupCaption != "" {
 					caption = loc.MustLocalize(&i18n.LocalizeConfig{
 						MessageID: "sendMediaInGroups",
 						TemplateData: map[string]string{
