@@ -70,7 +70,7 @@ func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) er
 	}
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.Offset)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.Offset, len(msgs))
 	files := []telego.InputMedia{
 		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("%d-summary-%s", data.ChatID, now))),
 	}
@@ -226,7 +226,7 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, query telego.Callba
 	}
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.BackOffset)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.BackOffset, len(msgs))
 	files := []telego.InputMedia{
 		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("msg-%d-summary-%s", data.MessageID, now))),
 	}

@@ -152,8 +152,7 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer, trunc
 	return strings.Join(summary, "\n")
 }
 
-func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n.Localizer, truncate bool, offset int) string {
-	messagesLen := len(messages)
+func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n.Localizer, truncate bool, offset int, messagesLen int) string {
 	if messagesLen == 1 {
 		return loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.deleted.format.message",

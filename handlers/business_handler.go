@@ -105,9 +105,12 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	messageIDs := c.Value("messageIDs").([]int)
 
 	var (
-		offset           int
-		typeOfPagination string
-		dataID           int64
+		limit              int
+		offset             int
+		typeOfPagination   string
+		dataID             int64
+		correctMessagesLen uint8
+		correctFilesLen    uint8
 	)
 	if itsCallbackQuery {
 		data, err := callbacks.NewHandleDeletedPaginationDataFromString(update.CallbackQuery.Data)
@@ -123,7 +126,8 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			return err
 		}
 
-		messageIDs, chatID, typeOfPagination, offset, dataID = result.MessageIDs, data.ChatID, data.TypeOfPagination, data.Offset, data.DataID
+		messageIDs, chatID, typeOfPagination, offset, dataID, limit, correctMessagesLen, correctFilesLen =
+			result.MessageIDs, data.ChatID, data.TypeOfPagination, data.Offset, data.DataID, consts.MAX_BUTTONS, result.MessagesCount, result.FilesCount
 	}
 
 	switch typeOfPagination {
@@ -139,7 +143,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			ChatID:        chatID,
 			MessageIDs:    messageIDs,
 			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
-			Limit:         consts.MAX_BUTTONS,
+			Limit:         limit,
 			Offset:        offset,
 		},
 	)
@@ -152,11 +156,26 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		return nil
 	}
 
+	filesLen := 0
+	for _, msg := range oldMsgs {
+		media := utils.GetFile(msg)
+		if media != nil {
+			filesLen++
+		}
+	}
+
 	if !itsCallbackQuery {
-		dataID, err = h.service.SetDataDeleted(context.TODO(), user.ID, messageIDs)
+		correctMessagesLen, correctFilesLen = uint8(len(oldMsgs)), uint8(filesLen)
+		dataID, err = h.service.SetDataDeleted(context.TODO(), user.ID, messageIDs, correctMessagesLen, correctFilesLen)
 		if err != nil {
 			return err
 		}
+
+		if len(oldMsgs) > consts.MAX_BUTTONS {
+			oldMsgs = oldMsgs[:consts.MAX_BUTTONS]
+		}
+
+		pagination.Forward = true
 	}
 
 	rows := [][]telego.InlineKeyboardButton{}
@@ -176,15 +195,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			),
 		)
 
-		filesLen := 0
-		for _, msg := range oldMsgs {
-			media := utils.GetFile(msg)
-			if media != nil {
-				filesLen++
-			}
-		}
-
-		if filesLen != 0 {
+		if correctFilesLen != 0 {
 			callbackData := types.HandleDeletedFilesData{
 				DataID: dataID,
 				ChatID: chatID,
@@ -196,27 +207,20 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 						loc.MustLocalize(&i18n.LocalizeConfig{
 							MessageID: "business.deleted.request.files",
 							TemplateData: map[string]int{
-								"Count": filesLen,
+								"Count": int(correctFilesLen),
 							},
-							PluralCount: filesLen,
+							PluralCount: int(correctFilesLen),
 						}),
 					).WithCallbackData(callbackData.ToString()),
 				),
 			)
 		}
 
-		var newMsgs []*telego.Message
-		if len(oldMsgs) > consts.MAX_BUTTONS {
-			newMsgs = oldMsgs[:consts.MAX_BUTTONS]
-		} else {
-			newMsgs = oldMsgs
-		}
-
-		if len(newMsgs) > 1 {
-			for i := 0; i < len(newMsgs); i += 2 {
+		if len(oldMsgs) > 1 {
+			for i := 0; i < len(oldMsgs); i += 2 {
 				row := make([]telego.InlineKeyboardButton, 0, 2)
 				data := types.HandleDeletedMessageData{
-					MessageID:  newMsgs[i].MessageID,
+					MessageID:  oldMsgs[i].MessageID,
 					ChatID:     chatID,
 					DataID:     dataID,
 					BackOffset: offset,
@@ -231,8 +235,8 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 					}),
 				).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
 
-				if i+1 < len(newMsgs) {
-					data.MessageID = newMsgs[i+1].MessageID
+				if i+1 < len(oldMsgs) {
+					data.MessageID = oldMsgs[i+1].MessageID
 					row = append(row, tu.InlineKeyboardButton(
 						loc.MustLocalize(&i18n.LocalizeConfig{
 							MessageID: "business.deleted.messageItem",
@@ -299,7 +303,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			update.DeletedBusinessMessages.Chat.LastName,
 		)
 	}
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true, offset)
+	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true, offset, int(correctMessagesLen))
 	summaryText = format.CustomTruncateText(
 		summaryText,
 		consts.MAX_LEN,
