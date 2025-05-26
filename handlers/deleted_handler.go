@@ -70,7 +70,7 @@ func (h *Handler) HandleDeletedLog(c *th.Context, query telego.CallbackQuery) er
 	}
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.Offset)
 	files := []telego.InputMedia{
 		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("%d-summary-%s", data.ChatID, now))),
 	}
@@ -162,11 +162,11 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, query telego.CallbackQuery
 	}
 
 	callbackData := types.HandleDeletedPaginationData{
-		DataID:           data.DataID,
-		ChatID:           data.ChatID,
-		Offset:           0,
-		TypeOfPagination: "",
+		DataID: data.DataID,
+		ChatID: data.ChatID,
+		Offset: data.BackOffset,
 	}
+
 	buttons = append(buttons, tu.InlineKeyboardRow(
 		tu.InlineKeyboardButton(
 			loc.MustLocalize(&i18n.LocalizeConfig{
@@ -226,7 +226,7 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, query telego.Callba
 	}
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false)
+	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.BackOffset)
 	files := []telego.InputMedia{
 		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("msg-%d-summary-%s", data.MessageID, now))),
 	}

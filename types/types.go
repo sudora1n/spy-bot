@@ -46,16 +46,18 @@ func (h HandleDeletedPaginationData) ToString() string {
 type HandleDeletedLogData struct {
 	DataID int64
 	ChatID int64
+	Offset int
 }
 
 func (h HandleDeletedLogData) ToString() string {
-	return fmt.Sprintf("%s|%d|%d", consts.CALLBACK_PREFIX_DELETED_LOG, h.DataID, h.ChatID)
+	return fmt.Sprintf("%s|%d|%d|%d", consts.CALLBACK_PREFIX_DELETED_LOG, h.DataID, h.ChatID, h.Offset)
 }
 
 type HandleDeletedMessageData struct {
-	MessageID int
-	ChatID    int64
-	DataID    int64
+	MessageID  int
+	ChatID     int64
+	DataID     int64
+	BackOffset int
 }
 
 type HandleDeletedMessageDataType int
@@ -77,7 +79,7 @@ func (h HandleDeletedMessageData) ToString(dataType HandleDeletedMessageDataType
 		return ""
 	}
 
-	return fmt.Sprintf("%s|%d|%d|%d", prefix, h.MessageID, h.ChatID, h.DataID)
+	return fmt.Sprintf("%s|%d|%d|%d|%d", prefix, h.MessageID, h.ChatID, h.DataID, h.BackOffset)
 }
 
 type HandleDeletedFilesDataType int

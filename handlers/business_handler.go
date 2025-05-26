@@ -164,6 +164,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		data := types.HandleDeletedLogData{
 			DataID: dataID,
 			ChatID: chatID,
+			Offset: offset,
 		}
 		rows = append(rows,
 			tu.InlineKeyboardRow(
@@ -211,73 +212,76 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			newMsgs = oldMsgs
 		}
 
-		for i := 0; i < len(newMsgs); i += 2 {
-			row := make([]telego.InlineKeyboardButton, 0, 2)
-			data := types.HandleDeletedMessageData{
-				MessageID: newMsgs[i].MessageID,
-				ChatID:    chatID,
-				DataID:    dataID,
-			}
+		if len(newMsgs) > 1 {
+			for i := 0; i < len(newMsgs); i += 2 {
+				row := make([]telego.InlineKeyboardButton, 0, 2)
+				data := types.HandleDeletedMessageData{
+					MessageID:  newMsgs[i].MessageID,
+					ChatID:     chatID,
+					DataID:     dataID,
+					BackOffset: offset,
+				}
 
-			row = append(row, tu.InlineKeyboardButton(
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "business.deleted.messageItem",
-					TemplateData: map[string]int{
-						"Count": i + 1 + offset,
-					},
-				}),
-			).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
-
-			if i+1 < len(newMsgs) {
-				data.MessageID = newMsgs[i+1].MessageID
 				row = append(row, tu.InlineKeyboardButton(
 					loc.MustLocalize(&i18n.LocalizeConfig{
 						MessageID: "business.deleted.messageItem",
 						TemplateData: map[string]int{
-							"Count": i + 2 + offset,
+							"Count": i + 1 + offset,
 						},
 					}),
 				).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
-			}
 
-			rows = append(rows, row)
-		}
-
-		if len(oldMsgs) > consts.MAX_BUTTONS || pagination.Backward || pagination.Forward {
-			row := make([]telego.InlineKeyboardButton, 0, 2)
-
-			paginationData := types.HandleDeletedPaginationData{
-				DataID: dataID,
-				ChatID: chatID,
-				Offset: offset,
-			}
-
-			if pagination.Backward {
-				paginationData.TypeOfPagination = "b"
-				row = append(
-					row,
-					tu.InlineKeyboardButton(
+				if i+1 < len(newMsgs) {
+					data.MessageID = newMsgs[i+1].MessageID
+					row = append(row, tu.InlineKeyboardButton(
 						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "arrow.backward",
+							MessageID: "business.deleted.messageItem",
+							TemplateData: map[string]int{
+								"Count": i + 2 + offset,
+							},
 						}),
-					).
-						WithCallbackData(paginationData.ToString()),
-				)
-			}
-			if pagination.Forward {
-				paginationData.TypeOfPagination = "f"
-				row = append(
-					row,
-					tu.InlineKeyboardButton(
-						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "arrow.forward",
-						}),
-					).
-						WithCallbackData(paginationData.ToString()),
-				)
+					).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
+				}
+
+				rows = append(rows, row)
 			}
 
-			rows = append(rows, row)
+			if len(oldMsgs) > consts.MAX_BUTTONS || pagination.Backward || pagination.Forward {
+				row := make([]telego.InlineKeyboardButton, 0, 2)
+
+				paginationData := types.HandleDeletedPaginationData{
+					DataID: dataID,
+					ChatID: chatID,
+					Offset: offset,
+				}
+
+				if pagination.Backward {
+					paginationData.TypeOfPagination = "b"
+					row = append(
+						row,
+						tu.InlineKeyboardButton(
+							loc.MustLocalize(&i18n.LocalizeConfig{
+								MessageID: "arrow.backward",
+							}),
+						).
+							WithCallbackData(paginationData.ToString()),
+					)
+				}
+				if pagination.Forward {
+					paginationData.TypeOfPagination = "f"
+					row = append(
+						row,
+						tu.InlineKeyboardButton(
+							loc.MustLocalize(&i18n.LocalizeConfig{
+								MessageID: "arrow.forward",
+							}),
+						).
+							WithCallbackData(paginationData.ToString()),
+					)
+				}
+
+				rows = append(rows, row)
+			}
 		}
 	}
 
@@ -295,7 +299,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			update.DeletedBusinessMessages.Chat.LastName,
 		)
 	}
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true)
+	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true, offset)
 	summaryText = format.CustomTruncateText(
 		summaryText,
 		consts.MAX_LEN,
