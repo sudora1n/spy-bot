@@ -66,5 +66,5 @@ type RedisConfig struct {
 
 type BotConfig struct {
 	Token  string `env:"TOKEN, required"`
-	ApiURL string `env:"API_URL"`
+	ApiURL string `env:"API_URL, required"`
 }

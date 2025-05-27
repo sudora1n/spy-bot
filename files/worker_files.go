@@ -3,11 +3,7 @@ package files
 import (
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"path/filepath"
-	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
 	"ssuspy-bot/locales"
@@ -65,25 +61,14 @@ func (w Worker) process(job *redis.Job) (err error) {
 	ctx := context.TODO()
 	loc := locales.NewLocalizer(job.UserLanguageCode)
 
-	var (
-		fileLimit uint64
-		isLocal   bool
-	)
-
-	if config.Config.TelegramBot.ApiURL == "" {
-		fileLimit = consts.MAX_FILE_SIZE_BYTES
-	} else {
-		fileLimit, isLocal = consts.MAX_FILE_SIZE_BYTES_LOCAL, true
-	}
-
-	if job.File.FileSize > int64(fileLimit) {
+	if job.File.FileSize > consts.MAX_FILE_SIZE_BYTES {
 		_, err = w.bot.SendMessage(ctx, tu.Message(
 			tu.ID(job.UserID),
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "errors.errorFileTooBig",
 				TemplateData: map[string]any{
 					"FileSize":  job.File.FileSize,
-					"FileLimit": humanize.Bytes(fileLimit),
+					"FileLimit": humanize.Bytes(consts.MAX_FILE_SIZE_BYTES),
 				},
 			}),
 		).
@@ -99,20 +84,11 @@ func (w Worker) process(job *redis.Job) (err error) {
 		return err
 	}
 
-	var (
-		file   telego.InputFile
-		closer io.Closer
-	)
-
-	if isLocal {
-		file, closer, err = w.createInputMediaLocal(fileNetPath)
-	} else {
-		file, closer, err = w.createInputMedia(fileNetPath)
-	}
+	f, err := os.Open(fileNetPath.FilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("open local file failed: %v", err)
 	}
-	defer closer.Close()
+	defer f.Close()
 
 	var caption string
 	if job.Caption != "" {
@@ -123,33 +99,9 @@ func (w Worker) process(job *redis.Job) (err error) {
 			},
 		})
 	}
+
+	file := tu.File(f)
 	inputMedia := utils.CreateInputMediaFromFileInfoByFile(file, job.File.Type, caption)
 
 	return utils.SendMediaInGroups(w.bot, ctx, job.UserID, []telego.InputMedia{inputMedia}, job.MessageID)
-}
-
-func (w Worker) createInputMedia(file *telego.File) (result telego.InputFile, closer io.Closer, err error) {
-	url := w.bot.FileDownloadURL(file.FilePath)
-	resp, err := http.Get(url)
-	if err != nil {
-		return result, nil, fmt.Errorf("download failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	result = tu.FileFromReader(
-		resp.Body,
-		fmt.Sprintf("file.%s", filepath.Ext(file.FilePath)),
-	)
-
-	return result, resp.Body, nil
-}
-
-func (w Worker) createInputMediaLocal(file *telego.File) (result telego.InputFile, closer io.Closer, err error) {
-	f, err := os.Open(file.FilePath)
-	if err != nil {
-		return result, nil, fmt.Errorf("open local file failed: %v", err)
-	}
-
-	result = tu.File(f)
-	return result, f, nil
 }

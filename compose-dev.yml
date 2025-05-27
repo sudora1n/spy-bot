@@ -77,7 +77,7 @@ services:
       - REDIS_PORT
       - REDIS_DB
       - TELEGRAM_TOKEN
-      - TELEGRAM_API_URL
+      - TELEGRAM_API_URL=http://telegram-bot-api:8081
       - GITHUB_URL
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api/

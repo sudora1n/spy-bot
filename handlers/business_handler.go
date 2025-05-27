@@ -24,7 +24,7 @@ import (
 )
 
 func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
-	message := update.Message
+	message := update.BusinessMessage
 	err := h.service.SaveMessage(context.Background(), message)
 	if err != nil {
 		log.Warn().
@@ -341,7 +341,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 }
 
 func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
-	message := update.Message
+	message := update.EditedBusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 	log := c.Value("log").(*zerolog.Logger)

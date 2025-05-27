@@ -67,4 +67,4 @@ jobs:
             ./prepare.sh
             docker compose pull
             docker compose down
-            docker compose up -d
+            docker compose --profile prod up -d

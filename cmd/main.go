@@ -77,12 +77,7 @@ func main() {
 		}
 	}()
 
-	options := []telego.BotOption{}
-	if cfg.TelegramBot.ApiURL != "" {
-		options = append(options, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
-	}
-
-	bot, err := telego.NewBot(cfg.TelegramBot.Token, options...)
+	bot, err := telego.NewBot(cfg.TelegramBot.Token, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create bot")
 	}
@@ -117,64 +112,34 @@ func main() {
 	log.Info().Msgf("bot username: @%s", botUser.Username)
 
 	var (
-		withWebhooks   = true
-		srv            = &fasthttp.Server{}
-		updates        <-chan telego.Update
-		allowedUpdates = []string{
-			"update_id",
-			"message",
-			"business_connection",
-			"business_message",
-			"edited_business_message",
-			"deleted_business_messages",
-			"my_chat_member",
-			"callback_query",
-		}
+		srv     = &fasthttp.Server{}
+		updates <-chan telego.Update
 	)
-	switch {
-	case cfg.TelegramBot.ApiURL != "":
-		if err != nil {
-			log.Fatal().Err(err).Msg("error when executing GetWebhookInfo request")
-		}
-		url := "http://bot:8079/bot/main"
-
-		allowedUpdates = append(allowedUpdates, "update_id")
-		updates, err = bot.UpdatesViaWebhook(
-			ctx,
-			telego.WebhookFastHTTP(srv, "/bot/main", bot.SecretToken()),
-			telego.WithWebhookBuffer(256),
-			telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
-				URL:                url,
-				SecretToken:        bot.SecretToken(),
-				AllowedUpdates:     allowedUpdates,
-				DropPendingUpdates: false,
-			}),
-		)
-		if err != nil {
-			log.Fatal().Err(err).Msg("error create bot updates via webhook (local bot api)")
-		}
-
-		log.Info().Str("localBotApiURL", cfg.TelegramBot.ApiURL).Str("url", url).Msg("successfully start webhook (local bot api)")
-	default:
-		err := bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
+	url := "http://bot:8079/bot/main"
+	updates, err = bot.UpdatesViaWebhook(
+		ctx,
+		telego.WebhookFastHTTP(srv, "/bot/main", bot.SecretToken()),
+		telego.WithWebhookBuffer(256),
+		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
+			URL:         url,
+			SecretToken: bot.SecretToken(),
+			AllowedUpdates: []string{
+				"update_id",
+				"message",
+				"business_connection",
+				"business_message",
+				"edited_business_message",
+				"deleted_business_messages",
+				"my_chat_member",
+				"callback_query",
+			},
 			DropPendingUpdates: false,
-		})
-		if err != nil {
-			log.Fatal().Err(err).Msg("error delete webhook")
-		}
-
-		updates, err = bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
-			Timeout:        10,
-			AllowedUpdates: allowedUpdates,
-		})
-		if err != nil {
-			log.Fatal().Err(err).Msg("error create bot updates")
-		}
-
-		log.Info().Msg("successfully set updates")
-
-		withWebhooks = false
+		}),
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error create bot updates via webhook (local bot api)")
 	}
+	log.Info().Str("localBotApiURL", cfg.TelegramBot.ApiURL).Str("url", url).Msg("successfully set webhook (local bot api)")
 
 	bh, err := th.NewBotHandler(bot, updates)
 	if err != nil {
@@ -273,14 +238,12 @@ func main() {
 		}
 	}()
 
-	if withWebhooks {
-		go func() {
-			log.Info().Msg("start web server...")
-			if err := srv.ListenAndServe(":8079"); err != nil {
-				log.Fatal().Err(err).Msg("bot error while process web")
-			}
-		}()
-	}
+	go func() {
+		log.Info().Msg("start web server...")
+		if err := srv.ListenAndServe(":8079"); err != nil {
+			log.Fatal().Err(err).Msg("bot error while process web")
+		}
+	}()
 
 	quit := make(chan bool)
 	<-quit
