@@ -26,9 +26,14 @@ Spy Bot is a Telegram bot designed for monitoring and logging user activities wi
     ```
 
 
-3. **Set Up Environment Variables**:
+3. **Prepare**:
 
-    Rename the `.env.example` file to `.env` and configure the necessary environment variables.
+    Run
+    ```bash
+    ./prepare.sh
+    ```
+    \
+    and configure the necessary environment variables in .env
 
 ## Docker Deployment
 

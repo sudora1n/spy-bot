@@ -17,6 +17,7 @@ COPY --from=builder /app /home/appuser/app
 
 WORKDIR /home/appuser/app
 
+EXPOSE 8079
 EXPOSE 8080
 
 CMD ["./appbin"]

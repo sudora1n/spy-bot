@@ -3,17 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/ziflex/lecho/v3"
+	"github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 
 	"ssuspy-bot/config"
@@ -68,6 +68,15 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to Redis")
 	}
 
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		if err := http.ListenAndServe(":8080", mux); err != nil && err != http.ErrServerClosed {
+			log.Fatal().Err(err).Msg("promhttp server down")
+		}
+	}()
+
 	options := []telego.BotOption{}
 	if cfg.TelegramBot.ApiURL != "" {
 		options = append(options, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
@@ -107,9 +116,11 @@ func main() {
 
 	log.Info().Msgf("bot username: @%s", botUser.Username)
 
-	updates, err := bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
-		Timeout: 10,
-		AllowedUpdates: []string{
+	var (
+		withWebhooks   = true
+		srv            = &fasthttp.Server{}
+		updates        <-chan telego.Update
+		allowedUpdates = []string{
 			"update_id",
 			"message",
 			"business_connection",
@@ -118,10 +129,51 @@ func main() {
 			"deleted_business_messages",
 			"my_chat_member",
 			"callback_query",
-		},
-	})
-	if err != nil {
-		log.Fatal().Err(err).Msg("error create bot updates")
+		}
+	)
+	switch {
+	case cfg.TelegramBot.ApiURL != "":
+		if err != nil {
+			log.Fatal().Err(err).Msg("error when executing GetWebhookInfo request")
+		}
+		url := "http://bot:8079/bot/main"
+
+		allowedUpdates = append(allowedUpdates, "update_id")
+		updates, err = bot.UpdatesViaWebhook(
+			ctx,
+			telego.WebhookFastHTTP(srv, "/bot/main", bot.SecretToken()),
+			telego.WithWebhookBuffer(256),
+			telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
+				URL:                url,
+				SecretToken:        bot.SecretToken(),
+				AllowedUpdates:     allowedUpdates,
+				DropPendingUpdates: false,
+			}),
+		)
+		if err != nil {
+			log.Fatal().Err(err).Msg("error create bot updates via webhook (local bot api)")
+		}
+
+		log.Info().Str("localBotApiURL", cfg.TelegramBot.ApiURL).Str("url", url).Msg("successfully start webhook (local bot api)")
+	default:
+		err := bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
+			DropPendingUpdates: false,
+		})
+		if err != nil {
+			log.Fatal().Err(err).Msg("error delete webhook")
+		}
+
+		updates, err = bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
+			Timeout:        10,
+			AllowedUpdates: allowedUpdates,
+		})
+		if err != nil {
+			log.Fatal().Err(err).Msg("error create bot updates")
+		}
+
+		log.Info().Msg("successfully set updates")
+
+		withWebhooks = false
 	}
 
 	bh, err := th.NewBotHandler(bot, updates)
@@ -215,17 +267,21 @@ func main() {
 		go filesWorker.Work(ctx, i+1)
 	}
 
-	e := echo.New()
-	e.Logger = lecho.From(log.Logger)
-
-	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	go func() {
-		if err := e.Start(":8080"); err != nil {
-			log.Fatal().Err(err).Msg("echo/labstack is down")
+		if err := bh.Start(); err != nil {
+			log.Fatal().Err(err).Msg("bot error while process")
 		}
 	}()
 
-	if err = bh.Start(); err != nil {
-		log.Fatal().Err(err).Msg("bot error while process")
+	if withWebhooks {
+		go func() {
+			log.Info().Msg("start web server...")
+			if err := srv.ListenAndServe(":8079"); err != nil {
+				log.Fatal().Err(err).Msg("bot error while process web")
+			}
+		}()
 	}
+
+	quit := make(chan bool)
+	<-quit
 }
