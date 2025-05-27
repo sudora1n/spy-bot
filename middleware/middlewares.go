@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"ssuspy-bot/locales"
+	"ssuspy-bot/prom"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
+	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -144,4 +146,23 @@ func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update
 	c = c.WithValue("userIsNew", new)
 
 	return c.Next(update)
+}
+
+func PromMiddleware(c *th.Context, update telego.Update) error {
+	handlerName := c.Value("handlerName").(string)
+
+	start := time.Now()
+	prom.RequestsTotal.WithLabelValues(handlerName).Inc()
+
+	defer func() {
+		duration := time.Since(start).Seconds()
+		prom.ProcessingTime.WithLabelValues(handlerName).Observe(duration)
+	}()
+
+	err := c.Next(update)
+	if err != nil {
+		prom.ErrorsTotal.WithLabelValues(handlerName).Inc()
+	}
+
+	return err
 }

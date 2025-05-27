@@ -12,5 +12,6 @@
 !/callbacks
 !/files
 !/redis
+!/prom
 !/go.mod
 !/go.sum

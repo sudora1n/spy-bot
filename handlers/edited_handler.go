@@ -18,7 +18,8 @@ import (
 	"ssuspy-bot/utils"
 )
 
-func (h *Handler) HandleEditedLog(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 
@@ -70,7 +71,8 @@ func (h *Handler) HandleEditedLog(c *th.Context, query telego.CallbackQuery) err
 
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
-func (h *Handler) HandleEditedFiles(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleEditedFiles(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	user := c.Value("user").(*repository.User)
 	loc := c.Value("loc").(*i18n.Localizer)
 

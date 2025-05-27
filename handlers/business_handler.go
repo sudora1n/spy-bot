@@ -23,9 +23,12 @@ import (
 	"ssuspy-bot/utils"
 )
 
-func (h *Handler) HandleMessage(c *th.Context, message telego.Message) error {
-	message.Text = format.TruncateText(message.Text, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
+func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
+	message := update.BusinessMessage
+
+  message.Text = format.TruncateText(message.Text, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
 	message.Caption = format.TruncateText(message.Caption, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
+  
 	err := h.service.SaveMessage(context.Background(), message)
 	if err != nil {
 		log.Warn().
@@ -341,7 +344,8 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	return err
 }
 
-func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
+func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
+	message := update.EditedBusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
 	user := c.Value("user").(*repository.User)
 	log := c.Value("log").(*zerolog.Logger)
@@ -365,7 +369,7 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 		return err
 	}
 
-	changes, mediaDiff := format.EditedDiff(oldMsg, &message, loc, true)
+	changes, mediaDiff := format.EditedDiff(oldMsg, message, loc, true)
 
 	if len(changes) == 0 {
 		err = h.service.SaveMessage(context.Background(), message)
@@ -482,10 +486,11 @@ func (h *Handler) HandleEdited(c *th.Context, message telego.Message) error {
 	return err
 }
 
-func (h *Handler) HandleConnection(c *th.Context, connection telego.BusinessConnection) error {
+func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
+	connection := update.BusinessConnection
 	loc := c.Value("loc").(*i18n.Localizer)
 
-	err := h.service.UpdateUserConnection(context.Background(), &connection)
+	err := h.service.UpdateUserConnection(context.Background(), connection)
 	if err != nil {
 		return err
 	}
