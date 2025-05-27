@@ -24,6 +24,7 @@ import (
 )
 
 func (h *Handler) HandleMessage(c *th.Context, message telego.Message) error {
+	message.Text = format.TruncateText(message.Text, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
 	err := h.service.SaveMessage(context.Background(), message)
 	if err != nil {
 		log.Warn().
