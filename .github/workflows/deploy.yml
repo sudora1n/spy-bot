@@ -5,22 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "cmd/**"
-      - "config/**"
-      - "handlers/**"
-      - "locales/**"
-      - "repository/**"
-      - "format/**"
-      - "middleware/**"
-      - "consts/**"
-      - "utils/**"
-      - "types/**"
-      - "callbacks/**"
-      - "files/**"
-      - "redis/**"
-      - "prom/**"
-      - "go.mod"
-      - "go.sum"
+      - "business_bot/**"
       - ".dockerignore"
       - "Dockerfile"
 
