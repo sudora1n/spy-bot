@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"ssuspy-bot/callbacks"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
 	"ssuspy-bot/redis"
@@ -103,33 +105,193 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	chatID := c.Value("chatID").(int64)
 	messageIDs := c.Value("messageIDs").([]int)
 
+	var (
+		limit              int
+		offset             int
+		typeOfPagination   string
+		dataID             int64
+		correctMessagesLen uint8
+		correctFilesLen    uint8
+	)
+	if itsCallbackQuery {
+		data, err := callbacks.NewHandleDeletedPaginationDataFromString(update.CallbackQuery.Data)
+		if err != nil {
+			log.Warn().Err(err).Str("data", update.CallbackQuery.Data).Msg("invalid callback data")
+			return fmt.Errorf("invalid callback data")
+		}
+
+		result, err := h.service.GetDataDeleted(context.Background(), update.CallbackQuery.From.ID, data.DataID)
+		if err != nil {
+			log.Error().Err(err).Int64("dataID", data.DataID).Msg("error GetDataFullDeletedLogByUUID")
+
+			return err
+		}
+
+		messageIDs, chatID, typeOfPagination, offset, dataID, limit, correctMessagesLen, correctFilesLen =
+			result.MessageIDs, data.ChatID, data.TypeOfPagination, data.Offset, data.DataID, consts.MAX_BUTTONS, result.MessagesCount, result.FilesCount
+	}
+
+	switch typeOfPagination {
+	case "f":
+		offset = offset + consts.MAX_BUTTONS
+	case "b":
+		offset = max(offset-consts.MAX_BUTTONS, 0)
+	}
+
 	oldMsgs, pagination, err := h.service.GetMessages(
 		context.Background(),
 		&repository.GetMessagesOptions{
 			ChatID:        chatID,
 			MessageIDs:    messageIDs,
 			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			Limit:         limit,
+			Offset:        offset,
 		},
 	)
 	if err != nil {
 		return err
 	}
 
-	if len(oldMsgs) > consts.MAX_BUTTONS {
-		pagination.Forward = true
-	}
-
 	if len(oldMsgs) == 0 {
-		log.Warn().Ints("messageIDs", messageIDs).Msg("no messages found in the database")
+		log.Warn().Ints("messageIDs", messageIDs).Int("offset", offset).Str("typeOfPagination", typeOfPagination).Msg("no messages found in the database")
 		return nil
 	}
 
-	var (
-		dataID int64
-		name   string
-	)
+	filesLen := 0
+	for _, msg := range oldMsgs {
+		media := utils.GetFile(msg)
+		if media != nil {
+			filesLen++
+		}
+	}
+
+	if !itsCallbackQuery {
+		correctMessagesLen, correctFilesLen = uint8(len(oldMsgs)), uint8(filesLen)
+		dataID, err = h.service.SetDataDeleted(context.TODO(), user.ID, messageIDs, correctMessagesLen, correctFilesLen)
+		if err != nil {
+			return err
+		}
+
+		if len(oldMsgs) > consts.MAX_BUTTONS {
+			oldMsgs = oldMsgs[:consts.MAX_BUTTONS]
+		}
+
+		pagination.Forward = true
+	}
+
+	rows := [][]telego.InlineKeyboardButton{}
+	if len(oldMsgs) > 0 {
+		data := types.HandleDeletedLogData{
+			DataID: dataID,
+			ChatID: chatID,
+			Offset: offset,
+		}
+		rows = append(rows,
+			tu.InlineKeyboardRow(
+				tu.InlineKeyboardButton(
+					loc.MustLocalize(&i18n.LocalizeConfig{
+						MessageID: "business.deleted.fullMessages",
+					}),
+				).WithCallbackData(data.ToString()),
+			),
+		)
+
+		if correctFilesLen != 0 {
+			callbackData := types.HandleDeletedFilesData{
+				DataID: dataID,
+				ChatID: chatID,
+				Type:   types.HandleDeletedFilesDataTypeData,
+			}
+			rows = append(rows,
+				tu.InlineKeyboardRow(
+					tu.InlineKeyboardButton(
+						loc.MustLocalize(&i18n.LocalizeConfig{
+							MessageID: "business.deleted.request.files",
+							TemplateData: map[string]int{
+								"Count": int(correctFilesLen),
+							},
+							PluralCount: int(correctFilesLen),
+						}),
+					).WithCallbackData(callbackData.ToString()),
+				),
+			)
+		}
+
+		if len(oldMsgs) > 1 {
+			for i := 0; i < len(oldMsgs); i += 2 {
+				row := make([]telego.InlineKeyboardButton, 0, 2)
+				data := types.HandleDeletedMessageData{
+					MessageID:  oldMsgs[i].MessageID,
+					ChatID:     chatID,
+					DataID:     dataID,
+					BackOffset: offset,
+				}
+
+				row = append(row, tu.InlineKeyboardButton(
+					loc.MustLocalize(&i18n.LocalizeConfig{
+						MessageID: "business.deleted.messageItem",
+						TemplateData: map[string]int{
+							"Count": i + 1 + offset,
+						},
+					}),
+				).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
+
+				if i+1 < len(oldMsgs) {
+					data.MessageID = oldMsgs[i+1].MessageID
+					row = append(row, tu.InlineKeyboardButton(
+						loc.MustLocalize(&i18n.LocalizeConfig{
+							MessageID: "business.deleted.messageItem",
+							TemplateData: map[string]int{
+								"Count": i + 2 + offset,
+							},
+						}),
+					).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
+				}
+
+				rows = append(rows, row)
+			}
+
+			if len(oldMsgs) > consts.MAX_BUTTONS || pagination.Backward || pagination.Forward {
+				row := make([]telego.InlineKeyboardButton, 0, 2)
+
+				paginationData := types.HandleDeletedPaginationData{
+					DataID: dataID,
+					ChatID: chatID,
+					Offset: offset,
+				}
+
+				if pagination.Backward {
+					paginationData.TypeOfPagination = "b"
+					row = append(
+						row,
+						tu.InlineKeyboardButton(
+							loc.MustLocalize(&i18n.LocalizeConfig{
+								MessageID: "arrow.backward",
+							}),
+						).
+							WithCallbackData(paginationData.ToString()),
+					)
+				}
+				if pagination.Forward {
+					paginationData.TypeOfPagination = "f"
+					row = append(
+						row,
+						tu.InlineKeyboardButton(
+							loc.MustLocalize(&i18n.LocalizeConfig{
+								MessageID: "arrow.forward",
+							}),
+						).
+							WithCallbackData(paginationData.ToString()),
+					)
+				}
+
+				rows = append(rows, row)
+			}
+		}
+	}
+
+	var name string
 	if itsCallbackQuery {
-		dataID = c.Value("dataID").(int64)
 		chatResolve, err := h.service.FindChatName(c, chatID)
 		if err != nil {
 			name = strconv.FormatInt(chatID, 10)
@@ -137,20 +299,12 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			name = chatResolve.Name
 		}
 	} else {
-		dataID, err = h.service.SetDataDeleted(context.TODO(), user.ID, messageIDs)
-		if err != nil {
-			return err
-		}
-
 		name = format.Name(
 			update.DeletedBusinessMessages.Chat.FirstName,
 			update.DeletedBusinessMessages.Chat.LastName,
 		)
 	}
-
-	rows := utils.DeletedRows(chatID, user, loc, oldMsgs, pagination, 0, dataID)
-
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true)
+	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true, offset, int(correctMessagesLen))
 	summaryText = format.CustomTruncateText(
 		summaryText,
 		consts.MAX_LEN,

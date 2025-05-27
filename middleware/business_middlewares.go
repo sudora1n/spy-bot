@@ -1,13 +1,11 @@
 package middleware
 
 import (
-	"context"
 	"errors"
-	"fmt"
-	"ssuspy-bot/callbacks"
 	"ssuspy-bot/locales"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
+	"ssuspy-bot/utils"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -25,7 +23,6 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 		chatID           int64
 		dataID           int64
 		itsCallbackQuery bool
-		itsNewUser       bool
 	)
 
 	{
@@ -43,33 +40,17 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 				update.EditedBusinessMessage.Chat.ID
 			break
 		case update.CallbackQuery != nil:
-			user = h.processBusiness("", update.CallbackQuery.From.ID)
+			itsCallbackQuery = true
+
+			user = utils.ProcessBusiness(h.service, "", update.CallbackQuery.From.ID)
 			if user == nil {
 				return nil
 			}
 
-			itsNewUser = true
-
-			data, err := callbacks.NewHandleBusinessDataFromString(update.CallbackQuery.Data)
-			if err != nil {
-				log.Warn().Err(err).Str("data", update.CallbackQuery.Data).Msg("invalid callback data")
-				return fmt.Errorf("invalid callback data")
-			}
-
-			result, err := h.service.GetDataDeleted(context.Background(), update.CallbackQuery.From.ID, data.DataID)
-			if err != nil {
-				log.Error().Err(err).Int64("dataID", data.DataID).Msg("error GetDataFullDeletedLogByUUID")
-
-				return err
-			}
-			messageIDs, chatID, itsCallbackQuery, dataID = result.MessageIDs, data.ChatID, true, data.DataID
+			ctx = ctx.WithValue("user", user)
 		default:
 			return errors.New("unsupported update type.")
 		}
-	}
-
-	if itsNewUser {
-		ctx = ctx.WithValue("user", user)
 	}
 
 	ctx = ctx.WithValue("dataID", dataID)

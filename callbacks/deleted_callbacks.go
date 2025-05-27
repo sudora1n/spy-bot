@@ -39,7 +39,7 @@ func NewHandleDeletedPaginationDataFromString(s string) (*types.HandleDeletedPag
 }
 
 func NewHandleDeletedLogDataFromString(s string) (*types.HandleDeletedLogData, error) {
-	expectedLen := 3
+	expectedLen := 4
 
 	parts := strings.Split(s, "|")
 	if len(parts) != expectedLen {
@@ -56,14 +56,20 @@ func NewHandleDeletedLogDataFromString(s string) (*types.HandleDeletedLogData, e
 		return nil, fmt.Errorf("failed to convert ChatID: %v", err)
 	}
 
+	offset, err := strconv.Atoi(parts[3])
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert Offset: %v", err)
+	}
+
 	return &types.HandleDeletedLogData{
 		DataID: dataID,
 		ChatID: chatID,
+		Offset: offset,
 	}, nil
 }
 
 func NewHandleDeletedMessageDataFromString(s string) (data *types.HandleDeletedMessageData, err error) {
-	expectedLen := 4
+	expectedLen := 5
 
 	parts := strings.Split(s, "|")
 	if len(parts) != expectedLen {
@@ -84,6 +90,11 @@ func NewHandleDeletedMessageDataFromString(s string) (data *types.HandleDeletedM
 	data.DataID, err = strconv.ParseInt(parts[3], 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert DataID: %v", err)
+	}
+
+	data.BackOffset, err = strconv.Atoi(parts[4])
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert BackOffset: %v", err)
 	}
 
 	return data, nil

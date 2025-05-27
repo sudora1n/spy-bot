@@ -8,6 +8,7 @@ import (
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
+	"ssuspy-bot/utils"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -59,7 +60,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			SendMessages:         true,
 		}
 	case update.BusinessMessage != nil:
-		user = h.processBusiness(update.BusinessMessage.BusinessConnectionID, 0)
+		user = utils.ProcessBusiness(h.service, update.BusinessMessage.BusinessConnectionID, 0)
 		if user == nil {
 			return nil
 		}
@@ -71,7 +72,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			SendMessages:         user.SendMessages,
 		}
 	case update.DeletedBusinessMessages != nil:
-		user = h.processBusiness(update.DeletedBusinessMessages.BusinessConnectionID, 0)
+		user = utils.ProcessBusiness(h.service, update.DeletedBusinessMessages.BusinessConnectionID, 0)
 		if user == nil {
 			return nil
 		}
@@ -83,7 +84,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			SendMessages:         user.SendMessages,
 		}
 	case update.EditedBusinessMessage != nil:
-		user = h.processBusiness(update.EditedBusinessMessage.BusinessConnectionID, 0)
+		user = utils.ProcessBusiness(h.service, update.EditedBusinessMessage.BusinessConnectionID, 0)
 		if user == nil {
 			return nil
 		}
@@ -113,30 +114,6 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 	c = c.WithValue("log", &logger)
 
 	return c.Next(update)
-}
-
-func (h *MiddlewareGroup) processBusiness(businessConnectionID string, userID int64) (user *repository.User) {
-	if businessConnectionID == "" && userID == 0 {
-		log.Printf("No business connection ID or userID found in update")
-		return nil
-	}
-
-	var err error
-	if userID == 0 {
-		user, err = h.service.FindUserByConnectionID(context.Background(), businessConnectionID)
-		if err != nil {
-			log.Warn().Err(err).Msg("error decoding user")
-			return nil
-		}
-	} else {
-		user, err = h.service.FindUser(context.Background(), userID)
-		if err != nil {
-			log.Warn().Err(err).Msg("error decoding user")
-			return nil
-		}
-	}
-
-	return user
 }
 
 func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update) error {

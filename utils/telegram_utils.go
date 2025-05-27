@@ -178,8 +178,17 @@ func GetFile(message *telego.Message) (media *types.MediaItem) {
 func SortFiles(media []*types.MediaItemProcess) [][]*types.MediaItemProcess {
 	groups := make(map[string][]*types.MediaItemProcess)
 
-	for _, item := range media {
-		groups[item.Type] = append(groups[item.Type], item)
+	for i, item := range media {
+		switch item.Type {
+		case "animation":
+			itemType := fmt.Sprintf("%s|%d", item.Type, i)
+			groups[itemType] = append(groups[itemType], item) // https://github.com/sudora1n/spy-bot/issues/29
+		case "video":
+			itemType := "photo"
+			groups[itemType] = append(groups[itemType], item) // for grouping photo and video together
+		default:
+			groups[item.Type] = append(groups[item.Type], item)
+		}
 	}
 
 	result := make([][]*types.MediaItemProcess, 0, len(groups))
