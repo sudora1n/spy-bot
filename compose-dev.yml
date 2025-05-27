@@ -59,9 +59,9 @@ services:
       start_period: 5s
 
   bot:
-    image: ghcr.io/sudora1n/spy-bot:latest
+    image: ghcr.io/sudora1n/spy-bot-business:latest
     restart: unless-stopped
-    container_name: ssuspy-bot
+    container_name: ssuspy-business-bot
     profiles: ["dev", "prod"]
     build: ./business_bot
     environment:

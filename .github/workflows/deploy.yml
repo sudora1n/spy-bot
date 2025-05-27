@@ -6,8 +6,6 @@ on:
       - main
     paths:
       - "business_bot/**"
-      - ".dockerignore"
-      - "Dockerfile"
 
 jobs:
   build_and_push:
@@ -26,10 +24,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}:latest .
+        run: docker build -t ghcr.io/${{ github.repository }}-business:latest .
 
       - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository }}:latest
+        run: docker push ghcr.io/${{ github.repository }}-business:latest
 
   deploy:
     name: Deploy to Remote Server
