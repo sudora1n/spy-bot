@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 
 	"ssuspy-bot/config"
@@ -21,6 +24,7 @@ import (
 	"ssuspy-bot/middleware"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/utils"
 )
 
 func main() {
@@ -64,12 +68,16 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to Redis")
 	}
 
-	options := []telego.BotOption{}
-	if cfg.TelegramBot.ApiURL != "" {
-		options = append(options, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
-	}
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
 
-	bot, err := telego.NewBot(cfg.TelegramBot.Token, options...)
+	go func() {
+		if err := http.ListenAndServe(":8080", mux); err != nil && err != http.ErrServerClosed {
+			log.Fatal().Err(err).Msg("promhttp server down")
+		}
+	}()
+
+	bot, err := telego.NewBot(cfg.TelegramBot.Token, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create bot")
 	}
@@ -103,22 +111,35 @@ func main() {
 
 	log.Info().Msgf("bot username: @%s", botUser.Username)
 
-	updates, err := bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
-		Timeout: 10,
-		AllowedUpdates: []string{
-			"update_id",
-			"message",
-			"business_connection",
-			"business_message",
-			"edited_business_message",
-			"deleted_business_messages",
-			"my_chat_member",
-			"callback_query",
-		},
-	})
+	var (
+		srv     = &fasthttp.Server{}
+		updates <-chan telego.Update
+	)
+	url := "http://bot:8079/bot/main"
+	updates, err = bot.UpdatesViaWebhook(
+		ctx,
+		telego.WebhookFastHTTP(srv, "/bot/main", bot.SecretToken()),
+		telego.WithWebhookBuffer(256),
+		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
+			URL:         url,
+			SecretToken: bot.SecretToken(),
+			AllowedUpdates: []string{
+				"update_id",
+				"message",
+				"business_connection",
+				"business_message",
+				"edited_business_message",
+				"deleted_business_messages",
+				"my_chat_member",
+				"callback_query",
+			},
+			DropPendingUpdates: false,
+		}),
+	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error create bot updates")
+		log.Fatal().Err(err).Msg("error create bot updates via webhook (local bot api)")
 	}
+	log.Info().Str("localBotApiURL", cfg.TelegramBot.ApiURL).Str("url", url).Msg("successfully set webhook (local bot api)")
 
 	bh, err := th.NewBotHandler(bot, updates)
 	if err != nil {
@@ -133,7 +154,7 @@ func main() {
 	bh.Use(middlewareGroup.GetInternalUserMiddleware)
 
 	handlerGroup := handlers.NewHandlerGroup(mongoRepo, &rdb)
-	bh.HandleMyChatMemberUpdated(handlerGroup.HandleBlocked)
+	bh.Handle(utils.WithProm("handleBlocked", handlerGroup.HandleBlocked), th.AnyMyChatMember())
 
 	{
 		starndard := bh.Group(th.Or(
@@ -149,32 +170,35 @@ func main() {
 			QueueSize: 3,
 		}))
 		starndard.Use(middlewareGroup.SyncUserMiddleware)
-		starndard.Handle(handlers.HandleStart, th.Or(
+		starndard.Handle(utils.WithProm("handleStart", handlers.HandleStart), th.Or(
 			th.CallbackDataEqual(consts.CALLBACK_PREFIX_BACK_TO_START),
 			th.CommandEqual("start"),
 		))
 		if hasGithub {
-			starndard.HandleMessage(handlers.HandleGithub, th.CommandEqual("github"))
+			starndard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"), th.AnyMessage())
 		}
-		starndard.HandleCallbackQuery(handlers.HandleLanguage, th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG))
-		starndard.HandleCallbackQuery(handlerGroup.HandleLanguageChange, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_LANG_CHANGE))
+		starndard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(
+			utils.WithProm("handleLanguageChange", handlerGroup.HandleLanguageChange),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_LANG_CHANGE),
+			th.AnyCallbackQueryWithMessage(),
+		)
 
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedLog, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG))
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedMessage, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE))
-		starndard.HandleCallbackQuery(handlerGroup.HandleDeletedMessageDetails, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS))
-		starndard.HandleCallbackQuery(handlerGroup.HandleGetDeletedFiles, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES))
-		// starndard.HandleCallbackQuery(handlerGroup.HandleDeletedPagination, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_PAGINATION))
+		starndard.Handle(utils.WithProm("handleDeletedLog", handlerGroup.HandleDeletedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleDeletedMessage", handlerGroup.HandleDeletedMessage), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleDeletedMessageDetails", handlerGroup.HandleDeletedMessageDetails), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleGetDeletedFiles", handlerGroup.HandleGetDeletedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES), th.AnyCallbackQueryWithMessage())
 		edited := starndard.Group(th.AnyCallbackQueryWithMessage())
 		edited.Use(middlewareGroup.EditedGetMessages)
-		edited.HandleCallbackQuery(handlerGroup.HandleEditedLog, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG))
-		edited.HandleCallbackQuery(handlerGroup.HandleEditedFiles, th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_FILES))
+		edited.Handle(utils.WithProm("handleEditedLog", handlerGroup.HandleEditedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG), th.AnyCallbackQueryWithMessage())
+		edited.Handle(utils.WithProm("handleEditedFiles", handlerGroup.HandleEditedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_FILES), th.AnyCallbackQueryWithMessage())
 	}
 
 	{
 		businessConnection := bh.Group(th.AnyBusinessConnection())
 		businessConnection.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION, 5))
 		businessConnection.Use(middlewareGroup.SyncUserMiddleware)
-		businessConnection.HandleBusinessConnection(handlerGroup.HandleConnection, th.AnyBusinessConnection())
+		businessConnection.Handle(utils.WithProm("handleConnection", handlerGroup.HandleConnection), th.AnyBusinessConnection())
 	}
 
 	{
@@ -189,18 +213,18 @@ func main() {
 		business.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS, 20))
 		business.Use(middlewareGroup.BusinessGetUserMiddleware)
 		business.Handle(
-			handlerGroup.HandleDeleted,
+			utils.WithProm("handleDeleted", handlerGroup.HandleDeleted),
 			th.Or(
 				th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED),
 				th.AnyDeletedBusinessMessages(),
 			))
-		business.HandleEditedBusinessMessage(handlerGroup.HandleEdited, th.AnyEditedBusinessMessage())
+		business.Handle(utils.WithProm("handleEdited", handlerGroup.HandleEdited), th.AnyEditedBusinessMessage())
 	}
 
 	{
 		businessMessage := bh.Group(th.AnyBusinessMessage())
 		businessMessage.Use(middlewareGroup.BusinessGetUserMiddleware)
-		businessMessage.HandleBusinessMessage(handlerGroup.HandleMessage, th.AnyBusinessMessage())
+		businessMessage.Handle(utils.WithProm("handleMessage", handlerGroup.HandleMessage), th.AnyBusinessMessage())
 	}
 
 	filesWorker := files.NewWorker(mongoRepo, &rdb, bot)
@@ -208,7 +232,19 @@ func main() {
 		go filesWorker.Work(ctx, i+1)
 	}
 
-	if err = bh.Start(); err != nil {
-		log.Fatal().Err(err).Msg("bot error while process")
-	}
+	go func() {
+		if err := bh.Start(); err != nil {
+			log.Fatal().Err(err).Msg("bot error while process")
+		}
+	}()
+
+	go func() {
+		log.Info().Msg("start web server...")
+		if err := srv.ListenAndServe(":8079"); err != nil {
+			log.Fatal().Err(err).Msg("bot error while process web")
+		}
+	}()
+
+	quit := make(chan bool)
+	<-quit
 }

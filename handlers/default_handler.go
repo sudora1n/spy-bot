@@ -122,7 +122,8 @@ func HandleStart(c *th.Context, update telego.Update) error {
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(queryID))
 }
 
-func HandleLanguage(c *th.Context, query telego.CallbackQuery) error {
+func HandleLanguage(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
 	lang := c.Value("languageCode").(string)
 
@@ -157,7 +158,8 @@ func HandleLanguage(c *th.Context, query telego.CallbackQuery) error {
 	return err
 }
 
-func (h *Handler) HandleLanguageChange(c *th.Context, query telego.CallbackQuery) error {
+func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) error {
+	query := update.CallbackQuery
 	user := c.Value("user").(*repository.User)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
@@ -180,7 +182,8 @@ func (h *Handler) HandleLanguageChange(c *th.Context, query telego.CallbackQuery
 	return err
 }
 
-func HandleGithub(c *th.Context, message telego.Message) error {
+func HandleGithub(c *th.Context, update telego.Update) error {
+	message := update.Message
 	loc := c.Value("loc").(*i18n.Localizer)
 
 	_, err := c.Bot().SendMessage(c, tu.Message(
@@ -203,7 +206,8 @@ func HandleGithub(c *th.Context, message telego.Message) error {
 	return err
 }
 
-func (h *Handler) HandleBlocked(_ *th.Context, chatMember telego.ChatMemberUpdated) error {
+func (h *Handler) HandleBlocked(_ *th.Context, update telego.Update) error {
+	chatMember := update.MyChatMember
 	if chatMember.NewChatMember.MemberStatus() == telego.MemberStatusBanned &&
 		chatMember.Chat.Type == "private" {
 		return h.service.UpdateUserSendMessages(context.Background(), chatMember.From.ID, false)
