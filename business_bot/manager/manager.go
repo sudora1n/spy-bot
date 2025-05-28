@@ -24,7 +24,6 @@ type BotInstance struct {
 	Bot     *telego.Bot
 	Handler *th.BotHandler
 	Updates <-chan telego.Update
-	Cancel  context.CancelFunc
 	Running bool
 }
 
@@ -63,10 +62,10 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 
 	botUser, err := bot.GetMe(ctx)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error when executing GetMe request")
+		return fmt.Errorf("error when executing GetMe request: %w", err)
 	}
 	if !botUser.CanConnectToBusiness {
-		log.Fatal().Msg("cannot use this bot: please enable business connections in @botfather")
+		return fmt.Errorf("cannot use this bot: please enable business connections in @botfather: %w", err)
 	}
 
 	commands := []telego.BotCommand{
@@ -83,9 +82,12 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		})
 	}
 
-	bot.SetMyCommands(ctx, &telego.SetMyCommandsParams{
+	err = bot.SetMyCommands(ctx, &telego.SetMyCommandsParams{
 		Commands: commands,
 	})
+	if err != nil {
+		log.Warn().Int64("botID", botID).Err(err).Msg("failed set bot commands")
+	}
 
 	webhookURL := fmt.Sprintf("%s/bot_%d", b.baseURL, botID)
 	webhookPath := fmt.Sprintf("POST /bot_%d", botID)
@@ -119,14 +121,11 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		return fmt.Errorf("failed to create bot handler: %w", err)
 	}
 
-	botCtx, cancel := context.WithCancel(ctx)
-
 	instance := &BotInstance{
 		ID:      botID,
 		Bot:     bot,
 		Handler: botHandler,
 		Updates: updates,
-		Cancel:  cancel,
 		Running: true,
 	}
 
@@ -137,8 +136,6 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 			log.Error().Err(err).Int64("botID", botID).Msg("bot handler stopped with error")
 		}
 	}()
-
-	go b.processBotUpdates(botCtx, instance)
 
 	b.bots[botID] = instance
 
@@ -155,11 +152,12 @@ func (b *BotManager) RemoveBot(botID int64) error {
 		return fmt.Errorf("bot with ID %d not found", botID)
 	}
 
-	instance.Cancel()
 	instance.Handler.Stop()
 	instance.Running = false
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	err := instance.Bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
 		DropPendingUpdates: false,
 	})
@@ -203,38 +201,38 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	instance.Handler.Handle(utils.WithProm("handleBlocked", handlerGroup.HandleBlocked), th.AnyMyChatMember())
 
 	{
-		starndard := instance.Handler.Group(th.Or(
+		standard := instance.Handler.Group(th.Or(
 			th.And(
 				th.AnyCallbackQueryWithMessage(),
 				th.CallbackDataPrefix("_"),
 			),
 			th.AnyCommand(),
 		))
-		starndard.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
+		standard.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
 			Window:    10 * time.Second,
 			Limit:     5,
 			QueueSize: 3,
 		}))
-		starndard.Use(middlewareGroup.SyncUserMiddleware)
-		starndard.Handle(utils.WithProm("handleStart", handlers.HandleStart), th.Or(
+		standard.Use(middlewareGroup.SyncUserMiddleware)
+		standard.Handle(utils.WithProm("handleStart", handlers.HandleStart), th.Or(
 			th.CallbackDataEqual(consts.CALLBACK_PREFIX_BACK_TO_START),
 			th.CommandEqual("start"),
 		))
 		if config.Config.GithubURL != "" {
-			starndard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"), th.AnyMessage())
+			standard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"))
 		}
-		starndard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())
-		starndard.Handle(
+		standard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())
+		standard.Handle(
 			utils.WithProm("handleLanguageChange", handlerGroup.HandleLanguageChange),
 			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_LANG_CHANGE),
 			th.AnyCallbackQueryWithMessage(),
 		)
 
-		starndard.Handle(utils.WithProm("handleDeletedLog", handlerGroup.HandleDeletedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG), th.AnyCallbackQueryWithMessage())
-		starndard.Handle(utils.WithProm("handleDeletedMessage", handlerGroup.HandleDeletedMessage), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE), th.AnyCallbackQueryWithMessage())
-		starndard.Handle(utils.WithProm("handleDeletedMessageDetails", handlerGroup.HandleDeletedMessageDetails), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS), th.AnyCallbackQueryWithMessage())
-		starndard.Handle(utils.WithProm("handleGetDeletedFiles", handlerGroup.HandleGetDeletedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES), th.AnyCallbackQueryWithMessage())
-		edited := starndard.Group(th.AnyCallbackQueryWithMessage())
+		standard.Handle(utils.WithProm("handleDeletedLog", handlerGroup.HandleDeletedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG), th.AnyCallbackQueryWithMessage())
+		standard.Handle(utils.WithProm("handleDeletedMessage", handlerGroup.HandleDeletedMessage), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE), th.AnyCallbackQueryWithMessage())
+		standard.Handle(utils.WithProm("handleDeletedMessageDetails", handlerGroup.HandleDeletedMessageDetails), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS), th.AnyCallbackQueryWithMessage())
+		standard.Handle(utils.WithProm("handleGetDeletedFiles", handlerGroup.HandleGetDeletedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES), th.AnyCallbackQueryWithMessage())
+		edited := standard.Group(th.AnyCallbackQueryWithMessage())
 		edited.Use(middlewareGroup.EditedGetMessages)
 		edited.Handle(utils.WithProm("handleEditedLog", handlerGroup.HandleEditedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG), th.AnyCallbackQueryWithMessage())
 		edited.Handle(utils.WithProm("handleEditedFiles", handlerGroup.HandleEditedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_FILES), th.AnyCallbackQueryWithMessage())
@@ -271,20 +269,5 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 		businessMessage := instance.Handler.Group(th.AnyBusinessMessage())
 		businessMessage.Use(middlewareGroup.BusinessGetUserMiddleware)
 		businessMessage.Handle(utils.WithProm("handleMessage", handlerGroup.HandleMessage), th.AnyBusinessMessage())
-	}
-}
-
-func (b *BotManager) processBotUpdates(ctx context.Context, instance *BotInstance) {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Debug().Int64("botID", instance.ID).Msg("bot update processing stopped")
-			return
-		case _, ok := <-instance.Updates:
-			if !ok {
-				log.Debug().Int64("botID", instance.ID).Msg("updates channel closed")
-				return
-			}
-		}
 	}
 }
