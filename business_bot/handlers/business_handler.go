@@ -26,9 +26,9 @@ import (
 func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 	message := update.BusinessMessage
 
-  message.Text = format.TruncateText(message.Text, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
+	message.Text = format.TruncateText(message.Text, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
 	message.Caption = format.TruncateText(message.Caption, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
-  
+
 	err := h.service.SaveMessage(context.Background(), message)
 	if err != nil {
 		log.Warn().
@@ -63,20 +63,20 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 	}
 
 	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
+	iUser := c.Value("iUser").(*repository.IUser)
 
 	file := utils.GetFile(replyToMessage)
 	if file == nil {
 		return nil
 	}
 
-	fileExists, err := h.service.CreateFileIfNotExists(c, file.FileID, user.ID, message.Chat.ID)
+	fileExists, err := h.service.CreateFileIfNotExists(c, file.FileID, iUser.User.ID, message.Chat.ID)
 	if err != nil || !fileExists {
 		return err
 	}
 
 	protectedMessage, err := c.Bot().SendMessage(c, tu.Message(
-		tu.ID(user.ID),
+		tu.ID(iUser.User.ID),
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.restrictedMedia",
 		}),
@@ -87,11 +87,11 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 
 	err = h.rdb.EnqueueJob(c, consts.REDIS_QUEUE_FILES, redis.Job{
 		File:             file,
-		UserID:           user.ID,
+		UserID:           iUser.User.ID,
 		ChatID:           message.Chat.ID,
 		MessageID:        protectedMessage.MessageID,
 		Caption:          replyToMessage.Caption,
-		UserLanguageCode: user.LanguageCode,
+		UserLanguageCode: iUser.User.LanguageCode,
 	})
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 
 func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
+	iUser := c.Value("iUser").(*repository.IUser)
 	log := c.Value("log").(*zerolog.Logger)
 
 	itsCallbackQuery := c.Value("itsCallbackQuery").(bool)
@@ -147,7 +147,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		&repository.GetMessagesOptions{
 			ChatID:        chatID,
 			MessageIDs:    messageIDs,
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
 			Limit:         limit,
 			Offset:        offset,
 		},
@@ -171,7 +171,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 	if !itsCallbackQuery {
 		correctMessagesLen, correctFilesLen = uint8(len(oldMsgs)), uint8(filesLen)
-		dataID, err = h.service.SetDataDeleted(context.TODO(), user.ID, messageIDs, correctMessagesLen, correctFilesLen)
+		dataID, err = h.service.SetDataDeleted(context.TODO(), iUser.User.ID, messageIDs, correctMessagesLen, correctFilesLen)
 		if err != nil {
 			return err
 		}
@@ -320,7 +320,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 	if itsCallbackQuery {
 		_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
-			tu.ID(user.ID),
+			tu.ID(iUser.User.ID),
 			update.CallbackQuery.Message.GetMessageID(),
 			summaryText,
 		).
@@ -334,7 +334,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(update.CallbackQuery.ID))
 	}
 	_, err = c.Bot().SendMessage(c, tu.Message(
-		tu.ID(user.ID),
+		tu.ID(iUser.User.ID),
 		summaryText,
 	).
 		WithParseMode(telego.ModeHTML).
@@ -347,7 +347,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 	message := update.EditedBusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
+	iUser := c.Value("iUser").(*repository.IUser)
 	log := c.Value("log").(*zerolog.Logger)
 
 	oldMsg, err := h.service.GetMessage(
@@ -355,7 +355,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		&repository.GetMessageOptions{
 			ChatID:        message.Chat.ID,
 			MessageID:     message.MessageID,
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
 		},
 	)
 	if err != nil {
@@ -411,7 +411,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 
 	dataID, err := h.service.SetDataEdited(context.TODO(), &repository.SetDataEditedOptions{
 		MessageID:     message.MessageID,
-		UserID:        user.ID,
+		UserID:        iUser.User.ID,
 		OldDate:       date,
 		OldDateIsEdit: dateIsEdit,
 		NewDate:       message.EditDate,
@@ -450,13 +450,13 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		_, err = c.Bot().SendMessage(
 			c,
 			tu.Message(
-				tu.ID(user.ID),
+				tu.ID(iUser.User.ID),
 				formattedText,
 			).WithParseMode(telego.ModeHTML).WithReplyMarkup(replyMarkup),
 		)
 	} else {
 		_, err = c.Bot().SendMessage(c, tu.Message(
-			tu.ID(user.ID),
+			tu.ID(iUser.User.ID),
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.messageOverflow",
 				TemplateData: map[string]any{
@@ -489,8 +489,9 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
 	connection := update.BusinessConnection
 	loc := c.Value("loc").(*i18n.Localizer)
+	botID := c.Value("botID").(int64)
 
-	err := h.service.UpdateUserConnection(context.Background(), connection)
+	err := h.service.UpdateBotUserConnection(context.Background(), connection, botID)
 	if err != nil {
 		return err
 	}

@@ -16,10 +16,9 @@ import (
 )
 
 func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update) error {
-	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
-
 	query := update.CallbackQuery
+	loc := c.Value("loc").(*i18n.Localizer)
+	iUser := c.Value("iUser").(*repository.IUser)
 
 	data, err := callbacks.NewHandleEditedLogDataFromString(query.Data)
 	if err != nil {
@@ -40,12 +39,12 @@ func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update)
 		&repository.GetMessagesOptions{
 			ChatID:        data.ChatID,
 			MessageIDs:    []int{result.MessageID},
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
 			WithEdits:     true,
 		},
 	)
 	if err != nil {
-		log.Error().Err(err).Int64("userID", user.ID).Msg("Error GetMessages for edited log")
+		log.Error().Err(err).Int64("userID", iUser.User.ID).Msg("Error GetMessages for edited log")
 		utils.OnDataError(c, query.ID, loc)
 		return err
 	}

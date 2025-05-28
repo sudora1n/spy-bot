@@ -3,12 +3,13 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"ssuspy-bot/config"
-	"ssuspy-bot/consts"
-	"ssuspy-bot/format"
-	"ssuspy-bot/locales"
-	"ssuspy-bot/repository"
-	"ssuspy-bot/types"
+	"ssuspy-creator-bot/config"
+	"ssuspy-creator-bot/consts"
+	"ssuspy-creator-bot/format"
+	"ssuspy-creator-bot/locales"
+	pb "ssuspy-creator-bot/pb"
+	"ssuspy-creator-bot/repository"
+	"ssuspy-creator-bot/types"
 
 	"strings"
 
@@ -20,19 +21,25 @@ import (
 	"golang.org/x/text/language/display"
 )
 
-func buildStartText(loc *i18n.Localizer, connection *repository.BusinessConnection, firstName string, lastName string) string {
-	name := format.Name(firstName, lastName)
+type Handler struct {
+	service    *repository.MongoRepository
+	grpcClient pb.BotClient
+}
 
-	enabled := false
-	if connection != nil {
-		enabled = connection.Enabled
+func NewHandlerGroup(service *repository.MongoRepository, grpcClient pb.BotClient) *Handler {
+	return &Handler{
+		service:    service,
+		grpcClient: grpcClient,
 	}
+}
+
+func buildStartText(loc *i18n.Localizer, firstName string, lastName string) string {
+	name := format.Name(firstName, lastName)
 
 	return loc.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "start.message",
 		TemplateData: map[string]any{
-			"Name":    name,
-			"Enabled": enabled,
+			"Name": name,
 		},
 	})
 }
@@ -51,7 +58,7 @@ func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
 
 func HandleStart(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*repository.User)
 	userIsNew := c.Value("userIsNew").(bool)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
@@ -64,7 +71,7 @@ func HandleStart(c *th.Context, update telego.Update) error {
 		queryID, messageID = update.CallbackQuery.ID, update.CallbackQuery.Message.GetMessageID()
 	}
 
-	text := buildStartText(loc, iUser.BotUser.GetUserCurrentConnection(), internalUser.FirstName, internalUser.LastName)
+	text := buildStartText(loc, internalUser.FirstName, internalUser.LastName)
 	replyMarkup := buildStartReplyMarkup(loc)
 	if queryID == "" {
 		startMessage, err := c.Bot().SendMessage(c, tu.Message(
@@ -102,7 +109,7 @@ func HandleStart(c *th.Context, update telego.Update) error {
 		).WithReplyParameters(
 			&telego.ReplyParameters{
 				MessageID:                startMessage.MessageID,
-				ChatID:                   tu.ID(internalUser.ID),
+				ChatID:                   tu.ID(user.ID),
 				AllowSendingWithoutReply: true,
 			},
 		).WithParseMode(telego.ModeHTML))
@@ -159,7 +166,6 @@ func HandleLanguage(c *th.Context, update telego.Update) error {
 
 func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
-	iUser := c.Value("iUser").(*repository.IUser)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	parts := strings.Split(query.Data, "|")
@@ -171,7 +177,7 @@ func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) erro
 
 	loc := locales.NewLocalizer(parts[1])
 
-	text := buildStartText(loc, iUser.BotUser.GetUserCurrentConnection(), internalUser.FirstName, internalUser.LastName)
+	text := buildStartText(loc, internalUser.FirstName, internalUser.LastName)
 	replyMarkup := buildStartReplyMarkup(loc)
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
 		tu.ID(query.From.ID),
@@ -205,13 +211,11 @@ func HandleGithub(c *th.Context, update telego.Update) error {
 	return err
 }
 
-func (h *Handler) HandleBlocked(c *th.Context, update telego.Update) error {
+func (h *Handler) HandleBlocked(_ *th.Context, update telego.Update) error {
 	chatMember := update.MyChatMember
-	botID := c.Value("botID").(int64)
-
 	if chatMember.NewChatMember.MemberStatus() == telego.MemberStatusBanned &&
 		chatMember.Chat.Type == "private" {
-		return h.service.UpdateBotUserSendMessages(context.Background(), chatMember.From.ID, botID, false)
+		return h.service.UpdateUserSendMessages(context.Background(), chatMember.From.ID, false)
 	}
 	return nil
 }

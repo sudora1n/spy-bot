@@ -25,7 +25,7 @@ import (
 func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
+	iUser := c.Value("iUser").(*repository.IUser)
 	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedLogDataFromString(query.Data)
@@ -35,7 +35,7 @@ func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 		return fmt.Errorf("invalid callback data")
 	}
 
-	result, err := h.service.GetDataDeleted(context.Background(), user.ID, data.DataID)
+	result, err := h.service.GetDataDeleted(context.Background(), iUser.User.ID, data.DataID)
 	if err != nil {
 		log.Error().Err(err).Int64("dataID", data.DataID).Msg("error GetDataFullDeletedLogByUUID")
 		utils.OnDataError(c, query.ID, loc)
@@ -47,7 +47,7 @@ func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 		&repository.GetMessagesOptions{
 			ChatID:        data.ChatID,
 			MessageIDs:    result.MessageIDs,
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
 			WithEdits:     true,
 		},
 	)
@@ -100,9 +100,9 @@ func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 			).WithParseMode(telego.ModeHTML),
 	)
 
-	if err := utils.SendMediaInGroups(c.Bot(), c, user.ID, files, query.Message.GetMessageID()); err != nil {
+	if err := utils.SendMediaInGroups(c.Bot(), c, iUser.User.ID, files, query.Message.GetMessageID()); err != nil {
 		log.Warn().Err(err).Msg("Error sending media to user")
-		utils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
+		utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
 	}
 
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
@@ -111,7 +111,7 @@ func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
+	iUser := c.Value("iUser").(*repository.IUser)
 	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedMessageDataFromString(query.Data)
@@ -125,7 +125,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 		context.Background(), &repository.GetMessageOptions{
 			ChatID:        data.ChatID,
 			MessageID:     data.MessageID,
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
 		},
 	)
 	if err != nil {
@@ -192,7 +192,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 func (h *Handler) HandleDeletedMessageDetails(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
+	iUser := c.Value("iUser").(*repository.IUser)
 	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedMessageDataFromString(query.Data)
@@ -207,7 +207,7 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, update telego.Updat
 		&repository.GetMessagesOptions{
 			ChatID:        data.ChatID,
 			MessageIDs:    []int{data.MessageID},
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
 			WithEdits:     true,
 		},
 	)
@@ -253,16 +253,16 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, update telego.Updat
 			).WithParseMode(telego.ModeHTML),
 	)
 
-	if err := utils.SendMediaInGroups(c.Bot(), c, user.ID, files, query.Message.GetMessageID()); err != nil {
+	if err := utils.SendMediaInGroups(c.Bot(), c, iUser.User.ID, files, query.Message.GetMessageID()); err != nil {
 		log.Warn().Err(err).Msg("Error sending media to user")
-		utils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
+		utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
 	}
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
 
 func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
-	user := c.Value("user").(*repository.User)
+	iUser := c.Value("iUser").(*repository.IUser)
 	loc := c.Value("loc").(*i18n.Localizer)
 
 	data, err := callbacks.NewHandleDeletedFilesFromString(query.Data)
@@ -277,10 +277,10 @@ func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) err
 	case types.HandleDeletedFilesDataTypeMessage:
 		messageIDs = []int{data.MessageID}
 	case types.HandleDeletedFilesDataTypeData:
-		callbackData, err := h.service.GetDataDeleted(context.Background(), user.ID, data.DataID)
+		callbackData, err := h.service.GetDataDeleted(context.Background(), iUser.User.ID, data.DataID)
 		if err != nil {
 			log.Warn().Int64("dataID", data.DataID).Err(err).Msg("failed GetDataDeleted")
-			utils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
+			utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
 			return err
 		}
 
@@ -292,11 +292,11 @@ func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) err
 		&repository.GetMessagesOptions{
 			ChatID:        data.ChatID,
 			MessageIDs:    messageIDs,
-			ConnectionIDs: user.GetUserCurrentConnectionIDs(),
+			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
 		},
 	)
 	if err != nil || len(msgs) == 0 {
-		log.Warn().Err(err).Int64("userID", user.ID).Msg("Error GetMessages for get deleted files log")
+		log.Warn().Err(err).Int64("userID", iUser.User.ID).Msg("Error GetMessages for get deleted files log")
 		utils.OnDataError(c, query.ID, loc)
 		if err == nil {
 			err = fmt.Errorf("no messages found for get deleted files log")
@@ -376,11 +376,11 @@ func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) err
 		sort := utils.SortFiles(files)
 		converted := utils.ConvertFileInfosGroupsToInputMediaGroups(sort)
 		for i, sortFiles := range converted {
-			if err = utils.SendMediaInGroups(c.Bot(), c, user.ID, sortFiles, query.Message.GetMessageID()); err != nil {
+			if err = utils.SendMediaInGroups(c.Bot(), c, iUser.User.ID, sortFiles, query.Message.GetMessageID()); err != nil {
 				log.Warn().Err(err).Int("batchIndex", i).Msg("failed sending files for get deleted files")
 			}
 			if err != nil {
-				utils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
+				utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
 			}
 		}
 	}

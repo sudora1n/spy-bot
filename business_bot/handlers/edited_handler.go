@@ -14,14 +14,14 @@ import (
 
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
-	"ssuspy-bot/repository"
+	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
 )
 
 func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	user := c.Value("user").(*repository.User)
+	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	chatID := c.Value("chatID").(int64)
 	msgs := c.Value("allEditedMessages").([]*telego.Message)
@@ -64,16 +64,16 @@ func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 		).WithParseMode(telego.ModeHTML),
 	)
 
-	if err := utils.SendMediaInGroups(c.Bot(), c, user.ID, files, query.Message.GetMessageID()); err != nil {
+	if err := utils.SendMediaInGroups(c.Bot(), c, internalUser.ID, files, query.Message.GetMessageID()); err != nil {
 		log.Warn().Err(err).Msg("Error sending media to user")
-		utils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
+		utils.OnFilesError(c, internalUser.ID, loc, query.Message.GetMessageID())
 	}
 
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
 func (h *Handler) HandleEditedFiles(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
-	user := c.Value("user").(*repository.User)
+	internalUser := c.Value("internalUser").(*types.InternalUser)
 	loc := c.Value("loc").(*i18n.Localizer)
 
 	newMsg := c.Value("editedMessage").(*telego.Message)
@@ -99,7 +99,7 @@ func (h *Handler) HandleEditedFiles(c *th.Context, update telego.Update) error {
 	}
 
 	file := utils.CreateInputMediaFromFileInfo(mediaDiff.Removed.FileID, mediaDiff.Removed.Type, caption)
-	if err := utils.SendMediaInGroups(c.Bot(), c, user.ID, []telego.InputMedia{file}, query.Message.GetMessageID()); err != nil {
+	if err := utils.SendMediaInGroups(c.Bot(), c, internalUser.ID, []telego.InputMedia{file}, query.Message.GetMessageID()); err != nil {
 		utils.OnDataError(c, query.ID, loc)
 		return err
 	}

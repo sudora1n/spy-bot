@@ -15,8 +15,9 @@ import (
 
 func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update telego.Update) (err error) {
 	log := ctx.Value("log").(*zerolog.Logger)
-	user := ctx.Value("user").(*repository.User)
+	iUser := ctx.Value("iUser").(*repository.IUser)
 	internalUser := ctx.Value("internalUser").(*types.InternalUser)
+	botID := ctx.Value("botID").(int64)
 
 	var (
 		messageIDs       []int
@@ -42,12 +43,12 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 		case update.CallbackQuery != nil:
 			itsCallbackQuery = true
 
-			user = utils.ProcessBusiness(h.service, "", update.CallbackQuery.From.ID)
-			if user == nil {
+			iUser = utils.ProcessBusinessBot(h.service, "", update.CallbackQuery.From.ID, botID)
+			if iUser == nil {
 				return nil
 			}
 
-			ctx = ctx.WithValue("user", user)
+			ctx = ctx.WithValue("iUser", iUser)
 		default:
 			return errors.New("unsupported update type.")
 		}
@@ -59,10 +60,10 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 	ctx = ctx.WithValue("messageIDs", messageIDs)
 
 	var loc *i18n.Localizer
-	if user == nil {
+	if iUser == nil {
 		loc = locales.NewLocalizer(internalUser.LanguageCode)
 	} else {
-		loc = locales.NewLocalizer(user.LanguageCode)
+		loc = locales.NewLocalizer(iUser.User.LanguageCode)
 	}
 	ctx = ctx.WithValue("loc", loc)
 

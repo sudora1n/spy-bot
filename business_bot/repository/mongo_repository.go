@@ -20,6 +20,8 @@ type MongoRepository struct {
 	callbackDataEdited  *mongo.Collection
 	filesExists         *mongo.Collection
 	chatResolve         *mongo.Collection
+	bots                *mongo.Collection
+	botUsers            *mongo.Collection
 	counters            *mongo.Collection
 }
 
@@ -78,6 +80,17 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 	}
 
 	chatResolveCollection := client.Database(cfg.Database).Collection("chats_resolve")
+	botsCollection := client.Database(cfg.Database).Collection("bots")
+	botUsersCollection := client.Database(cfg.Database).Collection("bot_users")
+	idxModel = mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "bot_id", Value: 1},
+			{Key: "userId", Value: 1},
+		},
+		Options: options.Index().SetUnique(true),
+	}
+	_, err = botUsersCollection.Indexes().CreateOne(ctx, idxModel)
+
 	countersCollection := client.Database(cfg.Database).Collection("counters")
 
 	return &MongoRepository{
@@ -88,6 +101,8 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		callbackDataEdited:  callbackDataEditedCollection,
 		filesExists:         filesExistsCollection,
 		chatResolve:         chatResolveCollection,
+		bots:                botsCollection,
+		botUsers:            botUsersCollection,
 		counters:            countersCollection,
 	}, nil
 }

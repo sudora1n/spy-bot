@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func ProcessBusiness(service *repository.MongoRepository, businessConnectionID string, userID int64) (user *repository.User) {
+func ProcessBusinessBot(service *repository.MongoRepository, businessConnectionID string, userID int64, botID int64) (iUser *repository.IUser) {
 	if businessConnectionID == "" && userID == 0 {
 		log.Printf("No business connection ID or userID found in update")
 		return nil
@@ -15,18 +15,18 @@ func ProcessBusiness(service *repository.MongoRepository, businessConnectionID s
 
 	var err error
 	if userID == 0 {
-		user, err = service.FindUserByConnectionID(context.Background(), businessConnectionID)
+		iUser, err = service.FindIUserByConnectionID(context.Background(), businessConnectionID, botID)
 		if err != nil {
-			log.Warn().Err(err).Msg("error decoding user")
+			log.Warn().Err(err).Msg("error finding bot user by connection")
 			return nil
 		}
 	} else {
-		user, err = service.FindUser(context.Background(), userID)
+		iUser, err = service.FindIUserByID(context.Background(), userID, botID)
 		if err != nil {
-			log.Warn().Err(err).Msg("error decoding user")
+			log.Warn().Err(err).Msg("error finding bot user")
 			return nil
 		}
 	}
 
-	return user
+	return iUser
 }

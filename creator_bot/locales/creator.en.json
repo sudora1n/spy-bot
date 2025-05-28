@@ -1,0 +1,49 @@
+{
+  "errors": {
+    "noMatch": "error: this is not a telegram bot token...",
+    "failedCreateBot": "failed to connect to the bot...",
+    "noBusiness": {
+      "message": "business mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
+      "link": "TODO"
+    },
+    "tooManyBots": "you have too many bots. please remove the unnecessary ones.",
+    "botExists": "this bot has already been registered!",
+    "couldNotRetrieveData": "error: could not retrieve data."
+  },
+  "start": {
+    "message": "hi, <b>{{.Name}}</b>!\nhere's the instruction on how to connect your own bot:\n\n• go to the @botfather bot and send the command /newbot\n\n• come up with and send any name for the bot (this name will be displayed in the header)\n\n• enter a unique username for the bot that ends with \"bot\"\n\n• copy the bot token (it looks something like this: 23774725:AAHZa...) and send it here\n\n• type /mybots, select your bot, go to bot settings and enable business mode",
+    "onNew": {
+      "message": "<b>you can read our article on how to connect the bot</b>\n(telegram premium users only)",
+      "buttons": {
+        "open": "open"
+      },
+      "link": "https://teletype.in/@ssuspy/setup-bot-en"
+    },
+    "buttons": {
+      "language": "сhange language"
+    }
+  },
+  "back": "back",
+  "backToMainMenu": "back to main menu",
+  "github": {
+    "message": "github bot page",
+    "buttons": {
+      "open": "open"
+    }
+  },
+  "language": "select your language bellow",
+  "handleToken": "the bot <i>@{{.Username}}</i> has been successfully connected to our system.",
+  "botList": "see my bots",
+  "handleBotsList": {
+    "message": "all your bots here:",
+    "item": "{{.Count}}. @{{.Username}}"
+  },
+  "handleBotItem": {
+    "message": "bot @{{.Username}}\navailable actions",
+    "buttons": {
+      "remove": "remove bot",
+      "backToBotsList": "back to bots list"
+    }
+  },
+  "handleBotRemove": "bot removed successfully..."
+}

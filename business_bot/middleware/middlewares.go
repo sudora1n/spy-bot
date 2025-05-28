@@ -29,8 +29,9 @@ func NewMiddlewareGroup(service *repository.MongoRepository, rdb *redis.Redis) *
 }
 
 func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego.Update) error {
+	botID := c.Value("botID").(int64)
 	var (
-		user         *repository.User
+		iUser        *repository.IUser
 		internalUser types.InternalUser
 	)
 
@@ -60,40 +61,40 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			SendMessages:         true,
 		}
 	case update.BusinessMessage != nil:
-		user = utils.ProcessBusiness(h.service, update.BusinessMessage.BusinessConnectionID, 0)
-		if user == nil {
+		iUser = utils.ProcessBusinessBot(h.service, update.BusinessMessage.BusinessConnectionID, 0, botID)
+		if iUser == nil {
 			return nil
 		}
 
 		internalUser = types.InternalUser{
-			ID:                   user.ID,
-			LanguageCode:         user.LanguageCode,
+			ID:                   iUser.User.ID,
+			LanguageCode:         iUser.User.LanguageCode,
 			BusinessConnectionID: update.BusinessMessage.BusinessConnectionID,
-			SendMessages:         user.SendMessages,
+			SendMessages:         iUser.BotUser.SendMessages,
 		}
 	case update.DeletedBusinessMessages != nil:
-		user = utils.ProcessBusiness(h.service, update.DeletedBusinessMessages.BusinessConnectionID, 0)
-		if user == nil {
+		iUser = utils.ProcessBusinessBot(h.service, update.DeletedBusinessMessages.BusinessConnectionID, 0, botID)
+		if iUser == nil {
 			return nil
 		}
 
 		internalUser = types.InternalUser{
-			ID:                   user.ID,
-			LanguageCode:         user.LanguageCode,
+			ID:                   iUser.User.ID,
+			LanguageCode:         iUser.User.LanguageCode,
 			BusinessConnectionID: update.DeletedBusinessMessages.BusinessConnectionID,
-			SendMessages:         user.SendMessages,
+			SendMessages:         iUser.BotUser.SendMessages,
 		}
 	case update.EditedBusinessMessage != nil:
-		user = utils.ProcessBusiness(h.service, update.EditedBusinessMessage.BusinessConnectionID, 0)
-		if user == nil {
+		iUser = utils.ProcessBusinessBot(h.service, update.EditedBusinessMessage.BusinessConnectionID, 0, botID)
+		if iUser == nil {
 			return nil
 		}
 
 		internalUser = types.InternalUser{
-			ID:                   user.ID,
-			LanguageCode:         user.LanguageCode,
+			ID:                   iUser.User.ID,
+			LanguageCode:         iUser.User.LanguageCode,
 			BusinessConnectionID: update.EditedBusinessMessage.BusinessConnectionID,
-			SendMessages:         user.SendMessages,
+			SendMessages:         iUser.BotUser.SendMessages,
 		}
 	case update.MyChatMember != nil:
 		internalUser = types.InternalUser{
@@ -101,13 +102,12 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			FirstName:    update.MyChatMember.From.FirstName,
 			LastName:     update.MyChatMember.From.LastName,
 			LanguageCode: update.MyChatMember.From.LanguageCode,
-			SendMessages: false,
 		}
 	default:
 		return errors.New("userID not found")
 	}
 
-	c = c.WithValue("user", user)
+	c = c.WithValue("iUser", iUser)
 	c = c.WithValue("internalUser", &internalUser)
 
 	logger := log.With().Int64("userID", internalUser.ID).Logger()
@@ -117,35 +117,39 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 }
 
 func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update) error {
+	botID := c.Value("botID").(int64)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
-	i18nLang := "en"
-	if internalUser.LanguageCode != "" {
-		i18nLang = internalUser.LanguageCode
-	}
-	new, err := h.service.UpdateUser(context.TODO(), internalUser.ID, internalUser.LanguageCode, internalUser.SendMessages)
-	if err != nil {
-		return err
+	i18nLang := internalUser.LanguageCode
+	if internalUser.LanguageCode == "" {
+		i18nLang = "en"
 	}
 
-	user, err := h.service.FindUser(context.TODO(), internalUser.ID)
+	iUser, new, err := h.service.FindOrCreateIUser(context.TODO(), internalUser.ID, botID, internalUser.LanguageCode)
 	if err != nil {
 		return err
 	}
 
 	if !new {
-		if user.LanguageCode != "" {
-			i18nLang = user.LanguageCode
+		if iUser.User.LanguageCode != "" {
+			i18nLang = iUser.User.LanguageCode
 		}
 	}
 
 	loc := locales.NewLocalizer(i18nLang)
 	c = c.WithValue("loc", loc)
 	c = c.WithValue("languageCode", i18nLang)
-	c = c.WithValue("user", user)
+	c = c.WithValue("iUser", iUser)
 	c = c.WithValue("userIsNew", new)
 
 	return c.Next(update)
+}
+
+func (h *MiddlewareGroup) BotContextMiddleware(botID int64) th.Handler {
+	return func(c *th.Context, update telego.Update) error {
+		c = c.WithValue("botID", botID)
+		return c.Next(update)
+	}
 }
 
 func PromMiddleware(c *th.Context, update telego.Update) error {
