@@ -62,6 +62,7 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 		return nil
 	}
 
+	botID := c.Value("botID").(int64)
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
 
@@ -92,6 +93,7 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 		MessageID:        protectedMessage.MessageID,
 		Caption:          replyToMessage.Caption,
 		UserLanguageCode: iUser.User.LanguageCode,
+		BotID:            botID,
 	})
 	if err != nil {
 		return err

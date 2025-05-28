@@ -17,6 +17,7 @@ type Job struct {
 	ChatID           int64
 	MessageID        int
 	Caption          string
+	BotID            int64
 }
 
 func (r *Redis) EnqueueJob(ctx context.Context, queueKey string, job Job) error {

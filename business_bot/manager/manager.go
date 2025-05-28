@@ -48,11 +48,11 @@ func NewBotManager(service *repository.MongoRepository, rdb *redis.Redis, mux *h
 	}
 }
 
-func (bm *BotManager) AddBot(ctx context.Context, botID int64, token string) error {
-	bm.mutex.Lock()
-	defer bm.mutex.Unlock()
+func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) error {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
 
-	if _, exists := bm.bots[botID]; exists {
+	if _, exists := b.bots[botID]; exists {
 		return fmt.Errorf("bot with ID %d already exists", botID)
 	}
 
@@ -87,12 +87,12 @@ func (bm *BotManager) AddBot(ctx context.Context, botID int64, token string) err
 		Commands: commands,
 	})
 
-	webhookURL := fmt.Sprintf("%s/bot_%d", bm.baseURL, botID)
+	webhookURL := fmt.Sprintf("%s/bot_%d", b.baseURL, botID)
 	webhookPath := fmt.Sprintf("POST /bot_%d", botID)
 
 	updates, err := bot.UpdatesViaWebhook(
 		ctx,
-		telego.WebhookHTTPServeMux(bm.mux, webhookPath, bot.SecretToken()),
+		telego.WebhookHTTPServeMux(b.mux, webhookPath, bot.SecretToken()),
 		telego.WithWebhookBuffer(128),
 		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
 			URL:         webhookURL,
@@ -130,7 +130,7 @@ func (bm *BotManager) AddBot(ctx context.Context, botID int64, token string) err
 		Running: true,
 	}
 
-	bm.setupBotHandlers(instance)
+	b.setupBotHandlers(instance)
 
 	go func() {
 		if err := botHandler.Start(); err != nil {
@@ -138,19 +138,19 @@ func (bm *BotManager) AddBot(ctx context.Context, botID int64, token string) err
 		}
 	}()
 
-	go bm.processBotUpdates(botCtx, instance)
+	go b.processBotUpdates(botCtx, instance)
 
-	bm.bots[botID] = instance
+	b.bots[botID] = instance
 
 	log.Info().Int64("botID", botID).Str("webhookURL", webhookURL).Msg("bot started successfully")
 	return nil
 }
 
-func (bm *BotManager) RemoveBot(botID int64) error {
-	bm.mutex.Lock()
-	defer bm.mutex.Unlock()
+func (b *BotManager) RemoveBot(botID int64) error {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
 
-	instance, exists := bm.bots[botID]
+	instance, exists := b.bots[botID]
 	if !exists {
 		return fmt.Errorf("bot with ID %d not found", botID)
 	}
@@ -167,17 +167,17 @@ func (bm *BotManager) RemoveBot(botID int64) error {
 		log.Warn().Err(err).Int64("botID", botID).Msg("failed to delete webhook")
 	}
 
-	delete(bm.bots, botID)
+	delete(b.bots, botID)
 
 	log.Info().Int64("botID", botID).Msg("bot stopped and removed successfully")
 	return nil
 }
 
-func (bm *BotManager) GetBot(botID int64) (*BotInstance, bool) {
-	bm.mutex.RLock()
-	defer bm.mutex.RUnlock()
+func (b *BotManager) GetBot(botID int64) (*BotInstance, bool) {
+	b.mutex.RLock()
+	defer b.mutex.RUnlock()
 
-	bot, exists := bm.bots[botID]
+	bot, exists := b.bots[botID]
 	return bot, exists
 }
 
@@ -274,7 +274,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	}
 }
 
-func (bm *BotManager) processBotUpdates(ctx context.Context, instance *BotInstance) {
+func (b *BotManager) processBotUpdates(ctx context.Context, instance *BotInstance) {
 	for {
 		select {
 		case <-ctx.Done():

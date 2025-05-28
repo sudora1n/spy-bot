@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/mymmrac/telego"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -64,11 +63,6 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to connect to Redis")
 	}
 
-	bot, err := telego.NewBot(cfg.TelegramBot.Token, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create bot")
-	}
-
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -93,7 +87,7 @@ func main() {
 		}
 	}
 
-	filesWorker := files.NewWorker(mongoRepo, &rdb, bot)
+	filesWorker := files.NewWorker(mongoRepo, &rdb, mng)
 	for i := range cfg.FilesWorkers {
 		go filesWorker.Work(ctx, i+1)
 	}

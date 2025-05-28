@@ -7,6 +7,7 @@ import (
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
 	"ssuspy-bot/locales"
+	"ssuspy-bot/manager"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/utils"
@@ -20,20 +21,20 @@ import (
 )
 
 type Worker struct {
-	service *repository.MongoRepository
-	rdb     *redis.Redis
-	bot     *telego.Bot
+	service    *repository.MongoRepository
+	rdb        *redis.Redis
+	botManager *manager.BotManager
 }
 
 func NewWorker(
 	service *repository.MongoRepository,
 	rdb *redis.Redis,
-	bot *telego.Bot,
+	botManager *manager.BotManager,
 ) *Worker {
 	return &Worker{
-		service: service,
-		rdb:     rdb,
-		bot:     bot,
+		service:    service,
+		rdb:        rdb,
+		botManager: botManager,
 	}
 }
 
@@ -61,8 +62,14 @@ func (w Worker) process(job *redis.Job) (err error) {
 	ctx := context.TODO()
 	loc := locales.NewLocalizer(job.UserLanguageCode)
 
+	bot, ok := w.botManager.GetBot(job.BotID)
+	if !ok {
+		log.Error().Int64("botID", job.BotID).Msg("no bot found")
+		return fmt.Errorf("no bot found")
+	}
+
 	if job.File.FileSize > consts.MAX_FILE_SIZE_BYTES {
-		_, err = w.bot.SendMessage(ctx, tu.Message(
+		_, err = bot.Bot.SendMessage(ctx, tu.Message(
 			tu.ID(job.UserID),
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "errors.errorFileTooBig",
@@ -79,7 +86,7 @@ func (w Worker) process(job *redis.Job) (err error) {
 		return err
 	}
 
-	fileNetPath, err := w.bot.GetFile(ctx, &telego.GetFileParams{FileID: job.File.FileID})
+	fileNetPath, err := bot.Bot.GetFile(ctx, &telego.GetFileParams{FileID: job.File.FileID})
 	if err != nil {
 		return err
 	}
@@ -103,5 +110,5 @@ func (w Worker) process(job *redis.Job) (err error) {
 	file := tu.File(f)
 	inputMedia := utils.CreateInputMediaFromFileInfoByFile(file, job.File.Type, caption)
 
-	return utils.SendMediaInGroups(w.bot, ctx, job.UserID, []telego.InputMedia{inputMedia}, job.MessageID)
+	return utils.SendMediaInGroups(bot.Bot, ctx, job.UserID, []telego.InputMedia{inputMedia}, job.MessageID)
 }
