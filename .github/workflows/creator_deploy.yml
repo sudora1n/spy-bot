@@ -24,7 +24,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}-creator:latest .
+        run: docker build -t ghcr.io/${{ github.repository }}-creator:latest ./creator_bot
 
       - name: Push Docker image
         run: docker push ghcr.io/${{ github.repository }}-creator:latest
