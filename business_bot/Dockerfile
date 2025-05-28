@@ -1,9 +1,15 @@
 FROM golang:1.24.1-alpine3.21 AS builder
 
-COPY ${PWD} /app
-WORKDIR /app
+COPY --from=root Makefile /business_bot
+WORKDIR /business_bot
 
-RUN CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "-static"' -o /app/appbin cmd/main.go
+RUN make install-tools
+
+COPY . /business_bot
+RUN CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "-static"' -o /business_bot/appbin cmd/main.go
+
+WORKDIR /
+RUN make generate-business
 
 FROM alpine:3.21
 RUN apk --update add ca-certificates && \
@@ -13,9 +19,9 @@ RUN addgroup -g 101 appgroup && \
     adduser -D -u 101 -G appgroup appuser
 USER appuser
 
-COPY --from=builder /app /home/appuser/app
+COPY --from=builder /business_bot /home/appuser/business_bot
 
-WORKDIR /home/appuser/app
+WORKDIR /home/appuser/business_bot
 
 EXPOSE 8079
 EXPOSE 8080
