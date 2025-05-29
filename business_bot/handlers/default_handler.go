@@ -198,7 +198,7 @@ func HandleGithub(c *th.Context, update telego.Update) error {
 						loc.MustLocalize(&i18n.LocalizeConfig{
 							MessageID: "github.buttons.open",
 						}),
-					).WithURL(config.Config.GithubURL),
+					).WithURL(config.Config.BusinessGithubURL),
 				),
 			),
 		).WithParseMode(telego.ModeHTML))
@@ -208,10 +208,11 @@ func HandleGithub(c *th.Context, update telego.Update) error {
 func (h *Handler) HandleBlocked(c *th.Context, update telego.Update) error {
 	chatMember := update.MyChatMember
 	botID := c.Value("botID").(int64)
+	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	if chatMember.NewChatMember.MemberStatus() == telego.MemberStatusBanned &&
 		chatMember.Chat.Type == "private" {
-		return h.service.UpdateBotUserSendMessages(context.Background(), chatMember.From.ID, botID, false)
+		return h.service.UpdateBotUserSendMessages(context.Background(), internalUser.ID, botID, false)
 	}
 	return nil
 }

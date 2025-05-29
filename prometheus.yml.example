@@ -2,9 +2,13 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: "bot"
+  - job_name: "business-bot"
     static_configs:
-      - targets: ["bot:8080"]
+      - targets: ["business-bot:8080"]
+
+  - job_name: "creator-bot"
+    static_configs:
+      - targets: ["creator-bot:8080"]
 
   - job_name: "prometheus"
     static_configs:

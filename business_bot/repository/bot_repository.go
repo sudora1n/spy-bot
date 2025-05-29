@@ -41,12 +41,13 @@ func (r *MongoRepository) AllBots(
 
 	filter := bson.M{}
 	cursor, err := r.bots.Find(ctx, filter)
+	defer cursor.Close(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	var bots []Bot
-	if err := cursor.All(ctx, bots); err != nil {
+	if err := cursor.All(ctx, &bots); err != nil {
 		return nil, err
 	}
 

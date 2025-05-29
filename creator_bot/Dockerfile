@@ -1,11 +1,16 @@
 FROM golang:1.24.1-alpine3.21 AS builder
 
-COPY --from=root Makefile /creator_bot
+COPY --from=root Makefile /
+COPY --from=root proto /proto
+WORKDIR /
+
+RUN apk add --no-cache make protoc
+
+COPY . /creator_bot/
+
+RUN make install-tools && make generate-creator
+
 WORKDIR /creator_bot
-
-RUN make install-tools
-
-COPY . /creator_bot
 RUN CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "-static"' -o /creator_bot/appbin cmd/main.go
 
 WORKDIR /
@@ -23,7 +28,6 @@ COPY --from=builder /creator_bot /home/appuser/creator_bot
 
 WORKDIR /home/appuser/creator_bot
 
-EXPOSE 8079
 EXPOSE 8080
 
 CMD ["./appbin"]

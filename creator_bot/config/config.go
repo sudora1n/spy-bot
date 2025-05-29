@@ -22,13 +22,13 @@ func NewConfig() (StructConfig, error) {
 }
 
 type StructConfig struct {
-	Mongo         *MongoConfig `env:", prefix=MONGO_"`
-	Redis         *RedisConfig `env:", prefix=REDIS_"`
-	TelegramBot   *BotConfig   `env:", prefix=TELEGRAM_"`
-	Grpc          *GrpcConfig  `env:", prefix=GRPC_SERVER_"`
-	GithubURL     string       `env:"GITHUB_URL"`
-	MaxBotsByUser int64        `env:"MAX_BOTS_BY_USER, default=10"`
-	DevMode       bool         `env:"DEV_MODE, default=false"`
+	Mongo            *MongoConfig `env:", prefix=MONGO_"`
+	Redis            *RedisConfig `env:", prefix=REDIS_"`
+	TelegramBot      *BotConfig   `env:", prefix=TELEGRAM_"`
+	Grpc             *GrpcConfig  `env:", prefix=GRPC_SERVER_"`
+	CreatorGithubURL string       `env:"CREATOR_GITHUB_URL"`
+	MaxBotsByUser    int64        `env:"MAX_BOTS_BY_USER, default=10"`
+	DevMode          bool         `env:"DEV_MODE, default=false"`
 }
 
 type GrpcConfig struct {

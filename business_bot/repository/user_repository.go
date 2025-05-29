@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mymmrac/telego"
+	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -299,8 +300,8 @@ func (r *MongoRepository) FindIUserByConnectionID(
 			"$unwind": "$user_data",
 		},
 		{"$project": bson.M{
-			"user_data": 1,
-			"bot_user":  "$$ROOT",
+			"user":     "$user_data",
+			"bot_user": "$$ROOT",
 		}},
 		{"$limit": 1},
 	}
@@ -345,18 +346,26 @@ func (r *MongoRepository) FindIUserByID(
 			},
 		},
 		{
-			"$unwind": "$user_data",
+			"$unwind": bson.M{
+				"path":                       "$bot_users",
+				"preserveNullAndEmptyArrays": true,
+			},
+		},
+		{
+			"$match": bson.M{
+				"bot_users.bot_id": botID,
+			},
 		},
 		{
 			"$project": bson.M{
-				"user_data": 1,
-				"bot_user":  "$$ROOT",
+				"user":     "$$ROOT",
+				"bot_user": "$bot_users",
 			},
 		},
 		{"$limit": 1},
 	}
 
-	cursor, err := r.botUsers.Aggregate(ctx, pipeline)
+	cursor, err := r.users.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
@@ -385,21 +394,25 @@ func (r *MongoRepository) FindOrCreateIUser(
 	}
 
 	if err != mongo.ErrNoDocuments {
+		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err find user")
 		return nil, false, err
 	}
 
 	_, err = r.updateUser(ctx, userId, languageCode)
 	if err != nil {
+		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err update user")
 		return nil, false, err
 	}
 
 	isNew, err := r.updateBotUser(ctx, userId, botID, false)
 	if err != nil {
+		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err update bot user")
 		return nil, false, err
 	}
 
 	iUser, err = r.FindIUserByID(ctx, userId, botID)
 	if err != nil {
+		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err find user by id")
 		return nil, false, err
 	}
 

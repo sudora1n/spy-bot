@@ -9,7 +9,6 @@ require (
 	github.com/redis/go-redis/v9 v9.9.0
 	github.com/rs/zerolog v1.34.0
 	github.com/sethvargo/go-envconfig v1.3.0
-	github.com/valyala/fasthttp v1.59.0
 	go.mongodb.org/mongo-driver v1.17.3
 	golang.org/x/text v0.25.0
 	google.golang.org/grpc v1.72.2
@@ -37,6 +36,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.59.0 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"ssuspy-creator-bot/callbacks"
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
@@ -86,11 +85,26 @@ func (h *Handler) HandleToken(c *th.Context, update telego.Update) error {
 		return onCreatingBotFail(c, loc, internalUser.ID)
 	}
 	if !botUser.CanConnectToBusiness {
-		_, err = c.Bot().SendMessage(c, tu.Message(tu.ID(internalUser.ID), loc.MustLocalize(
-			&i18n.LocalizeConfig{
-				MessageID: "errors.noBusiness.message",
-			}),
-		))
+		_, err = c.Bot().SendMessage(
+			c,
+			tu.Message(
+				tu.ID(internalUser.ID),
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "errors.noBusiness.message",
+				}),
+			).WithReplyMarkup(tu.InlineKeyboard(
+				tu.InlineKeyboardRow(
+					tu.InlineKeyboardButton(
+						loc.MustLocalize(&i18n.LocalizeConfig{
+							MessageID: "errors.noBusiness.open",
+						}),
+					).WithURL(
+						loc.MustLocalize(&i18n.LocalizeConfig{
+							MessageID: "errors.noBusiness.link",
+						}),
+					),
+				),
+			)))
 		return err
 	}
 
@@ -162,7 +176,7 @@ func (h *Handler) HandleBotsList(c *th.Context, update telego.Update) error {
 					"Username": bots[i].Username,
 				},
 			}),
-		).WithCallbackData(fmt.Sprint(data)))
+		).WithCallbackData(data.String()))
 
 		if i+1 < len(bots) {
 			data.BotID = bots[i+1].ID
@@ -174,7 +188,7 @@ func (h *Handler) HandleBotsList(c *th.Context, update telego.Update) error {
 						"Username": bots[i+1].Username,
 					},
 				}),
-			).WithCallbackData(fmt.Sprint(data)))
+			).WithCallbackData(data.String()))
 		}
 
 		rows = append(rows, row)
@@ -219,6 +233,10 @@ func (h *Handler) HandleBotItem(c *th.Context, update telego.Update) error {
 		return err
 	}
 
+	removeData := types.HandleBotRemove{
+		BotID: data.BotID,
+	}
+
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
 		tu.ID(internalUser.ID),
 		query.Message.GetMessageID(),
@@ -233,7 +251,7 @@ func (h *Handler) HandleBotItem(c *th.Context, update telego.Update) error {
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "handleBotItem.buttons.remove",
 			}),
-		).WithCallbackData(consts.CALLBACK_PREFIX_BOT_REMOVE)),
+		).WithCallbackData(removeData.String())),
 		tu.InlineKeyboardRow(tu.InlineKeyboardButton(
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "handleBotItem.buttons.backToBotsList",

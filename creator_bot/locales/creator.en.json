@@ -4,6 +4,7 @@
     "failedCreateBot": "failed to connect to the bot...",
     "noBusiness": {
       "message": "business mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
+      "open": "open instructions",
       "link": "TODO"
     },
     "tooManyBots": "you have too many bots. please remove the unnecessary ones.",

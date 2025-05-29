@@ -72,7 +72,7 @@ func main() {
 		}
 	}()
 
-	url := "http://bot:8079/"
+	url := "http://business-bot:8080"
 	mng := manager.NewBotManager(mongoRepo, &rdb, mux, url)
 
 	bots, err := mongoRepo.AllBots(ctx)
@@ -89,7 +89,8 @@ func main() {
 
 	filesWorker := files.NewWorker(mongoRepo, &rdb, mng)
 	for i := range cfg.FilesWorkers {
-		go filesWorker.Work(ctx, i+1)
+		go filesWorker.Work(ctx)
+		log.Info().Int("workerID", i+1).Msg("Worker started")
 	}
 
 	go func() {

@@ -53,6 +53,13 @@ func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
 				}),
 			).WithCallbackData(consts.CALLBACK_PREFIX_LANG),
 		),
+		tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton(
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "botList",
+				}),
+			).WithCallbackData(consts.CALLBACK_PREFIX_BOT_LIST),
+		),
 	)
 }
 
@@ -204,7 +211,7 @@ func HandleGithub(c *th.Context, update telego.Update) error {
 						loc.MustLocalize(&i18n.LocalizeConfig{
 							MessageID: "github.buttons.open",
 						}),
-					).WithURL(config.Config.GithubURL),
+					).WithURL(config.Config.CreatorGithubURL),
 				),
 			),
 		).WithParseMode(telego.ModeHTML))

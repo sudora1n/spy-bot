@@ -75,7 +75,7 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		},
 	}
 
-	if config.Config.GithubURL != "" {
+	if config.Config.BusinessGithubURL != "" {
 		commands = append(commands, telego.BotCommand{
 			Command:     "github",
 			Description: "bot source code",
@@ -139,7 +139,7 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 
 	b.bots[botID] = instance
 
-	log.Info().Int64("botID", botID).Str("webhookURL", webhookURL).Msg("bot started successfully")
+	log.Debug().Int64("botID", botID).Str("webhookURL", webhookURL).Msg("bot started successfully")
 	return nil
 }
 
@@ -218,7 +218,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 			th.CallbackDataEqual(consts.CALLBACK_PREFIX_BACK_TO_START),
 			th.CommandEqual("start"),
 		))
-		if config.Config.GithubURL != "" {
+		if config.Config.BusinessGithubURL != "" {
 			standard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"))
 		}
 		standard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())

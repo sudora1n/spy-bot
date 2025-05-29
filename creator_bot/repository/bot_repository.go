@@ -77,7 +77,7 @@ func (r *MongoRepository) FindBots(
 	}
 
 	var bots []Bot
-	if err := cursor.All(ctx, bots); err != nil {
+	if err := cursor.All(ctx, &bots); err != nil {
 		return nil, err
 	}
 
@@ -108,8 +108,8 @@ func (r *MongoRepository) InsertBot(
 
 func (r *MongoRepository) RemoveBot(
 	ctx context.Context,
-	botID int64,
 	userId int64,
+	botID int64,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

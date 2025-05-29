@@ -13,6 +13,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -118,6 +119,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 
 func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update) error {
 	botID := c.Value("botID").(int64)
+	log := c.Value("log").(*zerolog.Logger)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	i18nLang := internalUser.LanguageCode
@@ -127,6 +129,7 @@ func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update
 
 	iUser, new, err := h.service.FindOrCreateIUser(context.TODO(), internalUser.ID, botID, internalUser.LanguageCode)
 	if err != nil {
+		log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed get data")
 		return err
 	}
 

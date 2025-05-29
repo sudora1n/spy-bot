@@ -38,9 +38,7 @@ func NewWorker(
 	}
 }
 
-func (w Worker) Work(ctx context.Context, workerI int) {
-	log.Info().Int("workerID", workerI).Msg("Worker started")
-
+func (w Worker) Work(ctx context.Context) {
 	for {
 		res, err := w.rdb.DequeueJob(ctx, consts.REDIS_QUEUE_FILES, 5*time.Second)
 		if err != nil {

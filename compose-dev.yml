@@ -4,13 +4,18 @@ services:
     container_name: ssuspy-mongodb
     restart: always
     profiles: ["dev", "prod"]
+    ports:
+      - 27017:27017
     environment:
       - MONGO_USERNAME
       - MONGO_PASSWORD
       - MONGO_INITDB_ROOT_USERNAME
       - MONGO_INITDB_ROOT_PASSWORD
+    networks:
+      - ssuspy
     volumes:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/init.js
+      - ./migrations:/migrations
       - mongo-data:/data/db
     healthcheck:
       test: mongosh --quiet --eval "db.getSiblingDB('ssuspy')"
@@ -24,6 +29,8 @@ services:
     profiles: ["dev", "prod"]
     volumes:
       - redis-data:/data
+    networks:
+      - ssuspy
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 1s
@@ -43,6 +50,8 @@ services:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
     expose:
       - 8081:8081
+    networks:
+      - ssuspy
     healthcheck:
       test:
         [
@@ -58,12 +67,66 @@ services:
       retries: 5
       start_period: 5s
 
-  bot:
+  business-bot:
     image: ghcr.io/sudora1n/spy-bot-business:latest
     restart: unless-stopped
     container_name: ssuspy-business-bot
     profiles: ["dev", "prod"]
-    build: ./business_bot
+    build:
+      context: ./business_bot
+      additional_contexts:
+        root: .
+    environment:
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_USERNAME
+      - MONGO_PASSWORD
+      - MONGO_DB
+      - DEV_MODE
+      - REDIS_HOST=redis
+      - REDIS_USERNAME
+      - REDIS_PASSWORD
+      - REDIS_PORT
+      - REDIS_DB
+      - TELEGRAM_API_URL=http://telegram-bot-api:8081
+      - BUSINESS_GITHUB_URL
+    volumes:
+      - telegram-bot-api-data:/var/lib/telegram-bot-api/
+    networks:
+      - ssuspy
+    expose:
+      - 8080:8080
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      telegram-bot-api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--output-document=/dev/null",
+          "http://127.0.0.1:8080/metrics",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  creator-bot:
+    image: ghcr.io/sudora1n/spy-bot-creator:latest
+    restart: unless-stopped
+    container_name: ssuspy-creator-bot
+    profiles: ["dev", "prod"]
+    build:
+      context: ./creator_bot
+      additional_contexts:
+        root: .
     environment:
       - MONGO_HOST=mongodb
       - MONGO_PORT=27017
@@ -78,12 +141,12 @@ services:
       - REDIS_DB
       - TELEGRAM_TOKEN
       - TELEGRAM_API_URL=http://telegram-bot-api:8081
-      - GITHUB_URL
-    volumes:
-      - telegram-bot-api-data:/var/lib/telegram-bot-api/
+      - CREATOR_GITHUB_URL
+      - GRPC_SERVER_HOST=business-bot
     expose:
       - 8080:8080
-      - 8079:8079
+    networks:
+      - ssuspy
     depends_on:
       mongodb:
         condition: service_healthy
@@ -91,12 +154,16 @@ services:
         condition: service_healthy
       telegram-bot-api:
         condition: service_healthy
+      business-bot:
+        condition: service_healthy
 
   # infra
   prometheus:
     image: prom/prometheus:latest
     container_name: ssuspy-prometheus
     profiles: ["prod"]
+    networks:
+      - ssuspy
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
@@ -107,7 +174,9 @@ services:
     image: prom/node-exporter:latest
     container_name: ssuspy-node-exporter
     profiles: ["prod"]
-    expose:
+    networks:
+      - ssuspy
+    ports:
       - "9100:9100"
 
   grafana:
@@ -118,6 +187,8 @@ services:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+    networks:
+      - ssuspy
     depends_on:
       prometheus:
         condition: service_started
@@ -134,3 +205,6 @@ volumes:
   mongo-data:
   prometheus-data:
   grafana-data:
+
+networks:
+  ssuspy:

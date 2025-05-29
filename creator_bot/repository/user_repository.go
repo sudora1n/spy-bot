@@ -10,7 +10,7 @@ import (
 
 type User struct {
 	ID           int64  `bson:"_id"`
-	SendMessages bool   `bson:"send_messages"`
+	SendMessages bool   `bson:"creator_send_messages"`
 	LanguageCode string `bson:"language_code"`
 	CreatedAt    int64  `bson:"created_at"`
 }
@@ -22,7 +22,7 @@ func (r *MongoRepository) UpdateUserSendMessages(ctx context.Context, userId int
 	filter := bson.M{"_id": userId}
 	update := bson.M{
 		"$set": bson.M{
-			"send_messages": sendMessages,
+			"creator_send_messages": sendMessages,
 		},
 	}
 	_, err := r.users.UpdateOne(ctx, filter, update)

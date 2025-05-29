@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -79,15 +78,6 @@ func main() {
 	}
 	grpcClient := pb.NewBotClient(grpcConn)
 
-	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.Handler())
-
-	go func() {
-		if err := http.ListenAndServe(":8070", mux); err != nil && err != http.ErrServerClosed {
-			log.Fatal().Err(err).Msg("promhttp server down")
-		}
-	}()
-
 	bot, err := telego.NewBot(cfg.TelegramBot.Token, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create bot")
@@ -108,7 +98,7 @@ func main() {
 		},
 	}
 
-	hasGithub := cfg.GithubURL != ""
+	hasGithub := cfg.CreatorGithubURL != ""
 	if hasGithub {
 		commands = append(commands, telego.BotCommand{
 			Command:     "github",
@@ -122,14 +112,14 @@ func main() {
 
 	log.Info().Msgf("bot username: @%s", botUser.Username)
 
-	var (
-		srv     = &fasthttp.Server{}
-		updates <-chan telego.Update
-	)
-	url := "http://bot:8069/bot/main"
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	var updates <-chan telego.Update
+	url := "http://creator-bot:8080/bot"
 	updates, err = bot.UpdatesViaWebhook(
 		ctx,
-		telego.WebhookFastHTTP(srv, "/bot/main", bot.SecretToken()),
+		telego.WebhookHTTPServeMux(mux, "POST /bot", bot.SecretToken()),
 		telego.WithWebhookBuffer(128),
 		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
 			URL:         url,
@@ -170,7 +160,7 @@ func main() {
 				th.AnyCallbackQueryWithMessage(),
 				th.CallbackDataPrefix("+"),
 			),
-			th.AnyCommand(),
+			th.AnyMessageWithText(),
 		))
 		starndard.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
 			Window:    10 * time.Second,
@@ -183,7 +173,7 @@ func main() {
 			th.CommandEqual("start"),
 		))
 		if hasGithub {
-			starndard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"), th.AnyMessage())
+			starndard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"))
 		}
 		starndard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())
 		starndard.Handle(
@@ -191,6 +181,9 @@ func main() {
 			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_LANG_CHANGE),
 			th.AnyCallbackQueryWithMessage(),
 		)
+		starndard.Handle(utils.WithProm("handleBotsList", handlerGroup.HandleBotsList), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_BOT_LIST), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleBotItem", handlerGroup.HandleBotItem), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_BOT_ITEM), th.AnyCallbackQueryWithMessage())
+		starndard.Handle(utils.WithProm("handleBotRemove", handlerGroup.HandleBotRemove), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_BOT_REMOVE), th.AnyCallbackQueryWithMessage())
 		starndard.Handle(utils.WithProm("handleToken", handlerGroup.HandleToken), th.AnyMessageWithText())
 	}
 
@@ -201,9 +194,8 @@ func main() {
 	}()
 
 	go func() {
-		log.Info().Msg("start web server...")
-		if err := srv.ListenAndServe(":8069"); err != nil {
-			log.Fatal().Err(err).Msg("bot error while process web")
+		if err := http.ListenAndServe(":8080", mux); err != nil && err != http.ErrServerClosed {
+			log.Fatal().Err(err).Msg("web server down")
 		}
 	}()
 

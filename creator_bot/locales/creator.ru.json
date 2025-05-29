@@ -4,6 +4,7 @@
     "failedCreateBot": "ошибка подключения к боту...",
     "noBusiness": {
       "message": "у этого бота не включён бизнес-режим. Инструкции по включению доступны по ссылке ниже.",
+      "open": "посмотреть",
       "link": "TODO"
     },
     "tooManyBots": "у вас слишком много ботов. Пожалуйста, удалите лишних.",
@@ -20,10 +21,11 @@
       "link": "https://teletype.in/@ssuspy/setup-bot-en"
     },
     "buttons": {
-      "language": "Изменить язык"
+      "language": "изменить язык"
     }
   },
   "back": "назад",
+  "backToMainMenu": "back to main menu",
   "github": {
     "message": "страница бота на гитхаб",
     "buttons": {

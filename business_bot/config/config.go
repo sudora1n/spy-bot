@@ -22,12 +22,12 @@ func NewConfig() (StructConfig, error) {
 }
 
 type StructConfig struct {
-	Mongo        *MongoConfig `env:", prefix=MONGO_"`
-	Redis        *RedisConfig `env:", prefix=REDIS_"`
-	TelegramBot  *BotConfig   `env:", prefix=TELEGRAM_"`
-	GithubURL    string       `env:"GITHUB_URL"`
-	FilesWorkers int          `env:"FILES_WORKERS, default=5"`
-	DevMode      bool         `env:"DEV_MODE, default=false"`
+	Mongo             *MongoConfig `env:", prefix=MONGO_"`
+	Redis             *RedisConfig `env:", prefix=REDIS_"`
+	TelegramBot       *BotConfig   `env:", prefix=TELEGRAM_"`
+	BusinessGithubURL string       `env:"BUSINESS_GITHUB_URL"`
+	FilesWorkers      int          `env:"FILES_WORKERS, default=5"`
+	DevMode           bool         `env:"DEV_MODE, default=false"`
 }
 
 type MongoConfig struct {
