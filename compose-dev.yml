@@ -4,8 +4,6 @@ services:
     container_name: ssuspy-mongodb
     restart: always
     profiles: ["dev", "prod"]
-    ports:
-      - 27017:27017
     environment:
       - MONGO_USERNAME
       - MONGO_PASSWORD
@@ -176,7 +174,7 @@ services:
     profiles: ["prod"]
     networks:
       - ssuspy
-    ports:
+    expose:
       - "9100:9100"
 
   grafana:
