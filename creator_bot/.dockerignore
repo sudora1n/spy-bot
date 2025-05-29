@@ -1,0 +1,16 @@
+*
+!/callbacks
+!/cmd
+!/config
+!/consts
+!/format
+!/handlers
+!/locales
+!/middleware
+!/prom
+!/redis
+!/repository
+!/types
+!/utils
+!/go.mod
+!/go.sum

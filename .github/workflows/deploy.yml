@@ -5,24 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "cmd/**"
-      - "config/**"
-      - "handlers/**"
-      - "locales/**"
-      - "repository/**"
-      - "format/**"
-      - "middleware/**"
-      - "consts/**"
-      - "utils/**"
-      - "types/**"
-      - "callbacks/**"
-      - "files/**"
-      - "redis/**"
-      - "prom/**"
-      - "go.mod"
-      - "go.sum"
-      - ".dockerignore"
-      - "Dockerfile"
+      - "business_bot/**"
+      - "creator_bot/**"
 
 jobs:
   build_and_push:
@@ -41,10 +25,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}:latest .
+        run: docker compose --profile prod build
 
       - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository }}:latest
+        run: docker compose --profile prod push
 
   deploy:
     name: Deploy to Remote Server
