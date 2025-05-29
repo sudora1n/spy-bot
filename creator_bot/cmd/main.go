@@ -87,9 +87,6 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("error when executing GetMe request")
 	}
-	if !botUser.CanConnectToBusiness {
-		log.Fatal().Msg("cannot use this bot: please enable business connections in @botfather")
-	}
 
 	commands := []telego.BotCommand{
 		{
