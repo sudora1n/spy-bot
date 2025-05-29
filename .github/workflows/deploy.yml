@@ -50,6 +50,6 @@ jobs:
           script: |
             cd /home/$REMOTE_USER
             ./prepare.sh
-            docker compose pull
-            docker compose down
+            docker compose --profile prod pull
+            docker compose --profile prod down
             docker compose --profile prod up -d
