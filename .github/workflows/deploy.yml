@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - "business_bot/**"
       - "creator_bot/**"
 
 jobs:
@@ -24,10 +25,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}-creator:latest ./creator_bot
+        run: docker compose --profile prod build
 
       - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository }}-creator:latest
+        run: docker compose --profile prod push
 
   deploy:
     name: Deploy to Remote Server
