@@ -37,6 +37,7 @@
   "botList": "see my bots",
   "handleBotsList": {
     "message": "all your bots here:",
+    "noBots": "you don’t have any bots :(",
     "item": "{{.Count}}. @{{.Username}}"
   },
   "handleBotItem": {
@@ -46,5 +47,5 @@
       "backToBotsList": "back to bots list"
     }
   },
-  "handleBotRemove": "bot removed successfully..."
+  "handleBotRemove": "bot <i>@{{.Username}}</i> removed successfully..."
 }

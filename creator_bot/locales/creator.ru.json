@@ -25,7 +25,7 @@
     }
   },
   "back": "назад",
-  "backToMainMenu": "back to main menu",
+  "backToMainMenu": "назад в главное меню",
   "github": {
     "message": "страница бота на гитхаб",
     "buttons": {
@@ -37,6 +37,7 @@
   "botList": "мои боты",
   "handleBotsList": {
     "message": "все ваши боты:",
+    "noBots": "боты не найдены :(",
     "item": "{{.Count}}. @{{.Username}}"
   },
   "handleBotItem": {
@@ -46,5 +47,5 @@
       "backToBotsList": "назад к списку ботов"
     }
   },
-  "handleBotRemove": "бот успешно удалён..."
+  "handleBotRemove": "бот <i>@{{.Username}}</i> успешно удалён..."
 }

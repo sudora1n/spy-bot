@@ -143,7 +143,7 @@ func (h *Handler) HandleToken(c *th.Context, update telego.Update) error {
 				}),
 			).WithCallbackData(consts.CALLBACK_PREFIX_BOT_LIST),
 		),
-	)))
+	)).WithParseMode(telego.ModeHTML))
 
 	return err
 }
@@ -194,19 +194,33 @@ func (h *Handler) HandleBotsList(c *th.Context, update telego.Update) error {
 		rows = append(rows, row)
 	}
 
+	var noBots bool
+	if len(rows) == 0 {
+		noBots = true
+	}
+
 	rows = append(rows, tu.InlineKeyboardRow(tu.InlineKeyboardButton(
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "backToMainMenu",
 		}),
 	).WithCallbackData(consts.CALLBACK_PREFIX_BACK_TO_START)))
 
+	var text string
+	if noBots {
+		text = loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "handleBotsList.noBots",
+		})
+	} else {
+		text = loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "handleBotsList.message",
+		})
+	}
+
 	_, err = c.Bot().EditMessageText(
 		c,
 		tu.EditMessageText(tu.ID(internalUser.ID),
 			query.Message.GetMessageID(),
-			loc.MustLocalize(&i18n.LocalizeConfig{
-				MessageID: "handleBotsList.message",
-			}),
+			text,
 		).WithReplyMarkup(tu.InlineKeyboard(rows...)),
 	)
 
@@ -274,6 +288,11 @@ func (h *Handler) HandleBotRemove(c *th.Context, update telego.Update) error {
 		return err
 	}
 
+	resp, err := h.grpcClient.RemoveBot(c, &pb.RemoveBotRequest{Id: data.BotID})
+	if err != nil {
+		return onCreatingBotFail(c, loc, internalUser.ID)
+	}
+
 	err = h.service.RemoveBot(c, internalUser.ID, data.BotID)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed remove bot")
@@ -286,6 +305,9 @@ func (h *Handler) HandleBotRemove(c *th.Context, update telego.Update) error {
 		query.Message.GetMessageID(),
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "handleBotRemove",
+			TemplateData: map[string]string{
+				"Username": resp.GetUsername(),
+			},
 		}),
 	).WithReplyMarkup(tu.InlineKeyboard(
 		tu.InlineKeyboardRow(tu.InlineKeyboardButton(
@@ -293,6 +315,6 @@ func (h *Handler) HandleBotRemove(c *th.Context, update telego.Update) error {
 				MessageID: "handleBotItem.buttons.backToBotsList",
 			}),
 		).WithCallbackData(consts.CALLBACK_PREFIX_BOT_LIST)),
-	)))
+	)).WithParseMode(telego.ModeHTML))
 	return err
 }

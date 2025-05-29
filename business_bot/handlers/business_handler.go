@@ -502,6 +502,11 @@ func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
 	if connection.IsEnabled {
 		name := format.Name(connection.User.FirstName, connection.User.LastName)
 
+		err = h.service.UpdateBotUserSendMessages(c, connection.User.ID, botID, true)
+		if err != nil {
+			return err
+		}
+
 		text = loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.connection.on",
 			TemplateData: map[string]string{

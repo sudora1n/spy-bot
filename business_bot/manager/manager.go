@@ -24,6 +24,7 @@ type BotInstance struct {
 	Bot     *telego.Bot
 	Handler *th.BotHandler
 	Updates <-chan telego.Update
+	Cancel  context.CancelFunc
 	Running bool
 }
 
@@ -92,8 +93,10 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 	webhookURL := fmt.Sprintf("%s/bot_%d", b.baseURL, botID)
 	webhookPath := fmt.Sprintf("POST /bot_%d", botID)
 
+	botCtx, botCancel := context.WithCancel(context.Background())
+
 	updates, err := bot.UpdatesViaWebhook(
-		ctx,
+		botCtx,
 		telego.WebhookHTTPServeMux(b.mux, webhookPath, bot.SecretToken()),
 		telego.WithWebhookBuffer(128),
 		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
@@ -113,11 +116,13 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		}),
 	)
 	if err != nil {
+		botCancel()
 		return fmt.Errorf("failed to setup webhook updates: %w", err)
 	}
 
 	botHandler, err := th.NewBotHandler(bot, updates)
 	if err != nil {
+		botCancel()
 		return fmt.Errorf("failed to create bot handler: %w", err)
 	}
 
@@ -126,12 +131,17 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		Bot:     bot,
 		Handler: botHandler,
 		Updates: updates,
+		Cancel:  botCancel,
 		Running: true,
 	}
 
 	b.setupBotHandlers(instance)
 
 	go func() {
+		defer func() {
+			instance.Cancel()
+		}()
+
 		if err := botHandler.Start(); err != nil {
 			log.Error().Err(err).Int64("botID", botID).Msg("bot handler stopped with error")
 		}
@@ -152,6 +162,9 @@ func (b *BotManager) RemoveBot(botID int64) error {
 		return fmt.Errorf("bot with ID %d not found", botID)
 	}
 
+	if instance.Cancel != nil {
+		instance.Cancel()
+	}
 	instance.Handler.Stop()
 	instance.Running = false
 
@@ -159,7 +172,7 @@ func (b *BotManager) RemoveBot(botID int64) error {
 	defer cancel()
 
 	err := instance.Bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
-		DropPendingUpdates: false,
+		DropPendingUpdates: true,
 	})
 	if err != nil {
 		log.Warn().Err(err).Int64("botID", botID).Msg("failed to delete webhook")
