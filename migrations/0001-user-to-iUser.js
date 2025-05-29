@@ -55,3 +55,35 @@ print("\n3. results of migration:");
 print(`len of users: ${db.users.countDocuments()}`);
 print(`len of bot_users: ${db.bot_users.countDocuments()}`);
 print(`counter bot_users: ${db.counters.findOne({ _id: "bot_users" }).value}`);
+
+print("\n4. copying send_messages → main_send_messages...");
+
+const botCursor = db.bot_users.find({ bot_id: DEFAULT_BOT_ID });
+let updated = 0;
+let copyErrors = [];
+
+botCursor.forEach((botUser) => {
+  try {
+    const res = db.users.updateOne(
+      { _id: botUser.user_id },
+      { $set: { creator_send_messages: botUser.send_messages } },
+    );
+
+    if (res.matchedCount > 0) {
+      updated += 1;
+    } else {
+      throw `user not found: ${botUser.user_id}`;
+    }
+  } catch (e) {
+    print(`error while update user: ${botUser.user_id}: ${e}`);
+    copyErrors.push({ user: botUser.user_id, error: e.toString() });
+  }
+});
+
+print(`\n done. updated: ${updated}`);
+if (copyErrors.length > 0) {
+  print("--- errors while copy: ---");
+  printjson(copyErrors);
+} else {
+  print("--- done without errors ---");
+}

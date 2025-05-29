@@ -56,7 +56,7 @@ func (r *MongoRepository) UpdateUser(
 
 	setFields := bson.M{}
 	if sendMessage {
-		setFields["send_messages"] = true
+		setFields["creator_send_messages"] = true
 	}
 
 	update := bson.M{
