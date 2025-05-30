@@ -33,12 +33,45 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 				update.BusinessMessage.Chat.ID
 			break
 		case update.DeletedBusinessMessages != nil:
-			messageIDs, chatID =
-				update.DeletedBusinessMessages.MessageIDs, update.DeletedBusinessMessages.Chat.ID
+			messageIDs = update.DeletedBusinessMessages.MessageIDs
+
+			filtered := make([]int, 0, len(messageIDs))
+			for _, messageID := range messageIDs {
+				ignore, err := h.rdb.IsMessageIgnore(
+					ctx,
+					messageID,
+					update.DeletedBusinessMessages.Chat.ID,
+				)
+				if err != nil {
+					log.Warn().Err(err).Msg("failed get ignore message")
+				}
+				if !ignore {
+					filtered = append(filtered, messageID)
+				}
+			}
+
+			if len(filtered) == 0 {
+				return nil
+			}
+
+			messageIDs = filtered
+			chatID = update.DeletedBusinessMessages.Chat.ID
 			break
 		case update.EditedBusinessMessage != nil:
-			chatID =
-				update.EditedBusinessMessage.Chat.ID
+			chatID = update.EditedBusinessMessage.Chat.ID
+
+			ignore, err := h.rdb.IsMessageIgnore(
+				ctx,
+				update.EditedBusinessMessage.MessageID,
+				chatID,
+			)
+			if err != nil {
+				log.Warn().Err(err).Msg("failed get ignore message")
+			}
+			if ignore {
+				return nil
+			}
+
 			break
 		case update.CallbackQuery != nil:
 			itsCallbackQuery = true
@@ -69,6 +102,51 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 
 	logger := log.With().Int64("chatID", chatID).Logger()
 	ctx = ctx.WithValue("log", &logger)
+
+	return ctx.Next(update)
+}
+
+// func (h *MiddlewareGroup) BusinessIsIgnore(ctx *th.Context, update telego.Update) (err error) {
+// 	log := ctx.Value("log").(*zerolog.Logger)
+
+// 	if update.BusinessMessage != nil {
+// 		ignore, err := h.rdb.IsMessageIgnore(
+// 			ctx,
+// 			update.BusinessMessage.MessageID,
+// 			update.BusinessMessage.Chat.ID,
+// 		)
+// 		if err != nil {
+// 			log.Warn().Err(err).Msg("failed get ignore message")
+// 		}
+// 		if ignore {
+// 			return nil
+// 		}
+// 	}
+
+// 	return ctx.Next(update)
+// }
+
+func (h *MiddlewareGroup) BusinessIsFromUser(ctx *th.Context, update telego.Update) (err error) {
+	iUser := ctx.Value("iUser").(*repository.IUser)
+	if update.BusinessMessage != nil && update.BusinessMessage.From.ID == iUser.User.ID {
+		return ctx.Next(update)
+	}
+	return nil
+}
+
+func (h *MiddlewareGroup) BusinessIgnoreMessage(ctx *th.Context, update telego.Update) (err error) {
+	log := ctx.Value("log").(*zerolog.Logger)
+
+	if update.BusinessMessage != nil {
+		err = h.rdb.IgnoreMessage(
+			ctx,
+			update.BusinessMessage.MessageID,
+			update.BusinessMessage.Chat.ID,
+		)
+		if err != nil {
+			log.Warn().Err(err).Msg("failed save message as ignore")
+		}
+	}
 
 	return ctx.Next(update)
 }

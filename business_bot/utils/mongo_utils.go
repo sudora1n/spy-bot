@@ -17,13 +17,13 @@ func ProcessBusinessBot(service *repository.MongoRepository, businessConnectionI
 	if userID == 0 {
 		iUser, err = service.FindIUserByConnectionID(context.Background(), businessConnectionID, botID)
 		if err != nil {
-			log.Warn().Err(err).Msg("error finding bot user by connection")
+			log.Warn().Str("businessConnectionID", businessConnectionID).Err(err).Msg("error finding bot user by connection")
 			return nil
 		}
 	} else {
 		iUser, err = service.FindIUserByID(context.Background(), userID, botID)
 		if err != nil {
-			log.Warn().Err(err).Msg("error finding bot user")
+			log.Warn().Int64("userID", userID).Err(err).Msg("error finding bot user")
 			return nil
 		}
 	}

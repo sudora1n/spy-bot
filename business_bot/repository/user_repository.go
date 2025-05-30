@@ -24,9 +24,10 @@ type User struct {
 }
 
 type BusinessConnection struct {
-	ID       string `bson:"id"`
-	Enabled  bool   `bson:"enabled"`
-	Unixtime int64  `bson:"date"`
+	ID       string                    `bson:"id"`
+	Rights   *telego.BusinessBotRights `bson:"rights,omitempty"`
+	Enabled  bool                      `bson:"enabled"`
+	Unixtime int64                     `bson:"date"`
 }
 
 type BotUser struct {
@@ -161,11 +162,17 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 			"business_connections.id": connection.ID,
 		}
 
+		updateFields := bson.M{
+			"business_connections.$.date":    currentTime,
+			"business_connections.$.enabled": true,
+		}
+
+		if connection.Rights != nil {
+			updateFields["business_connections.$.rights"] = connection.Rights
+		}
+
 		update := bson.M{
-			"$set": bson.M{
-				"business_connections.$.date":    currentTime,
-				"business_connections.$.enabled": true,
-			},
+			"$set": updateFields,
 		}
 
 		result, err := r.botUsers.UpdateOne(ctx, filter, update)
@@ -185,6 +192,7 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 						ID:       connection.ID,
 						Enabled:  true,
 						Unixtime: currentTime,
+						Rights:   connection.Rights,
 					},
 				},
 				"$setOnInsert": bson.M{
@@ -215,10 +223,16 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 			"business_connections.id": connection.ID,
 		}
 
+		updateFields := bson.M{
+			"business_connections.$.enabled": false,
+		}
+
+		if connection.Rights != nil {
+			updateFields["business_connections.$.rights"] = connection.Rights
+		}
+
 		update := bson.M{
-			"$set": bson.M{
-				"business_connections.$.enabled": false,
-			},
+			"$set": updateFields,
 		}
 
 		_, err := r.botUsers.UpdateOne(ctx, filter, update)

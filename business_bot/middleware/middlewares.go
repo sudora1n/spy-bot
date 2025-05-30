@@ -104,6 +104,20 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			LastName:     update.MyChatMember.From.LastName,
 			LanguageCode: update.MyChatMember.From.LanguageCode,
 		}
+	case update.InlineQuery != nil:
+		internalUser = types.InternalUser{
+			ID:           update.InlineQuery.From.ID,
+			FirstName:    update.InlineQuery.From.FirstName,
+			LastName:     update.InlineQuery.From.LastName,
+			LanguageCode: update.InlineQuery.From.LanguageCode,
+		}
+	case update.ChosenInlineResult != nil:
+		internalUser = types.InternalUser{
+			ID:           update.ChosenInlineResult.From.ID,
+			FirstName:    update.ChosenInlineResult.From.FirstName,
+			LastName:     update.ChosenInlineResult.From.LastName,
+			LanguageCode: update.ChosenInlineResult.From.LanguageCode,
+		}
 	default:
 		return errors.New("userID not found")
 	}

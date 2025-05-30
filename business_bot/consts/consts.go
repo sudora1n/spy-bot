@@ -1,5 +1,7 @@
 package consts
 
+import "time"
+
 const MAX_FILE_SIZE_BYTES = 2_000_000_000
 const MAX_MEDIA_GROUP_SIZE = 10
 
@@ -9,7 +11,7 @@ const MAX_BUTTONS = 8
 const MAX_NAME_LEN = 128
 const MAX_MESSAGE_TEXT_LEN = 256
 const MAX_MEDIA_CAPTION_LEN = 1024
-const MAX_USER_MESSAGE_TEXT_LEN = 5120
+const MAX_USER_MESSAGE_TEXT_LEN = 4096 + 1024
 
 const DATETIME_FOR_FILES = "02-01-2006_15-04-05"
 const DATETIME_FOR_MESSAGE = "02-01-2006 15:04:05"
@@ -34,10 +36,13 @@ const CALLBACK_PREFIX_LANG_CHANGE = "___9"
 
 const CALLBACK_PREFIX_BACK_TO_START = "__10"
 
+const REDIS_IGNORE = "ignore"
 const REDIS_QUEUE_FILES = "queue:files"
 const REDIS_RATELIMIT_COUNT = "rl_count"
 const REDIS_RATELIMIT_QUEUE = "rl_queue"
 const REDIS_RATELIMIT_QUEUE_BUSINESS = "rl_queue_business"
 const REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION = "rl_queue_business_connection"
+
+const REDIS_TTL_IGNORE = time.Minute
 
 const MonthInSeconds = 30 * 24 * 60 * 60

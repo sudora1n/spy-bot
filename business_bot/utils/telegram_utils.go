@@ -3,7 +3,9 @@ package utils
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"ssuspy-bot/consts"
+	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
 	"time"
 
@@ -211,6 +213,28 @@ func ConvertFileInfosGroupsToInputMediaGroups(mediaFiles [][]*types.MediaItemPro
 		result = append(result, convertedInner)
 	}
 	return result
+}
+
+func BusinessMessageMatches(pattern *regexp.Regexp) th.Predicate {
+	return func(_ context.Context, update telego.Update) bool {
+		return update.BusinessMessage != nil && pattern.MatchString(update.BusinessMessage.Text)
+	}
+}
+
+func GetBusinessRights(c *th.Context, localConnection *repository.BusinessConnection) (rights *telego.BusinessBotRights, err error) {
+	if localConnection.Rights == nil {
+		connection, err := c.Bot().GetBusinessConnection(
+			c,
+			&telego.GetBusinessConnectionParams{
+				BusinessConnectionID: localConnection.ID,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		return connection.Rights, nil
+	}
+	return localConnection.Rights, nil
 }
 
 func OnDataError(c *th.Context, queryID string, loc *i18n.Localizer) {
