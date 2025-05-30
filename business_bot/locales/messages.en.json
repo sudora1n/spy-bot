@@ -6,7 +6,12 @@
   "errors": {
     "couldNotRetrieveData": "error: could not retrieve data.",
     "errorSendingFiles": "error: could not send files.",
-    "errorFileTooBig": "error: file weighs {{.FileSize}}, current limit for restricted files {{.FileLimit}}"
+    "errorFileTooBig": "error: file weighs {{.FileSize}}, current limit for restricted files {{.FileLimit}}",
+    "userHandlers": {
+      "noCanReply": "you entered a command \"{{.Command}}\"\nit looks like the reply-to-messages option isn’t enabled in business bot settings...",
+      "noCanTransferAndUpgradeGifts": "error: the bot does not have permission to transfer and upgrade gifts.",
+      "noCanViewGiftsAndStars": "error: the bot does not have permission to view gifts and stars."
+    }
   },
   "mediaTypes": {
     "photo": "📷 photo",
@@ -107,6 +112,28 @@
         "removed": "<b>{{.MediaType}} removed</b>"
       },
       "request": "<b>full edited messages</b>\n{{if .WithEdits}}diff, both messages (JSON), and all versions with edits (JSON){{else}}diff and both messages (JSON) (JSON){{end}}"
+    }
+  },
+  "userHandlers": {
+    "help": "<b>no implemented yet...</b>"
+  },
+  "inlineQuery": {
+    "needBusiness": "requires bot to be connected as a business to your account.",
+    "handleUserGiftUpgrade": {
+      "button": {
+        "text": "Just wait",
+        "buttonCopy": "REALLY JUST WAIT PLEASE"
+      },
+      "text": "upgrade all gifts",
+      "textMessage": "working with your gifts, please wait..."
+    }
+  },
+  "userCallbackHandlers": {
+    "handleUserGiftUpgrade": {
+      "part1": "fetching your gifts...",
+      "part2": "upgrading...\n{{.Gifts}}...",
+      "noFound": "gifts not found",
+      "final": "gift upgrade complete:\n{{.Gifts}}..."
     }
   }
 }
