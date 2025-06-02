@@ -45,7 +45,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
+          port: ${{ secrets.REMOTE_PORT }}
           envs: REMOTE_USER
           script: |
             cd /home/$REMOTE_USER
