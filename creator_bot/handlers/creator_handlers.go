@@ -6,6 +6,7 @@ import (
 	"ssuspy-creator-bot/callbacks"
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
+	"ssuspy-creator-bot/keyboard"
 	pb "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/types"
 	"ssuspy-creator-bot/utils"
@@ -100,20 +101,10 @@ func (h *Handler) HandleToken(c *th.Context, update telego.Update) error {
 				tu.Message(
 					tu.ID(internalUser.ID),
 					loc.MustLocalize(&i18n.LocalizeConfig{
-						MessageID: fmt.Sprintf("errors.%s.message", message),
+						MessageID: fmt.Sprintf("errors.%s", message),
 					}),
 				).WithReplyMarkup(tu.InlineKeyboard(
-					tu.InlineKeyboardRow(
-						tu.InlineKeyboardButton(
-							loc.MustLocalize(&i18n.LocalizeConfig{
-								MessageID: fmt.Sprintf("errors.%s.open", message),
-							}),
-						).WithURL(
-							loc.MustLocalize(&i18n.LocalizeConfig{
-								MessageID: fmt.Sprintf("errors.%s.link", message),
-							}),
-						),
-					),
+					keyboard.ButtonsToRows(keyboard.BuildInstructionsKeyboardRows(loc))...,
 				)))
 			if err != nil {
 				return err

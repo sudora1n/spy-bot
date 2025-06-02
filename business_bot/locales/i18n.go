@@ -11,7 +11,7 @@ import (
 	"golang.org/x/text/language"
 )
 
-//go:embed messages.*.json
+//go:embed business.*.json
 var localeFS embed.FS
 
 var Bundle *i18n.Bundle
@@ -27,7 +27,7 @@ func Init(defaultLang language.Tag) error {
 
 	for _, f := range entries {
 		name := f.Name()
-		if f.IsDir() || !strings.HasPrefix(name, "messages.") || !strings.HasSuffix(name, ".json") {
+		if f.IsDir() || !strings.HasPrefix(name, "business.") || !strings.HasSuffix(name, ".json") {
 			continue
 		}
 

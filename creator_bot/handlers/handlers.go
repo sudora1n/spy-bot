@@ -6,6 +6,7 @@ import (
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
 	"ssuspy-creator-bot/format"
+	"ssuspy-creator-bot/keyboard"
 	"ssuspy-creator-bot/locales"
 	pb "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/repository"
@@ -49,16 +50,18 @@ func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
 		tu.InlineKeyboardRow(
 			tu.InlineKeyboardButton(
 				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "botList",
+				}),
+			).WithCallbackData(consts.CALLBACK_PREFIX_BOT_LIST),
+
+			tu.InlineKeyboardButton(
+				loc.MustLocalize(&i18n.LocalizeConfig{
 					MessageID: "start.buttons.language",
 				}),
 			).WithCallbackData(consts.CALLBACK_PREFIX_LANG),
 		),
 		tu.InlineKeyboardRow(
-			tu.InlineKeyboardButton(
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "botList",
-				}),
-			).WithCallbackData(consts.CALLBACK_PREFIX_BOT_LIST),
+			keyboard.BuildInstructionsKeyboardRows(loc)...,
 		),
 	)
 }
