@@ -32,9 +32,10 @@
     "onNew": {
       "message": "<b>вы можете прочитать нашу статью о подключении бота</b>\n(только для пользователей telegram premium)",
       "buttons": {
-        "open": "открыть"
+        "open": "открыть инструкцию",
+        "settings": "открыть ваши telegram настройки"
       },
-      "link": "https://teletype.in/@ssuspy/setup-bot-ru"
+      "link": "https://shpioniro.bearblog.dev/business-bot-ru/"
     },
     "buttons": {
       "language": "Изменить язык"
@@ -123,7 +124,10 @@
     "help": "<b>ещё не реализовано...</b>"
   },
   "inlineQuery": {
-    "needBusiness": "требуется подключить бота как бизнес бота к вашему аккаунту.",
+    "needBusiness": {
+      "inline": "you dont have permission to use this bot",
+      "message": "требуется подключить бота как бизнес бота к вашему аккаунту."
+    },
     "handleUserGiftUpgrade": {
       "button": {
         "text": "Просто подождите",

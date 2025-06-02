@@ -39,12 +39,12 @@ func HandleInlineQuery(c *th.Context, update telego.Update) error {
 			tu.ResultArticle(
 				"needBusiness",
 				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "inlineQuery.needBusiness",
+					MessageID: "inlineQuery.needBusiness.inline",
 				}),
 				tu.TextMessage(loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "inlineQuery.needBusiness",
+					MessageID: "inlineQuery.needBusiness.message",
 				})),
-			),
+			).WithReplyMarkup(buildOnNewReplyMarkup(loc)),
 		)
 	} else {
 		result = tu.InlineQuery(

@@ -32,9 +32,10 @@
     "onNew": {
       "message": "<b>you can read our article on how to connect the bot</b>\n(telegram premium users only)",
       "buttons": {
-        "open": "open"
+        "open": "open instruction",
+        "settings": "open your telegram settings"
       },
-      "link": "https://teletype.in/@ssuspy/setup-bot-en"
+      "link": "https://shpioniro.bearblog.dev/business-bot-en/"
     },
     "buttons": {
       "language": "сhange language"
@@ -118,7 +119,10 @@
     "help": "<b>no implemented yet...</b>"
   },
   "inlineQuery": {
-    "needBusiness": "requires bot to be connected as a business to your account.",
+    "needBusiness": {
+      "inline": "не хватает прав для использования бота",
+      "message": "requires bot to be connected as a business to your account."
+    },
     "handleUserGiftUpgrade": {
       "button": {
         "text": "Just wait",

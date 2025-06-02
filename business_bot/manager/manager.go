@@ -69,9 +69,7 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 	if !botUser.CanConnectToBusiness {
 		return fmt.Errorf("cannot use this bot: please enable business connections in @botfather")
 	}
-	if !botUser.SupportsInlineQueries {
-		return fmt.Errorf("cannot use this bot: please enable inline mode in @botfather")
-	}
+	// не ставлю !botUser.SupportsInlineQueries для поддержки старых ботов
 
 	commands := []telego.BotCommand{
 		{
@@ -125,12 +123,6 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		botCancel()
 		return fmt.Errorf("failed to setup webhook updates: %w", err)
 	}
-
-	// updates = tu.UpdateProcessor(updates, 128, func(update telego.Update) telego.Update {
-	// 	fmt.Printf("Update 1: %+v\n", update)
-
-	// 	return update
-	// })
 
 	botHandler, err := th.NewBotHandler(bot, updates)
 	if err != nil {
@@ -321,7 +313,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 		businessMessage := instance.Handler.Group(th.AnyBusinessMessage())
 		businessMessage.Use(middlewareGroup.BusinessGetUserMiddleware)
 
-		startsWith := regexp.MustCompile(`^!.*`)
+		startsWith := regexp.MustCompile(`^\..*`)
 		userCommands := businessMessage.Group(th.AnyBusinessMessage(), utils.BusinessMessageMatches(startsWith))
 		userCommands.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
 			Window:    10 * time.Second,
@@ -331,7 +323,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 		userCommands.Use(middlewareGroup.BusinessIsFromUser)
 		userCommands.Use(middlewareGroup.BusinessIgnoreMessage)
 
-		helpRegex := regexp.MustCompile(`^\s*!help\b`)
+		helpRegex := regexp.MustCompile(`^\s*\.help\b`)
 		userCommands.Handle(
 			utils.WithProm("handleUserHelp", handlerGroup.HandleUserHelp),
 			utils.BusinessMessageMatches(helpRegex),

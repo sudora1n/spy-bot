@@ -152,7 +152,7 @@ func (r *MongoRepository) UpdateUserLanguage(ctx context.Context, userId int64, 
 	return err
 }
 
-func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connection *telego.BusinessConnection, botID int64) error {
+func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connection *telego.BusinessConnection, botID int64) (isUpdated bool, err error) {
 	currentTime := time.Now().Unix()
 
 	if connection.IsEnabled {
@@ -177,13 +177,14 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 
 		result, err := r.botUsers.UpdateOne(ctx, filter, update)
 		if err != nil {
-			return err
+			return false, err
 		}
-
-		if result.ModifiedCount == 0 {
+		if result.ModifiedCount > 0 {
+			return true, nil
+		} else {
 			_id, err := r.GetNextSequence(ctx, r.botUsers.Name())
 			if err != nil {
-				return err
+				return false, err
 			}
 
 			update := bson.M{
@@ -213,8 +214,10 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 				options.Update().SetUpsert(true),
 			)
 			if err != nil {
-				return err
+				return false, err
 			}
+
+			return false, nil
 		}
 	} else {
 		filter := bson.M{
@@ -234,14 +237,13 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 		update := bson.M{
 			"$set": updateFields,
 		}
-
-		_, err := r.botUsers.UpdateOne(ctx, filter, update)
+		result, err := r.botUsers.UpdateOne(ctx, filter, update)
 		if err != nil {
-			return err
+			return false, err
 		}
-	}
 
-	return nil
+		return result.ModifiedCount > 0, nil
+	}
 }
 
 func (r *MongoRepository) UpdateBotUserSendMessages(ctx context.Context, userId int64, botID int64, sendMessages bool) error {

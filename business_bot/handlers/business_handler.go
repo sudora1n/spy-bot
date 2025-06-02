@@ -493,7 +493,7 @@ func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	botID := c.Value("botID").(int64)
 
-	err := h.service.UpdateBotUserConnection(context.Background(), connection, botID)
+	isUpdated, err := h.service.UpdateBotUserConnection(context.Background(), connection, botID)
 	if err != nil {
 		return err
 	}
@@ -519,9 +519,12 @@ func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
 		})
 	}
 
-	_, err = c.Bot().SendMessage(c, tu.Message(
-		tu.ID(connection.User.ID),
-		text,
-	).WithParseMode(telego.ModeHTML))
-	return err
+	if !isUpdated {
+		_, err = c.Bot().SendMessage(c, tu.Message(
+			tu.ID(connection.User.ID),
+			text,
+		).WithParseMode(telego.ModeHTML))
+		return err
+	}
+	return nil
 }

@@ -31,7 +31,7 @@ func (h *Handler) HandleUserHelp(c *th.Context, update telego.Update) error {
 			tu.Message(tu.ID(iUser.User.ID), loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "errors.userHandlers.noCanReply",
 				TemplateData: map[string]string{
-					"Command": "!help",
+					"Command": "help",
 				},
 			})),
 		)
