@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"slices"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
+	"ssuspy-bot/keyboard"
 	"ssuspy-bot/locales"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
@@ -38,44 +40,23 @@ func buildStartText(loc *i18n.Localizer, connection *repository.BusinessConnecti
 }
 
 func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
-	return tu.InlineKeyboard(
-		tu.InlineKeyboardRow(
-			tu.InlineKeyboardButton(
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "start.buttons.language",
-				}),
-			).WithCallbackData(consts.CALLBACK_PREFIX_LANG),
-		),
-	)
-}
-
-func buildOnNewReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
-	return tu.InlineKeyboard(
-		tu.InlineKeyboardRow(
-			tu.InlineKeyboardButton(
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "start.onNew.buttons.open",
-				}),
-			).WithURL(
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "start.onNew.link",
-				}),
-			),
-		),
-		tu.InlineKeyboardRow(
-			tu.InlineKeyboardButton(
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "start.onNew.buttons.settings",
-				}),
-			).WithURL("tg://settings"),
-		),
-	)
+	rows := make([][]telego.InlineKeyboardButton, 0, 3)
+	rows = append(rows, tu.InlineKeyboardRow(
+		tu.InlineKeyboardButton(
+			loc.MustLocalize(&i18n.LocalizeConfig{
+				MessageID: "start.buttons.language",
+			}),
+		).WithCallbackData(consts.CALLBACK_PREFIX_LANG),
+	))
+	helpRows := keyboard.BuildOnNewReplyMarkup(loc)
+	slices.Reverse(helpRows)
+	rows = append(rows, helpRows...)
+	return tu.InlineKeyboard(helpRows...)
 }
 
 func HandleStart(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
-	userIsNew := c.Value("userIsNew").(bool)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	var (
@@ -90,31 +71,10 @@ func HandleStart(c *th.Context, update telego.Update) error {
 	text := buildStartText(loc, iUser.BotUser.GetUserCurrentConnection(), internalUser.FirstName, internalUser.LastName)
 	replyMarkup := buildStartReplyMarkup(loc)
 	if queryID == "" {
-		startMessage, err := c.Bot().SendMessage(c, tu.Message(
+		_, err := c.Bot().SendMessage(c, tu.Message(
 			tu.ID(internalUser.ID),
 			text,
 		).WithReplyMarkup(replyMarkup).WithParseMode(telego.ModeHTML))
-
-		if err != nil {
-			return err
-		}
-
-		if !userIsNew {
-			return nil
-		}
-
-		_, err = c.Bot().SendMessage(c, tu.Message(
-			tu.ID(internalUser.ID),
-			loc.MustLocalize(&i18n.LocalizeConfig{
-				MessageID: "start.onNew.message",
-			}),
-		).WithReplyMarkup(buildOnNewReplyMarkup(loc)).WithReplyParameters(
-			&telego.ReplyParameters{
-				MessageID:                startMessage.MessageID,
-				ChatID:                   tu.ID(internalUser.ID),
-				AllowSendingWithoutReply: true,
-			},
-		).WithParseMode(telego.ModeHTML))
 
 		return err
 	}

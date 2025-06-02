@@ -9,14 +9,7 @@
     "couldNotRetrieveData": "error: could not retrieve data."
   },
   "start": {
-    "message": "hi, <b>{{.Name}}</b>!\nhere's the instruction on how to connect your own bot:\n\n• go to the @botfather bot and send the command /newbot\n\n• come up with and send any name for the bot (this name will be displayed in the header)\n\n• enter a unique username for the bot that ends with \"bot\"\n\n• copy the bot token (it looks something like this: 23774725:AAHZa...) and send it here\n\n• type /mybots, select your bot, go to bot settings and enable business mode",
-    "onNew": {
-      "message": "<b>you can read our article on how to connect the bot</b>\n(telegram premium users only)",
-      "buttons": {
-        "open": "open"
-      },
-      "link": "https://shpioniro.bearblog.dev/setup-bot-en/"
-    },
+    "message": "hi, <b>{{.Name}}</b>!\nclick the \"open instruction\" button to see how to connect your bot.\n<b>important!</b> you need to enable \"business mode\" in your bot\noptional: \"inline mode\", \"inline feedback\"",
     "buttons": {
       "language": "сhange language"
     }

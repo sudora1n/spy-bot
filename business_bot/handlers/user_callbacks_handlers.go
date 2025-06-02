@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"ssuspy-bot/keyboard"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/utils"
 	"strings"
@@ -44,7 +45,9 @@ func HandleInlineQuery(c *th.Context, update telego.Update) error {
 				tu.TextMessage(loc.MustLocalize(&i18n.LocalizeConfig{
 					MessageID: "inlineQuery.needBusiness.message",
 				})),
-			).WithReplyMarkup(buildOnNewReplyMarkup(loc)),
+			).WithReplyMarkup(tu.InlineKeyboard(
+				keyboard.BuildOnNewReplyMarkup(loc)...,
+			)),
 		)
 	} else {
 		result = tu.InlineQuery(
