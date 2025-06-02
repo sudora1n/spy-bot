@@ -12,5 +12,6 @@
 !/repository
 !/types
 !/utils
+!/keyboard
 !/go.mod
 !/go.sum

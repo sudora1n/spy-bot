@@ -2,16 +2,8 @@
   "errors": {
     "noMatch": "error: this is not a telegram bot token...",
     "failedCreateBot": "failed to connect to the bot...",
-    "noBusiness": {
-      "message": "business mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
-      "open": "open instructions",
-      "link": "https://shpioniro.bearblog.dev/setup-bot-en/"
-    },
-    "noInline": {
-      "message": "inline mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
-      "open": "open instructions",
-      "link": "https://shpioniro.bearblog.dev/setup-bot-en/"
-    },
+    "noBusiness": "business mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
+    "noInline": "inline mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
     "tooManyBots": "you have too many bots. please remove the unnecessary ones.",
     "botExists": "this bot has already been registered!",
     "couldNotRetrieveData": "error: could not retrieve data."
@@ -28,6 +20,11 @@
     "buttons": {
       "language": "сhange language"
     }
+  },
+  "instruction": {
+    "open": "open instruction",
+    "link": "https://shpioniro.bearblog.dev/setup-bot-en/",
+    "botfather": "open @botfather"
   },
   "back": "back",
   "backToMainMenu": "back to main menu",

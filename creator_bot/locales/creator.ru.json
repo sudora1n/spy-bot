@@ -2,16 +2,8 @@
   "errors": {
     "noMatch": "ошибка: это не токен Telegram-бота...",
     "failedCreateBot": "ошибка подключения к боту...",
-    "noBusiness": {
-      "message": "у этого бота не включён бизнес-режим. Инструкции по включению доступны по ссылке ниже.",
-      "open": "посмотреть",
-      "link": "https://shpioniro.bearblog.dev/setup-bot-ru/"
-    },
-    "noInline": {
-      "message": "у этого бота не включён inline мод. Инструкции по включению доступны по ссылке ниже.",
-      "open": "посмотреть",
-      "link": "https://shpioniro.bearblog.dev/setup-bot-ru/"
-    },
+    "noBusiness": "у этого бота не включён бизнес-режим. Инструкции по включению доступны по ссылке ниже.",
+    "noInline": "у этого бота не включён inline мод. Инструкции по включению доступны по ссылке ниже.",
     "tooManyBots": "у вас слишком много ботов. Пожалуйста, удалите лишних.",
     "botExists": "этот бот уже зарегистрирован!",
     "couldNotRetrieveData": "ошибка: не удалось получить данные."
@@ -28,6 +20,11 @@
     "buttons": {
       "language": "изменить язык"
     }
+  },
+  "instruction": {
+    "open": "открыть инструкцию",
+    "link": "https://shpioniro.bearblog.dev/setup-bot-ru/",
+    "botfather": "открыть @botfather"
   },
   "back": "назад",
   "backToMainMenu": "назад в главное меню",
