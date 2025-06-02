@@ -49,6 +49,29 @@ func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
 	)
 }
 
+func buildOnNewReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
+	return tu.InlineKeyboard(
+		tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton(
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "start.onNew.buttons.open",
+				}),
+			).WithURL(
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "start.onNew.link",
+				}),
+			),
+		),
+		tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton(
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "start.onNew.buttons.settings",
+				}),
+			).WithURL("tg://settings"),
+		),
+	)
+}
+
 func HandleStart(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
@@ -85,21 +108,7 @@ func HandleStart(c *th.Context, update telego.Update) error {
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "start.onNew.message",
 			}),
-		).WithReplyMarkup(
-			tu.InlineKeyboard(
-				tu.InlineKeyboardRow(
-					tu.InlineKeyboardButton(
-						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "start.onNew.buttons.open",
-						}),
-					).WithURL(
-						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "start.onNew.link",
-						}),
-					),
-				),
-			),
-		).WithReplyParameters(
+		).WithReplyMarkup(buildOnNewReplyMarkup(loc)).WithReplyParameters(
 			&telego.ReplyParameters{
 				MessageID:                startMessage.MessageID,
 				ChatID:                   tu.ID(internalUser.ID),

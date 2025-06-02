@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/handlers"
@@ -66,8 +67,9 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		return fmt.Errorf("error when executing GetMe request: %w", err)
 	}
 	if !botUser.CanConnectToBusiness {
-		return fmt.Errorf("cannot use this bot: please enable business connections in @botfather: %w", err)
+		return fmt.Errorf("cannot use this bot: please enable business connections in @botfather")
 	}
+	// не ставлю !botUser.SupportsInlineQueries для поддержки старых ботов
 
 	commands := []telego.BotCommand{
 		{
@@ -111,6 +113,8 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 				"deleted_business_messages",
 				"my_chat_member",
 				"callback_query",
+				"inline_query",
+				"chosen_inline_result",
 			},
 			DropPendingUpdates: false,
 		}),
@@ -172,7 +176,7 @@ func (b *BotManager) RemoveBot(botID int64) error {
 	defer cancel()
 
 	err := instance.Bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
-		DropPendingUpdates: true,
+		DropPendingUpdates: false,
 	})
 	if err != nil {
 		log.Warn().Err(err).Int64("botID", botID).Msg("failed to delete webhook")
@@ -214,6 +218,32 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	instance.Handler.Handle(utils.WithProm("handleBlocked", handlerGroup.HandleBlocked), th.AnyMyChatMember())
 
 	{
+		inline := instance.Handler.Group(th.AnyInlineQuery())
+		// inline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
+		// 	Window: 5 * time.Second,
+		// 	Limit:  10,
+		// }))
+		inline.Use(middlewareGroup.SyncUserMiddleware)
+		inline.Handle(
+			utils.WithProm("handleInlineQuery", handlers.HandleInlineQuery),
+			th.AnyInlineQuery(),
+		)
+	}
+
+	{
+		chosenInline := instance.Handler.Group(th.AnyChosenInlineResult())
+		// chosenInline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
+		// 	Window: 10 * time.Second,
+		// 	Limit:  5,
+		// }))
+		chosenInline.Use(middlewareGroup.SyncUserMiddleware)
+		chosenInline.Handle(
+			utils.WithProm("handleUserGiftUpgrade", handlers.HandleUserGiftUpgrade),
+			th.AnyChosenInlineResult(),
+		)
+	}
+
+	{
 		standard := instance.Handler.Group(th.Or(
 			th.And(
 				th.AnyCallbackQueryWithMessage(),
@@ -245,6 +275,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 		standard.Handle(utils.WithProm("handleDeletedMessage", handlerGroup.HandleDeletedMessage), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE), th.AnyCallbackQueryWithMessage())
 		standard.Handle(utils.WithProm("handleDeletedMessageDetails", handlerGroup.HandleDeletedMessageDetails), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS), th.AnyCallbackQueryWithMessage())
 		standard.Handle(utils.WithProm("handleGetDeletedFiles", handlerGroup.HandleGetDeletedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES), th.AnyCallbackQueryWithMessage())
+
 		edited := standard.Group(th.AnyCallbackQueryWithMessage())
 		edited.Use(middlewareGroup.EditedGetMessages)
 		edited.Handle(utils.WithProm("handleEditedLog", handlerGroup.HandleEditedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG), th.AnyCallbackQueryWithMessage())
@@ -281,6 +312,24 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	{
 		businessMessage := instance.Handler.Group(th.AnyBusinessMessage())
 		businessMessage.Use(middlewareGroup.BusinessGetUserMiddleware)
+
+		startsWith := regexp.MustCompile(`^\..*`)
+		userCommands := businessMessage.Group(th.AnyBusinessMessage(), utils.BusinessMessageMatches(startsWith))
+		userCommands.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
+			Window:    10 * time.Second,
+			Limit:     3,
+			QueueSize: 1,
+		}))
+		userCommands.Use(middlewareGroup.BusinessIsFromUser)
+		userCommands.Use(middlewareGroup.BusinessIgnoreMessage)
+
+		helpRegex := regexp.MustCompile(`^\s*\.help\b`)
+		userCommands.Handle(
+			utils.WithProm("handleUserHelp", handlerGroup.HandleUserHelp),
+			utils.BusinessMessageMatches(helpRegex),
+			th.AnyBusinessMessage(),
+		)
+
 		businessMessage.Handle(utils.WithProm("handleMessage", handlerGroup.HandleMessage), th.AnyBusinessMessage())
 	}
 }

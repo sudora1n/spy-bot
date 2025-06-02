@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"ssuspy-creator-bot/callbacks"
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
@@ -84,28 +85,41 @@ func (h *Handler) HandleToken(c *th.Context, update telego.Update) error {
 	if err != nil {
 		return onCreatingBotFail(c, loc, internalUser.ID)
 	}
-	if !botUser.CanConnectToBusiness {
-		_, err = c.Bot().SendMessage(
-			c,
-			tu.Message(
-				tu.ID(internalUser.ID),
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "errors.noBusiness.message",
-				}),
-			).WithReplyMarkup(tu.InlineKeyboard(
-				tu.InlineKeyboardRow(
-					tu.InlineKeyboardButton(
-						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "errors.noBusiness.open",
-						}),
-					).WithURL(
-						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "errors.noBusiness.link",
-						}),
+	if !botUser.CanConnectToBusiness || !botUser.SupportsInlineQueries {
+		var messages []string
+		if !botUser.CanConnectToBusiness {
+			messages = append(messages, "noBusiness")
+		}
+		if !botUser.SupportsInlineQueries {
+			messages = append(messages, "noInline")
+		}
+
+		for _, message := range messages {
+			_, err = c.Bot().SendMessage(
+				c,
+				tu.Message(
+					tu.ID(internalUser.ID),
+					loc.MustLocalize(&i18n.LocalizeConfig{
+						MessageID: fmt.Sprintf("errors.%s.message", message),
+					}),
+				).WithReplyMarkup(tu.InlineKeyboard(
+					tu.InlineKeyboardRow(
+						tu.InlineKeyboardButton(
+							loc.MustLocalize(&i18n.LocalizeConfig{
+								MessageID: fmt.Sprintf("errors.%s.open", message),
+							}),
+						).WithURL(
+							loc.MustLocalize(&i18n.LocalizeConfig{
+								MessageID: fmt.Sprintf("errors.%s.link", message),
+							}),
+						),
 					),
-				),
-			)))
-		return err
+				)))
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	err = h.service.InsertBot(c, botUser.ID, internalUser.ID, message.Text, botUser.Username)

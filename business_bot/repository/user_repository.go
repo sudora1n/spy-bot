@@ -24,9 +24,10 @@ type User struct {
 }
 
 type BusinessConnection struct {
-	ID       string `bson:"id"`
-	Enabled  bool   `bson:"enabled"`
-	Unixtime int64  `bson:"date"`
+	ID       string                    `bson:"id"`
+	Rights   *telego.BusinessBotRights `bson:"rights,omitempty"`
+	Enabled  bool                      `bson:"enabled"`
+	Unixtime int64                     `bson:"date"`
 }
 
 type BotUser struct {
@@ -151,7 +152,7 @@ func (r *MongoRepository) UpdateUserLanguage(ctx context.Context, userId int64, 
 	return err
 }
 
-func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connection *telego.BusinessConnection, botID int64) error {
+func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connection *telego.BusinessConnection, botID int64) (isUpdated bool, err error) {
 	currentTime := time.Now().Unix()
 
 	if connection.IsEnabled {
@@ -161,22 +162,29 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 			"business_connections.id": connection.ID,
 		}
 
+		updateFields := bson.M{
+			"business_connections.$.date":    currentTime,
+			"business_connections.$.enabled": true,
+		}
+
+		if connection.Rights != nil {
+			updateFields["business_connections.$.rights"] = connection.Rights
+		}
+
 		update := bson.M{
-			"$set": bson.M{
-				"business_connections.$.date":    currentTime,
-				"business_connections.$.enabled": true,
-			},
+			"$set": updateFields,
 		}
 
 		result, err := r.botUsers.UpdateOne(ctx, filter, update)
 		if err != nil {
-			return err
+			return false, err
 		}
-
-		if result.ModifiedCount == 0 {
+		if result.ModifiedCount > 0 {
+			return true, nil
+		} else {
 			_id, err := r.GetNextSequence(ctx, r.botUsers.Name())
 			if err != nil {
-				return err
+				return false, err
 			}
 
 			update := bson.M{
@@ -185,6 +193,7 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 						ID:       connection.ID,
 						Enabled:  true,
 						Unixtime: currentTime,
+						Rights:   connection.Rights,
 					},
 				},
 				"$setOnInsert": bson.M{
@@ -205,8 +214,10 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 				options.Update().SetUpsert(true),
 			)
 			if err != nil {
-				return err
+				return false, err
 			}
+
+			return false, nil
 		}
 	} else {
 		filter := bson.M{
@@ -215,19 +226,24 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 			"business_connections.id": connection.ID,
 		}
 
+		updateFields := bson.M{
+			"business_connections.$.enabled": false,
+		}
+
+		if connection.Rights != nil {
+			updateFields["business_connections.$.rights"] = connection.Rights
+		}
+
 		update := bson.M{
-			"$set": bson.M{
-				"business_connections.$.enabled": false,
-			},
+			"$set": updateFields,
 		}
-
-		_, err := r.botUsers.UpdateOne(ctx, filter, update)
+		result, err := r.botUsers.UpdateOne(ctx, filter, update)
 		if err != nil {
-			return err
+			return false, err
 		}
-	}
 
-	return nil
+		return result.ModifiedCount > 0, nil
+	}
 }
 
 func (r *MongoRepository) UpdateBotUserSendMessages(ctx context.Context, userId int64, botID int64, sendMessages bool) error {

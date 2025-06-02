@@ -5,7 +5,12 @@
     "noBusiness": {
       "message": "business mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
       "open": "open instructions",
-      "link": "https://teletype.in/@ssuspy/create-bot-en"
+      "link": "https://shpioniro.bearblog.dev/setup-bot-en/"
+    },
+    "noInline": {
+      "message": "inline mode is not enabled for this bot. instructions on how to enable it can be found at the link below.",
+      "open": "open instructions",
+      "link": "https://shpioniro.bearblog.dev/setup-bot-en/"
     },
     "tooManyBots": "you have too many bots. please remove the unnecessary ones.",
     "botExists": "this bot has already been registered!",
@@ -18,7 +23,7 @@
       "buttons": {
         "open": "open"
       },
-      "link": "https://teletype.in/@ssuspy/create-bot-en"
+      "link": "https://shpioniro.bearblog.dev/setup-bot-en/"
     },
     "buttons": {
       "language": "сhange language"

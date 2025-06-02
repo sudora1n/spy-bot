@@ -5,7 +5,12 @@
     "noBusiness": {
       "message": "у этого бота не включён бизнес-режим. Инструкции по включению доступны по ссылке ниже.",
       "open": "посмотреть",
-      "link": "https://teletype.in/@ssuspy/create-bot-ru"
+      "link": "https://shpioniro.bearblog.dev/setup-bot-ru/"
+    },
+    "noInline": {
+      "message": "у этого бота не включён inline мод. Инструкции по включению доступны по ссылке ниже.",
+      "open": "посмотреть",
+      "link": "https://shpioniro.bearblog.dev/setup-bot-ru/"
     },
     "tooManyBots": "у вас слишком много ботов. Пожалуйста, удалите лишних.",
     "botExists": "этот бот уже зарегистрирован!",
@@ -18,7 +23,7 @@
       "buttons": {
         "open": "открыть"
       },
-      "link": "https://teletype.in/@ssuspy/create-bot-ru"
+      "link": "https://shpioniro.bearblog.dev/setup-bot-ru/"
     },
     "buttons": {
       "language": "изменить язык"
