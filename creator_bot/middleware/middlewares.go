@@ -98,7 +98,6 @@ func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update
 	c = c.WithValue("loc", loc)
 	c = c.WithValue("languageCode", i18nLang)
 	c = c.WithValue("user", user)
-	c = c.WithValue("userIsNew", new)
 
 	return c.Next(update)
 }
