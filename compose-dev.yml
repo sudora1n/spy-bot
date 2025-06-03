@@ -16,10 +16,11 @@ services:
       - ./migrations:/migrations
       - mongo-data:/data/db
     healthcheck:
-      test: mongosh --quiet --eval "db.getSiblingDB('ssuspy')"
+      test: mongosh --quiet --eval "db.adminCommand('ping')"
       interval: 10s
-      timeout: 1s
+      timeout: 5s
       retries: 10
+      start_period: 10s
 
   redis:
     image: redis:7
