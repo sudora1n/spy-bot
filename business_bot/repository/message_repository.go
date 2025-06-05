@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -14,16 +13,8 @@ import (
 )
 
 type internalMessage struct {
-	InternalID           int64  `bson:"_id"`
-	ChatID               int64  `bson:"chat_id"`
-	MessageID            int    `bson:"message_id"`
-	BusinessConnectionID string `bson:"business_connection"`
-	Json                 string `bson:"json"`
-
-	EditDate int64 `bson:"edit_date,omitempty"`
-	Date     int64 `bson:"date"`
-
-	MediaGroupID string `bson:"media_group_id,omitempty"`
+	InternalID int64    `bson:"_id"`
+	Message    bson.Raw `bson:"message"`
 }
 
 type GetMessageOptions struct {
@@ -50,10 +41,11 @@ func (r *MongoRepository) SaveMessage(ctx context.Context, message *telego.Messa
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	jsonBytes, err := json.Marshal(message)
+	msgBytes, err := r.customRegistry.SaveMessage(message)
 	if err != nil {
-		return fmt.Errorf("failed to marshal message to JSON: %w", err)
+		return fmt.Errorf("failed to marshal message to BSON: %w", err)
 	}
+	msgRaw := bson.Raw(msgBytes)
 
 	_id, err := r.GetNextSequence(ctx, r.telegramMessages.Name())
 	if err != nil {
@@ -61,21 +53,12 @@ func (r *MongoRepository) SaveMessage(ctx context.Context, message *telego.Messa
 	}
 
 	doc := internalMessage{
-		InternalID:           _id.Value,
-		ChatID:               message.Chat.ID,
-		MessageID:            message.MessageID,
-		BusinessConnectionID: message.BusinessConnectionID,
-		Json:                 string(jsonBytes),
-		EditDate:             message.EditDate,
-		Date:                 message.Date,
-		MediaGroupID:         message.MediaGroupID,
+		InternalID: _id.Value,
+		Message:    msgRaw,
 	}
 
 	_, err = r.telegramMessages.InsertOne(ctx, doc)
-	if err != nil {
-		return fmt.Errorf("failed to save/update message in MongoDB: %w", err)
-	}
-	return nil
+	return err
 }
 
 func (r *MongoRepository) GetMessage(
@@ -105,13 +88,13 @@ func (r *MongoRepository) GetMessages(ctx context.Context, options *GetMessagesO
 	defer cancel()
 
 	matchConditions := bson.D{
-		{Key: "chat_id", Value: options.ChatID},
-		{Key: "business_connection", Value: bson.D{{Key: "$in", Value: options.ConnectionIDs}}},
+		{Key: "message.chat.id", Value: options.ChatID},
+		{Key: "message.business_connection_id", Value: bson.D{{Key: "$in", Value: options.ConnectionIDs}}},
 	}
 
 	orConditions := []bson.D{}
 	if len(options.MessageIDs) > 0 {
-		orConditions = append(orConditions, bson.D{{Key: "message_id", Value: bson.D{{Key: "$in", Value: options.MessageIDs}}}})
+		orConditions = append(orConditions, bson.D{{Key: "message.message_id", Value: bson.D{{Key: "$in", Value: options.MessageIDs}}}})
 	}
 
 	if len(orConditions) > 0 {
@@ -125,24 +108,24 @@ func (r *MongoRepository) GetMessages(ctx context.Context, options *GetMessagesO
 
 	if options.WithEdits {
 		pipeline = append(pipeline, bson.D{{Key: "$sort", Value: bson.D{
-			{Key: "message_id", Value: 1},
-			{Key: "date", Value: -1}, // 1
-			{Key: "edit_date", Value: -1},
+			{Key: "message.message_id", Value: 1},
+			{Key: "message.date", Value: -1},
+			{Key: "message.edit_date", Value: -1},
 		}}})
 	} else {
 		pipeline = append(
 			pipeline,
 			bson.D{{Key: "$sort", Value: bson.D{
-				{Key: "message_id", Value: 1},
-				{Key: "edit_date", Value: -1},
-				{Key: "date", Value: -1},
+				{Key: "message.message_id", Value: 1},
+				{Key: "message.edit_date", Value: -1},
+				{Key: "message.date", Value: -1},
 			}}},
 			bson.D{{Key: "$group", Value: bson.D{
-				{Key: "_id", Value: "$message_id"},
+				{Key: "_id", Value: "$message.message_id"},
 				{Key: "doc", Value: bson.D{{Key: "$first", Value: "$$ROOT"}}},
 			}}},
 			bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$doc"}}}},
-			bson.D{{Key: "$sort", Value: bson.D{{Key: "message_id", Value: 1}}}},
+			bson.D{{Key: "$sort", Value: bson.D{{Key: "message.message_id", Value: 1}}}},
 		)
 	}
 
@@ -160,36 +143,27 @@ func (r *MongoRepository) GetMessages(ctx context.Context, options *GetMessagesO
 	}
 	defer cursor.Close(ctxTimeout)
 
-	var messages []*telego.Message
-	for cursor.Next(ctxTimeout) {
-		var resultDoc internalMessage
-		if err := cursor.Decode(&resultDoc); err != nil {
-			return nil, nil, fmt.Errorf("failed to decode message document: %w", err)
-		}
+	var results []internalMessage
+	if err := cursor.All(ctxTimeout, &results); err != nil {
+		return nil, nil, err
+	}
 
+	var messages []*telego.Message
+	for _, rdoc := range results {
 		var msg telego.Message
-		if err := json.Unmarshal([]byte(resultDoc.Json), &msg); err != nil {
-			log.Warn().Err(err).Int("retrieved_message_id", resultDoc.MessageID).Msg("failed to unmarshal message JSON")
+		if err := r.customRegistry.LoadMessage(rdoc.Message, &msg); err != nil {
+			log.Warn().Err(err).Msg("fail decode message")
 			continue
 		}
 		messages = append(messages, &msg)
 	}
 
-	if err := cursor.Err(); err != nil {
-		return nil, nil, fmt.Errorf("cursor error after iterating messages: %w", err)
-	}
-
 	pagination := &PaginationAnswer{
 		Backward: options.Offset > 0,
 	}
-	if options.Limit > 0 {
-		messagesLen := len(messages)
-		if messagesLen > options.Limit {
-			pagination.Forward = true
-			messages = messages[:messagesLen-1]
-		} else {
-			pagination.Forward = false
-		}
+	if options.Limit > 0 && len(messages) > options.Limit {
+		pagination.Forward = true
+		messages = messages[:len(messages)-1]
 	}
 
 	return messages, pagination, nil

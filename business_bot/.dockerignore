@@ -16,5 +16,6 @@
 !/types
 !/utils
 !/keyboard
+!/migrations
 !/go.mod
 !/go.sum
