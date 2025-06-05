@@ -10,6 +10,8 @@ import (
 
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
+	"ssuspy-bot/migrations"
+	custom_registry "ssuspy-bot/repository/bson_custon_registry"
 )
 
 type MongoRepository struct {
@@ -23,6 +25,9 @@ type MongoRepository struct {
 	bots                *mongo.Collection
 	botUsers            *mongo.Collection
 	counters            *mongo.Collection
+	migrations          *mongo.Collection
+
+	customRegistry *custom_registry.CustomRegistry
 }
 
 type Sequence struct {
@@ -32,9 +37,13 @@ type Sequence struct {
 func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 	uri := cfg.BuildMongoURI()
 
-	clientOptions := options.Client().ApplyURI(uri)
+	customRegistry := custom_registry.CreateCustomRegistry()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	clientOptions := options.Client().
+		SetRegistry(customRegistry.Registry).
+		ApplyURI(uri)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	client, err := mongo.Connect(ctx, clientOptions)
@@ -47,9 +56,42 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		return nil, err
 	}
 
-	telegramMessages := client.Database(cfg.Database).Collection("telegram_messages")
-	userCollection := client.Database(cfg.Database).Collection("users")
-	callbackDataDeletedCollection := client.Database(cfg.Database).Collection("callback_data_deleted")
+	db := client.Database(cfg.Database)
+
+	telegramMessages := db.Collection("telegram_messages_v2")
+	indexes := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "message.chat.id", Value: 1},
+			},
+			Options: options.Index().SetName("ChatId"),
+		},
+		{
+			Keys: bson.D{
+				{Key: "message.chat.id", Value: 1},
+				{Key: "message.business_connection_id", Value: 1},
+				{Key: "message.message_id", Value: 1},
+				{Key: "message.edit_date", Value: -1},
+				{Key: "message.date", Value: -1},
+			},
+			Options: options.Index().SetName("ChatConn_MsgId_EditDate_Date"),
+		},
+		{
+			Keys: bson.D{
+				{Key: "message.chat.id", Value: 1},
+				{Key: "message.business_connection_id", Value: 1},
+				{Key: "message.message_id", Value: 1},
+			},
+			Options: options.Index().SetName("ChatConn_MsgId"),
+		},
+	}
+	_, err = telegramMessages.Indexes().CreateMany(ctx, indexes)
+	if err != nil {
+		return nil, err
+	}
+
+	userCollection := db.Collection("users")
+	callbackDataDeletedCollection := db.Collection("callback_data_deleted")
 	idxTTLMonth := mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "created_at", Value: 1},
@@ -60,12 +102,12 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	callbackDataEditedCollection := client.Database(cfg.Database).Collection("callback_data_edited")
+	callbackDataEditedCollection := db.Collection("callback_data_edited")
 	_, err = callbackDataEditedCollection.Indexes().CreateOne(ctx, idxTTLMonth)
 	if err != nil {
 		return nil, err
 	}
-	filesExistsCollection := client.Database(cfg.Database).Collection("files_exists")
+	filesExistsCollection := db.Collection("files_exists")
 	idxModel := mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "fileId", Value: 1},
@@ -79,9 +121,9 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		return nil, err
 	}
 
-	chatResolveCollection := client.Database(cfg.Database).Collection("chats_resolve")
-	botsCollection := client.Database(cfg.Database).Collection("bots")
-	botUsersCollection := client.Database(cfg.Database).Collection("bot_users")
+	chatResolveCollection := db.Collection("chats_resolve")
+	botsCollection := db.Collection("bots")
+	botUsersCollection := db.Collection("bot_users")
 	idxModel = mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "bot_id", Value: 1},
@@ -91,9 +133,10 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 	}
 	_, err = botUsersCollection.Indexes().CreateOne(ctx, idxModel)
 
-	countersCollection := client.Database(cfg.Database).Collection("counters")
+	countersCollection := db.Collection("counters")
+	migrationsCollection := db.Collection("migrations")
 
-	return &MongoRepository{
+	repository := MongoRepository{
 		client:              client,
 		telegramMessages:    telegramMessages,
 		users:               userCollection,
@@ -104,7 +147,23 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		bots:                botsCollection,
 		botUsers:            botUsersCollection,
 		counters:            countersCollection,
-	}, nil
+		migrations:          migrationsCollection,
+
+		customRegistry: customRegistry,
+	}
+
+	JsonToBsonMessagesMigrationIsNeeded, err := repository.MigrationIsNeeded(ctx, "json_to_bson_messages")
+	if err != nil {
+		return nil, err
+	}
+	if JsonToBsonMessagesMigrationIsNeeded {
+		migrations.DoJsonToBsonMessagesMigrate(context.Background(), db, customRegistry)
+		if err := repository.ApplyMigration(ctx, "json_to_bson_messages"); err != nil {
+			return nil, err
+		}
+	}
+
+	return &repository, nil
 }
 
 func (r *MongoRepository) GetNextSequence(ctx context.Context, name string) (*Sequence, error) {
