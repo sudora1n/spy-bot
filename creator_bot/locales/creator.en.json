@@ -36,7 +36,7 @@
     "item": "{{.Count}}. @{{.Username}}"
   },
   "handleBotItem": {
-    "message": "bot @{{.Username}}\navailable actions",
+    "message": "bot @{{.Username}}\nusers: {{.Users}}\nbusiness users: {{.BusinessUsers}}\navailable actions:",
     "buttons": {
       "remove": "remove bot",
       "backToBotsList": "back to bots list"

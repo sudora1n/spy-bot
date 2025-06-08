@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Bot struct {
@@ -15,6 +16,12 @@ type Bot struct {
 
 	UserID    int64     `bson:"user_id"`
 	CreatedAt time.Time `bson:"created_at"`
+}
+
+type FindBotWithUserCountsResult struct {
+	Bot                `bson:",inline"`
+	TotalUsers         int `bson:"totalUsers"`
+	TotalBusinessUsers int `bson:"totalBusinessUsers"`
 }
 
 func (r *MongoRepository) LenBots(
@@ -28,21 +35,63 @@ func (r *MongoRepository) LenBots(
 	return r.bots.CountDocuments(ctx, filter)
 }
 
-func (r *MongoRepository) FindBotByID(
+func (r *MongoRepository) FindBotWithUserCounts(
 	ctx context.Context,
 	userId int64,
 	botId int64,
-) (*Bot, error) {
+) (*FindBotWithUserCountsResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	filter := bson.M{"user_id": userId, "_id": botId}
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"_id": botId, "user_id": userId}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from": "bot_users",
+			"let":  bson.M{"botId": "$_id"},
+			"pipeline": mongo.Pipeline{
+				{{Key: "$match", Value: bson.M{"$expr": bson.M{"$eq": []any{"$bot_id", "$$botId"}}}}},
+			},
+			"as": "users",
+		}}},
+		{{Key: "$addFields", Value: bson.M{
+			"totalUsers": bson.M{"$size": "$users"},
+			"totalBusinessUsers": bson.M{"$size": bson.M{
+				"$filter": bson.M{
+					"input": "$users",
+					"as":    "u",
+					"cond": bson.M{
+						"$gt": []any{
+							bson.M{"$size": bson.M{
+								"$filter": bson.M{
+									"input": "$$u.business_connections",
+									"as":    "bc",
+									"cond":  bson.M{"$eq": []any{"$$bc.enabled", true}},
+								},
+							}},
+							0,
+						},
+					},
+				},
+			}},
+		}}},
+		{{Key: "$project", Value: bson.M{"users": 0}}},
+	}
 
-	var bot Bot
-	if err := r.bots.FindOne(ctx, filter).Decode(&bot); err != nil {
+	cursor, err := r.bots.Aggregate(ctx, pipeline)
+	if err != nil {
 		return nil, err
 	}
-	return &bot, nil
+	defer cursor.Close(ctx)
+
+	var result FindBotWithUserCountsResult
+	if cursor.Next(ctx) {
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+		return &result, nil
+	}
+
+	return nil, mongo.ErrNoDocuments
 }
 
 func (r *MongoRepository) FindBotByToken(

@@ -245,7 +245,7 @@ func (h *Handler) HandleBotItem(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	botUser, err := h.service.FindBotByID(c, internalUser.ID, data.BotID)
+	botInfo, err := h.service.FindBotWithUserCounts(c, internalUser.ID, data.BotID)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed get data")
 		utils.OnDataError(c, query.ID, loc)
@@ -261,8 +261,10 @@ func (h *Handler) HandleBotItem(c *th.Context, update telego.Update) error {
 		query.Message.GetMessageID(),
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "handleBotItem.message",
-			TemplateData: map[string]string{
-				"Username": botUser.Username,
+			TemplateData: map[string]any{
+				"Username":      botInfo.Username,
+				"Users":         botInfo.TotalUsers,
+				"BusinessUsers": botInfo.TotalBusinessUsers,
 			},
 		}),
 	).WithReplyMarkup(tu.InlineKeyboard(
