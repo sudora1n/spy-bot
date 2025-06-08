@@ -55,7 +55,7 @@ func (r *MongoRepository) FindBotWithUserCounts(
 		}}},
 		{{Key: "$addFields", Value: bson.M{
 			"totalUsers": bson.M{"$size": "$users"},
-			"totalBusinessUsers": bson.M{"$size": bson.M{
+			"activeUsers": bson.M{"$size": bson.M{
 				"$filter": bson.M{
 					"input": "$users",
 					"as":    "u",
@@ -63,9 +63,11 @@ func (r *MongoRepository) FindBotWithUserCounts(
 						"$gt": []any{
 							bson.M{"$size": bson.M{
 								"$filter": bson.M{
-									"input": "$$u.business_connections",
-									"as":    "bc",
-									"cond":  bson.M{"$eq": []any{"$$bc.enabled", true}},
+									"input": bson.M{
+										"$ifNull": []any{"$$u.business_connections", bson.A{}},
+									},
+									"as":   "bc",
+									"cond": bson.M{"$eq": []any{"$$bc.enabled", true}},
 								},
 							}},
 							0,
