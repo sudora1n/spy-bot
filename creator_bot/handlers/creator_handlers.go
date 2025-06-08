@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"ssuspy-creator-bot/callbacks"
 	"ssuspy-creator-bot/config"
-	"ssuspy-creator-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-creator-bot/keyboard"
-	pb "ssuspy-creator-bot/pb"
-	"ssuspy-creator-bot/types"
-	"ssuspy-creator-bot/utils"
+	pb "github.com/example/current-repo/common/pb"
+	"github.com/example/current-repo/common/types"
+	"github.com/example/current-repo/common/utils"
 
 	"time"
 

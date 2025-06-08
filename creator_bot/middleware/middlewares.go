@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"ssuspy-creator-bot/locales"
-	"ssuspy-creator-bot/prom"
-	"ssuspy-creator-bot/redis"
+	"github.com/example/current-repo/common/prom"
+	"github.com/example/current-repo/common/redis"
 	"ssuspy-creator-bot/repository"
-	"ssuspy-creator-bot/types"
+	"github.com/example/current-repo/common/types"
 	"time"
 
 	"github.com/mymmrac/telego"

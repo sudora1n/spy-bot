@@ -1,6 +1,7 @@
 package repository
 
 import (
+	commonTypes "github.com/example/current-repo/common/types"
 	"context"
 	"time"
 
@@ -8,15 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Bot struct {
-	ID int64 `bson:"_id"`
-
-	Username    string `bson:"username"`
-	SecretToken string `bson:"secret_token"`
-
-	UserID    int64     `bson:"user_id"`
-	CreatedAt time.Time `bson:"created_at"`
-}
+/^type Bot struct/ { printing=0 }
+/^}}$/ { printing=1 }
 
 type FindBotWithUserCountsResult struct {
 	Bot                `bson:",inline"`
@@ -100,13 +94,13 @@ func (r *MongoRepository) FindBotByToken(
 	ctx context.Context,
 	userId int64,
 	token string,
-) (*Bot, error) {
+) (*commonTypes.Bot, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	filter := bson.M{"user_id": userId, "secret_token": token}
 
-	var bot Bot
+	var bot commonTypes.Bot
 	if err := r.bots.FindOne(ctx, filter).Decode(&bot); err != nil {
 		return nil, err
 	}
@@ -116,7 +110,7 @@ func (r *MongoRepository) FindBotByToken(
 func (r *MongoRepository) FindBots(
 	ctx context.Context,
 	userId int64,
-) ([]Bot, error) {
+) ([]commonTypes.Bot, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -127,7 +121,7 @@ func (r *MongoRepository) FindBots(
 		return nil, err
 	}
 
-	var bots []Bot
+	var bots []commonTypes.Bot
 	if err := cursor.All(ctx, &bots); err != nil {
 		return nil, err
 	}

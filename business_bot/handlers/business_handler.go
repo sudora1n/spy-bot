@@ -15,12 +15,12 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"ssuspy-bot/callbacks"
-	"ssuspy-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-bot/format"
-	"ssuspy-bot/redis"
+	"github.com/example/current-repo/common/redis"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/types"
-	"ssuspy-bot/utils"
+	"github.com/example/current-repo/common/types"
+	"github.com/example/current-repo/common/utils"
 )
 
 func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {

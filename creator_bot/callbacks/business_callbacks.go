@@ -2,7 +2,7 @@ package callbacks
 
 import (
 	"fmt"
-	"ssuspy-creator-bot/types"
+	"github.com/example/current-repo/common/types"
 	"strconv"
 	"strings"
 )

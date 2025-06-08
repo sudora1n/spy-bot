@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"ssuspy-bot/manager"
-	pb "ssuspy-bot/pb"
+	pb "github.com/example/current-repo/common/pb"
 	"ssuspy-bot/repository"
 )
 

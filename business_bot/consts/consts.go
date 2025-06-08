@@ -44,5 +44,3 @@ const REDIS_RATELIMIT_QUEUE_BUSINESS = "rl_queue_business"
 const REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION = "rl_queue_business_connection"
 
 const REDIS_TTL_IGNORE = time.Minute
-
-const MonthInSeconds = 30 * 24 * 60 * 60

@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"ssuspy-bot/config"
-	"ssuspy-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-bot/migrations"
 	custom_registry "ssuspy-bot/repository/bson_custon_registry"
 )

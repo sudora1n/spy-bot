@@ -3,8 +3,6 @@ package consts
 const REDIS_RATELIMIT_COUNT = "rl_c_count"
 const REDIS_RATELIMIT_QUEUE = "rl_c_queue"
 
-const MonthInSeconds = 30 * 24 * 60 * 60
-
 const MAX_NAME_LEN = 128
 
 const CALLBACK_PREFIX_BACK_TO_START = "+++1"

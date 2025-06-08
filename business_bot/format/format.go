@@ -3,9 +3,9 @@ package format
 import (
 	"fmt"
 	"html"
-	"ssuspy-bot/consts"
-	"ssuspy-bot/types"
-	"ssuspy-bot/utils"
+	"github.com/example/current-repo/common/consts"
+	"github.com/example/current-repo/common/types"
+	"github.com/example/current-repo/common/utils"
 	"strconv"
 	"strings"
 	"unicode/utf8"

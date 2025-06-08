@@ -1,10 +1,12 @@
-package redis
+package redisclient // Changed from "redis" to "redisclient"
 
 import (
 	"context"
 	"fmt"
-	"ssuspy-bot/config"
 	"time"
+
+	// Assuming RedisConfig will be imported from the common config package
+	commonConfig "github.com/example/current-repo/common/config"
 
 	goredis "github.com/redis/go-redis/v9"
 )
@@ -13,7 +15,7 @@ type Redis struct {
 	*goredis.Client
 }
 
-func NewRedis(cfg *config.RedisConfig) (Redis, error) {
+func NewRedis(cfg *commonConfig.RedisConfig) (Redis, error) {
 	client := goredis.NewClient(&goredis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		Password: cfg.Password,

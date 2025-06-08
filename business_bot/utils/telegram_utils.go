@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"ssuspy-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/types"
+	"github.com/example/current-repo/common/types"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -237,13 +237,6 @@ func GetBusinessRights(c *th.Context, localConnection *repository.BusinessConnec
 	return localConnection.Rights, nil
 }
 
-func OnDataError(c *th.Context, queryID string, loc *i18n.Localizer) {
-	c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(queryID).WithText(
-		loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "errors.couldNotRetrieveData",
-		}),
-	))
-}
 
 func OnFilesError(c *th.Context, userID int64, loc *i18n.Localizer, replyToMessageID int) {
 	c.Bot().SendMessage(c, tu.Message(

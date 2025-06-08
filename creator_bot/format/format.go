@@ -3,7 +3,7 @@ package format
 import (
 	"fmt"
 	"html"
-	"ssuspy-creator-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"unicode/utf8"
 )
 

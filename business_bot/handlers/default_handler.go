@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"slices"
 	"ssuspy-bot/config"
-	"ssuspy-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-bot/format"
 	"ssuspy-bot/keyboard"
 	"ssuspy-bot/locales"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/types"
+	"github.com/example/current-repo/common/types"
 
 	"strings"
 

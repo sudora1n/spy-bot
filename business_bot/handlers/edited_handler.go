@@ -12,10 +12,10 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog/log"
 
-	"ssuspy-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-bot/format"
-	"ssuspy-bot/types"
-	"ssuspy-bot/utils"
+	"github.com/example/current-repo/common/types"
+	"github.com/example/current-repo/common/utils"
 )
 
 func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {

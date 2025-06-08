@@ -3,7 +3,7 @@ package handlers
 import (
 	"ssuspy-bot/keyboard"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/utils"
+	"github.com/example/current-repo/common/utils"
 	"strings"
 
 	"github.com/mymmrac/telego"

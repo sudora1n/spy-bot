@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"ssuspy-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"time"
 
 	"github.com/rs/zerolog/log"

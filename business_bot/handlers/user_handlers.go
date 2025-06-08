@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"ssuspy-bot/repository"
-	"ssuspy-bot/utils"
+	"github.com/example/current-repo/common/utils"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"

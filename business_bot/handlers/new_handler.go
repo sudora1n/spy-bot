@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"ssuspy-bot/redis"
+	"github.com/example/current-repo/common/redis"
 	"ssuspy-bot/repository"
 )
 

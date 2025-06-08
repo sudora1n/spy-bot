@@ -2,79 +2,44 @@ package config
 
 import (
 	"context"
-	"fmt"
-	"net/url"
+	// "fmt" // Not needed if GrpcConfig.String() is not used locally or common one is sufficient
 
-	"github.com/sethvargo/go-envconfig"
+	commonConfig "github.com/example/current-repo/common/config"
+	"github.com/sethvargo/go-envconfig" // Import envconfig here
 )
 
 var Config StructConfig
 
+type StructConfig struct {
+	commonConfig.BaseConfig `env:",squash"` // Use squash to make BaseConfig fields act as if they are part of StructConfig
+	CreatorGithubURL        string          `env:"CREATOR_GITHUB_URL"`
+	MaxBotsByUser           int64           `env:"MAX_BOTS_BY_USER, default=10"`
+	// If GRPC_SERVER_HOST is strictly required for creator_bot, it must be ensured by the environment.
+	// Alternatively, add a specific field here and validate in NewConfig or use a custom processor.
+	// For example:
+	// RequiredGrpcHost string `env:"GRPC_SERVER_HOST,required"`
+	// Then in NewConfig: config.BaseConfig.Grpc.Host = config.RequiredGrpcHost
+}
+
 func NewConfig() (StructConfig, error) {
 	var config StructConfig
+	// envconfig.Process will initialize nil pointer fields in BaseConfig
+	// (e.g., Mongo, Redis, TelegramBot, Grpc) if `env:",squash"` is used.
 
 	if err := envconfig.Process(context.Background(), &config); err != nil {
 		return StructConfig{}, err
 	}
 
+	// Example of custom validation or logic after loading:
+	// If creator_bot absolutely requires GRPC host and port to be set:
+	// if config.BaseConfig.Grpc == nil || config.BaseConfig.Grpc.Host == "" {
+	// 	return StructConfig{}, fmt.Errorf("GRPC_SERVER_HOST is required for creator_bot")
+	// }
+	// if config.BaseConfig.Grpc.Port == 0 {
+	//	return StructConfig{}, fmt.Errorf("GRPC_SERVER_PORT is required for creator_bot")
+	// }
+	// This enforcement should align with deployment practices. For now, assume env vars handle requirements.
+
 	Config = config
 	return config, nil
-}
-
-type StructConfig struct {
-	Mongo            *MongoConfig `env:", prefix=MONGO_"`
-	Redis            *RedisConfig `env:", prefix=REDIS_"`
-	TelegramBot      *BotConfig   `env:", prefix=TELEGRAM_"`
-	Grpc             *GrpcConfig  `env:", prefix=GRPC_SERVER_"`
-	CreatorGithubURL string       `env:"CREATOR_GITHUB_URL"`
-	MaxBotsByUser    int64        `env:"MAX_BOTS_BY_USER, default=10"`
-	DevMode          bool         `env:"DEV_MODE, default=false"`
-}
-
-type GrpcConfig struct {
-	Host string `env:"HOST, required"`
-	Port int    `env:"PORT, default=50051"`
-}
-
-func (g *GrpcConfig) String() string {
-	return fmt.Sprintf("%s:%d", g.Host, g.Port)
-}
-
-type MongoConfig struct {
-	Host     string            `env:"HOST, required"`
-	Port     int               `env:"PORT, required"`
-	Database string            `env:"DB, default=ssuspy"`
-	Username string            `env:"USERNAME"`
-	Password string            `env:"PASSWORD"`
-	Options  map[string]string `env:"OPTIONS, separator=|"`
-}
-
-func (m MongoConfig) BuildMongoURI() string {
-	var auth = ""
-	if m.Username != "" && m.Password != "" {
-		auth = fmt.Sprintf("%s:%s@", url.QueryEscape(m.Username), url.QueryEscape(m.Password))
-	}
-
-	var query = ""
-	if len(m.Options) > 0 {
-		q := url.Values{}
-		for key, value := range m.Options {
-			q.Add(key, value)
-		}
-		query = "?" + q.Encode()
-	}
-
-	return fmt.Sprintf("mongodb://%s%s:%d/%s%s", auth, m.Host, m.Port, m.Database, query)
-}
-
-type RedisConfig struct {
-	Host     string `env:"HOST, default=localhost"`
-	Port     int    `env:"PORT, default=6379"`
-	Password string `env:"PASSWORD"`
-	Database int    `env:"DBNAME, default=0"`
-}
-
-type BotConfig struct {
-	Token  string `env:"TOKEN, required"`
-	ApiURL string `env:"API_URL, required"`
 }

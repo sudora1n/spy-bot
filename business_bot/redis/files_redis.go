@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"ssuspy-bot/types"
+	"github.com/example/current-repo/common/types"
 	"time"
 
 	goredis "github.com/redis/go-redis/v9"

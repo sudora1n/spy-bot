@@ -2,16 +2,11 @@ package types
 
 import (
 	"fmt"
-	"ssuspy-creator-bot/consts"
+	"github.com/example/current-repo/common/consts"
 )
 
-type InternalUser struct {
-	ID           int64
-	FirstName    string // optional
-	LastName     string // optional
-	LanguageCode string
-	SendMessages bool
-}
+/^type InternalUser struct/ { printing=0 }
+/^}}$/ { printing=1 }
 
 type HandleBotItem struct {
 	BotID int64

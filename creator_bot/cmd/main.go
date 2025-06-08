@@ -18,17 +18,19 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"ssuspy-creator-bot/config"
-	"ssuspy-creator-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-creator-bot/handlers"
 	"ssuspy-creator-bot/locales"
-	"ssuspy-creator-bot/middleware"
-	pb "ssuspy-creator-bot/pb"
-	"ssuspy-creator-bot/redis"
+	"github.com/example/current-repo/common/middleware"
+	pb "github.com/example/current-repo/common/pb"
+	"github.com/example/current-repo/common/redis"
 	"ssuspy-creator-bot/repository"
-	"ssuspy-creator-bot/utils"
+	"github.com/example/current-repo/common/utils"
 )
 
 func main() {
+	prom.InitProm("bot_creator")
+
 	ctx := context.Background()
 
 	zerolog.TimeFieldFormat = time.RFC3339

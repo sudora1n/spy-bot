@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"ssuspy-creator-bot/config"
-	"ssuspy-creator-bot/consts"
+	"github.com/example/current-repo/common/consts"
 	"ssuspy-creator-bot/format"
 	"ssuspy-creator-bot/keyboard"
 	"ssuspy-creator-bot/locales"
-	pb "ssuspy-creator-bot/pb"
+	pb "github.com/example/current-repo/common/pb"
 	"ssuspy-creator-bot/repository"
-	"ssuspy-creator-bot/types"
+	"github.com/example/current-repo/common/types"
 
 	"strings"
 

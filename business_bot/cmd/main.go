@@ -18,11 +18,13 @@ import (
 	"ssuspy-bot/grpc_server"
 	"ssuspy-bot/locales"
 	"ssuspy-bot/manager"
-	"ssuspy-bot/redis"
+	"github.com/example/current-repo/common/redis"
 	"ssuspy-bot/repository"
 )
 
 func main() {
+	prom.InitProm("bot")
+
 	ctx := context.Background()
 
 	zerolog.TimeFieldFormat = time.RFC3339
