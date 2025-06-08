@@ -36,7 +36,7 @@
     "item": "{{.Count}}. @{{.Username}}"
   },
   "handleBotItem": {
-    "message": "бот @{{.Username}}\nдоступные действия",
+    "message": "бот @{{.Username}}\nпользователи: {{.Users}}\nbusiness пользователи: {{.BusinessUsers}}\nдоступные действия:",
     "buttons": {
       "remove": "удалить бота",
       "backToBotsList": "назад к списку ботов"
