@@ -29,6 +29,23 @@ func NewMiddlewareGroup(service *repository.MongoRepository, rdb *redis.Redis) *
 	}
 }
 
+// because creator bot
+func SkipNonPrivateChatsMiddleware(c *th.Context, update telego.Update) error {
+	var chatType string
+	switch {
+	case update.Message != nil:
+		chatType = update.Message.Chat.Type
+	case update.MyChatMember != nil:
+		chatType = update.MyChatMember.Chat.Type
+	}
+
+	if chatType == telego.ChatTypePrivate {
+		return c.Next(update)
+	}
+
+	return nil
+}
+
 func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego.Update) error {
 	botID := c.Value("botID").(int64)
 	var (

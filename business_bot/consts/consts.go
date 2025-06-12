@@ -38,11 +38,13 @@ const CALLBACK_PREFIX_BACK_TO_START = "__10"
 
 const REDIS_IGNORE = "ignore"
 const REDIS_QUEUE_FILES = "queue:files"
+const REDIS_PUBLIC_GIFTS = "public_gifts"
 const REDIS_RATELIMIT_COUNT = "rl_count"
 const REDIS_RATELIMIT_QUEUE = "rl_queue"
 const REDIS_RATELIMIT_QUEUE_BUSINESS = "rl_queue_business"
 const REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION = "rl_queue_business_connection"
 
 const REDIS_TTL_IGNORE = time.Minute
+const REDIS_TTL_PUBLIC_GIFTS = time.Minute * 15
 
 const MonthInSeconds = 30 * 24 * 60 * 60

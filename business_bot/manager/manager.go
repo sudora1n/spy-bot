@@ -212,6 +212,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 
 	middlewareGroup := middleware.NewMiddlewareGroup(b.service, b.rdb)
 	instance.Handler.Use(middlewareGroup.BotContextMiddleware(instance.ID))
+	instance.Handler.Use(middleware.SkipNonPrivateChatsMiddleware)
 	instance.Handler.Use(middlewareGroup.GetInternalUserMiddleware)
 
 	handlerGroup := handlers.NewHandlerGroup(b.service, b.rdb)

@@ -7,6 +7,7 @@ replace github.com/mymmrac/telego => github.com/sudora1n/telego v0.0.0-202505302
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.3.3
 	github.com/dustin/go-humanize v1.0.1
+	github.com/google/uuid v1.6.0
 	github.com/mymmrac/telego v1.1.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/prometheus/client_golang v1.22.0
