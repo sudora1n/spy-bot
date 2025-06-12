@@ -44,39 +44,48 @@ func (r *MongoRepository) FindBotWithUserCounts(
 	defer cancel()
 
 	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.M{"_id": botId, "user_id": userId}}},
-		{{Key: "$lookup", Value: bson.M{
-			"from": "bot_users",
-			"let":  bson.M{"botId": "$_id"},
-			"pipeline": mongo.Pipeline{
-				{{Key: "$match", Value: bson.M{"$expr": bson.M{"$eq": []any{"$bot_id", "$$botId"}}}}},
-			},
-			"as": "users",
+		bson.D{{Key: "$match", Value: bson.D{
+			{Key: "_id", Value: botId},
+			{Key: "user_id", Value: userId},
 		}}},
-		{{Key: "$addFields", Value: bson.M{
-			"totalUsers": bson.M{"$size": "$users"},
-			"activeUsers": bson.M{"$size": bson.M{
-				"$filter": bson.M{
-					"input": "$users",
-					"as":    "u",
-					"cond": bson.M{
-						"$gt": []any{
-							bson.M{"$size": bson.M{
-								"$filter": bson.M{
-									"input": bson.M{
-										"$ifNull": []any{"$$u.business_connections", bson.A{}},
-									},
-									"as":   "bc",
-									"cond": bson.M{"$eq": []any{"$$bc.enabled", true}},
-								},
-							}},
-							0,
-						},
-					},
-				},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "bot_users"},
+			{Key: "let", Value: bson.D{{Key: "botId", Value: "$_id"}}},
+			{Key: "pipeline", Value: mongo.Pipeline{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "$expr", Value: bson.D{
+						{Key: "$eq", Value: bson.A{"$bot_id", "$$botId"}},
+					}},
+				}}},
 			}},
+			{Key: "as", Value: "users"},
 		}}},
-		{{Key: "$project", Value: bson.M{"users": 0}}},
+		bson.D{{Key: "$addFields", Value: bson.D{
+			{Key: "totalUsers", Value: bson.D{{Key: "$size", Value: "$users"}}},
+			{Key: "activeUsers", Value: bson.D{{Key: "$size", Value: bson.D{
+				{Key: "$filter", Value: bson.D{
+					{Key: "input", Value: "$users"},
+					{Key: "as", Value: "u"},
+					{Key: "cond", Value: bson.D{
+						{Key: "$gt", Value: bson.A{
+							bson.D{{Key: "$size", Value: bson.D{
+								{Key: "$filter", Value: bson.D{
+									{Key: "input", Value: bson.D{
+										{Key: "$ifNull", Value: bson.A{"$$u.business_connections", bson.A{}}},
+									}},
+									{Key: "as", Value: "bc"},
+									{Key: "cond", Value: bson.D{
+										{Key: "$eq", Value: bson.A{"$$bc.enabled", true}},
+									}},
+								}},
+							}}},
+							0,
+						}},
+					}},
+				}},
+			}}}},
+		}}},
+		bson.D{{Key: "$project", Value: bson.D{{Key: "users", Value: 0}}}},
 	}
 
 	cursor, err := r.bots.Aggregate(ctx, pipeline)
