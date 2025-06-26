@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"slices"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/format"
@@ -49,9 +48,8 @@ func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
 		).WithCallbackData(consts.CALLBACK_PREFIX_LANG),
 	))
 	helpRows := keyboard.BuildOnNewReplyMarkup(loc)
-	slices.Reverse(helpRows)
 	rows = append(rows, helpRows...)
-	return tu.InlineKeyboard(helpRows...)
+	return tu.InlineKeyboard(rows...)
 }
 
 func HandleStart(c *th.Context, update telego.Update) error {
