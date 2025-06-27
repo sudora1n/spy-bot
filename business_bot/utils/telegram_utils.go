@@ -245,6 +245,22 @@ func OnDataError(c *th.Context, queryID string, loc *i18n.Localizer) {
 	))
 }
 
+func OnCantReply(c *th.Context, loc *i18n.Localizer, userID int64, commandName string) error {
+	_, err := c.Bot().SendMessage(
+		c,
+		tu.Message(
+			tu.ID(userID),
+			loc.MustLocalize(&i18n.LocalizeConfig{
+				MessageID: "errors.userHandlers.noCanReply",
+				TemplateData: map[string]string{
+					"Command": commandName,
+				},
+			}),
+		),
+	)
+	return err
+}
+
 func OnFilesError(c *th.Context, userID int64, loc *i18n.Localizer, replyToMessageID int) {
 	c.Bot().SendMessage(c, tu.Message(
 		tu.ID(userID),
