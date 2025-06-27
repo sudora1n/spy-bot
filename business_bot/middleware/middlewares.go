@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"ssuspy-bot/locales"
-	"ssuspy-bot/prom"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
-	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -31,7 +29,7 @@ func NewMiddlewareGroup(service *repository.MongoRepository, rdb *redis.Redis) *
 
 // because creator bot
 func SkipNonPrivateChatsMiddleware(c *th.Context, update telego.Update) error {
-	var chatType string
+	chatType := telego.ChatTypePrivate
 	switch {
 	case update.Message != nil:
 		chatType = update.Message.Chat.Type
@@ -39,11 +37,11 @@ func SkipNonPrivateChatsMiddleware(c *th.Context, update telego.Update) error {
 		chatType = update.MyChatMember.Chat.Type
 	}
 
-	if chatType == telego.ChatTypePrivate {
-		return c.Next(update)
+	if chatType != telego.ChatTypePrivate {
+		return nil
 	}
 
-	return nil
+	return c.Next(update)
 }
 
 func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego.Update) error {
@@ -183,23 +181,4 @@ func (h *MiddlewareGroup) BotContextMiddleware(botID int64) th.Handler {
 		c = c.WithValue("botID", botID)
 		return c.Next(update)
 	}
-}
-
-func PromMiddleware(c *th.Context, update telego.Update) error {
-	handlerName := c.Value("handlerName").(string)
-
-	start := time.Now()
-	prom.RequestsTotal.WithLabelValues(handlerName).Inc()
-
-	defer func() {
-		duration := time.Since(start).Seconds()
-		prom.ProcessingTime.WithLabelValues(handlerName).Observe(duration)
-	}()
-
-	err := c.Next(update)
-	if err != nil {
-		prom.ErrorsTotal.WithLabelValues(handlerName).Inc()
-	}
-
-	return err
 }

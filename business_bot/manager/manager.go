@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/mymmrac/telego"
+	ta "github.com/mymmrac/telego/telegoapi"
 	th "github.com/mymmrac/telego/telegohandler"
 	"github.com/rs/zerolog/log"
 )
@@ -57,7 +58,17 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 		return fmt.Errorf("bot with ID %d already exists", botID)
 	}
 
-	bot, err := telego.NewBot(token, telego.WithAPIServer(config.Config.TelegramBot.ApiURL))
+	bot, err := telego.NewBot(
+		token,
+		telego.WithAPICaller(&ta.RetryCaller{
+			Caller:       ta.DefaultFastHTTPCaller,
+			MaxAttempts:  4,
+			ExponentBase: 2,
+			StartDelay:   time.Millisecond * 10,
+			MaxDelay:     time.Second,
+		}),
+		telego.WithAPIServer(config.Config.TelegramBot.ApiURL),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create bot: %w", err)
 	}
@@ -323,11 +334,19 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 		}))
 		userCommands.Use(middlewareGroup.BusinessIsFromUser)
 		userCommands.Use(middlewareGroup.BusinessIgnoreMessage)
+		userCommands.Use(middlewareGroup.BusinessUserSetRights)
 
 		helpRegex := regexp.MustCompile(`^\s*\.help\b`)
 		userCommands.Handle(
 			utils.WithProm("handleUserHelp", handlerGroup.HandleUserHelp),
 			utils.BusinessMessageMatches(helpRegex),
+			th.AnyBusinessMessage(),
+		)
+
+		animRegex := regexp.MustCompile(`^\s*\.(a|anim)\b`)
+		userCommands.Handle(
+			utils.WithProm("HandleUserAnimation", handlerGroup.HandleUserAnimation),
+			utils.BusinessMessageMatches(animRegex),
 			th.AnyBusinessMessage(),
 		)
 

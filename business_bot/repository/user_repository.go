@@ -230,10 +230,6 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 			"business_connections.$.enabled": false,
 		}
 
-		if connection.Rights != nil {
-			updateFields["business_connections.$.rights"] = connection.Rights
-		}
-
 		update := bson.M{
 			"$set": updateFields,
 		}

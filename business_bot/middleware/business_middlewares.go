@@ -11,6 +11,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update telego.Update) (err error) {
@@ -132,6 +133,21 @@ func (h *MiddlewareGroup) BusinessIsFromUser(ctx *th.Context, update telego.Upda
 		return ctx.Next(update)
 	}
 	return nil
+}
+
+func (h *MiddlewareGroup) BusinessUserSetRights(ctx *th.Context, update telego.Update) (err error) {
+	iUser := ctx.Value("iUser").(*repository.IUser)
+
+	connection := iUser.BotUser.GetUserCurrentConnection()
+	rights, err := utils.GetBusinessRights(ctx, connection)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed get business connection")
+		return err
+	}
+
+	ctx = ctx.WithValue("rights", rights)
+	ctx = ctx.WithValue("userConnection", connection)
+	return ctx.Next(update)
 }
 
 func (h *MiddlewareGroup) BusinessIgnoreMessage(ctx *th.Context, update telego.Update) (err error) {
