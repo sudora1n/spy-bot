@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"html"
+	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/utils"
 	"strings"
@@ -22,16 +23,7 @@ func (h *Handler) HandleUserHelp(c *th.Context, update telego.Update) error {
 	connection := c.Value("userConnection").(*repository.BusinessConnection)
 
 	if !rights.CanReply {
-		_, err := c.Bot().SendMessage(
-			c,
-			tu.Message(tu.ID(iUser.User.ID), loc.MustLocalize(&i18n.LocalizeConfig{
-				MessageID: "errors.userHandlers.noCanReply",
-				TemplateData: map[string]string{
-					"Command": "help",
-				},
-			})),
-		)
-		return err
+		return utils.OnCantReply(c, loc, iUser.User.ID, ".help")
 	}
 
 	_, err := c.Bot().EditMessageText(
@@ -58,19 +50,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 	}
 
 	if !rights.CanReply {
-		_, err := c.Bot().SendMessage(
-			c,
-			tu.Message(
-				tu.ID(iUser.User.ID),
-				loc.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: "errors.userHandlers.noCanReply",
-					TemplateData: map[string]string{
-						"Command": ".(a|anim)",
-					},
-				}),
-			),
-		)
-		return err
+		return utils.OnCantReply(c, loc, iUser.User.ID, ".(a|anim)")
 	}
 
 	frames := utils.GenerateBatchAnimationFrames(text, 10)
@@ -114,6 +94,102 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 			).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
 		)
 		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) HandleUserLoveUa(c *th.Context, update telego.Update) error {
+	message := update.BusinessMessage
+	loc := c.Value("loc").(*i18n.Localizer)
+	iUser := c.Value("iUser").(*repository.IUser)
+	rights := c.Value("rights").(*telego.BusinessBotRights)
+	connection := c.Value("userConnection").(*repository.BusinessConnection)
+
+	if !rights.CanReply {
+		return utils.OnCantReply(c, loc, iUser.User.ID, ".loveua")
+	}
+
+	for range 5 {
+		for _, frame := range consts.UA {
+			_, err := c.Bot().EditMessageText(
+				c,
+				tu.EditMessageText(
+					tu.ID(message.Chat.ID),
+					message.MessageID,
+					frame,
+				).WithBusinessConnectionID(connection.ID),
+			)
+			if err != nil {
+				return err
+			}
+
+			time.Sleep(400 * time.Millisecond)
+		}
+	}
+
+	return nil
+}
+
+func (h *Handler) HandleUserLoveRu(c *th.Context, update telego.Update) error {
+	message := update.BusinessMessage
+	loc := c.Value("loc").(*i18n.Localizer)
+	iUser := c.Value("iUser").(*repository.IUser)
+	rights := c.Value("rights").(*telego.BusinessBotRights)
+	connection := c.Value("userConnection").(*repository.BusinessConnection)
+
+	if !rights.CanReply {
+		return utils.OnCantReply(c, loc, iUser.User.ID, ".loveru")
+	}
+
+	for range 3 {
+		for _, frame := range consts.RU {
+			_, err := c.Bot().EditMessageText(
+				c,
+				tu.EditMessageText(
+					tu.ID(message.Chat.ID),
+					message.MessageID,
+					frame,
+				).WithBusinessConnectionID(connection.ID),
+			)
+			if err != nil {
+				return err
+			}
+
+			time.Sleep(400 * time.Millisecond)
+		}
+	}
+
+	return nil
+}
+
+func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
+	message := update.BusinessMessage
+	loc := c.Value("loc").(*i18n.Localizer)
+	iUser := c.Value("iUser").(*repository.IUser)
+	rights := c.Value("rights").(*telego.BusinessBotRights)
+	connection := c.Value("userConnection").(*repository.BusinessConnection)
+
+	if !rights.CanReply {
+		return utils.OnCantReply(c, loc, iUser.User.ID, ".love")
+	}
+
+	for range 5 {
+		for _, frame := range consts.JustLove {
+			_, err := c.Bot().EditMessageText(
+				c,
+				tu.EditMessageText(
+					tu.ID(message.Chat.ID),
+					message.MessageID,
+					frame,
+				).WithBusinessConnectionID(connection.ID),
+			)
+			if err != nil {
+				return err
+			}
+
+			time.Sleep(400 * time.Millisecond)
+		}
 	}
 
 	return nil
