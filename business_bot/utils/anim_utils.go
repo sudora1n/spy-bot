@@ -6,7 +6,6 @@ func shiftTextRight(text string) string {
 		return text
 	}
 
-	// Берем последний символ и ставим его в начало
 	lastChar := runes[len(runes)-1]
 	shifted := append([]rune{lastChar}, runes[:len(runes)-1]...)
 
@@ -21,12 +20,7 @@ func generateAnimationFrames(text string, maxFrames int) []string {
 	runes := []rune(text)
 	textLen := len(runes)
 
-	// Определяем количество кадров
-	frameCount := textLen
-	if frameCount > maxFrames {
-		frameCount = maxFrames
-	}
-
+	frameCount := min(textLen, maxFrames)
 	frames := make([]string, frameCount)
 	currentText := text
 
@@ -47,11 +41,9 @@ func GenerateBatchAnimationFrames(text string, maxFrames int) []string {
 	textLen := len(runes)
 
 	if textLen <= maxFrames {
-		// Если текст короткий, используем обычную анимацию
 		return generateAnimationFrames(text, maxFrames)
 	}
 
-	// Для длинных текстов вычисляем размер батча
 	batchSize := textLen / maxFrames
 	if batchSize == 0 {
 		batchSize = 1
@@ -64,9 +56,7 @@ func GenerateBatchAnimationFrames(text string, maxFrames int) []string {
 	for i := range maxFrames {
 		frames[i] = string(currentRunes)
 
-		// Сдвигаем на размер батча
 		for j := 0; j < batchSize && len(currentRunes) > 1; j++ {
-			// Берем последний символ и ставим в начало
 			lastChar := currentRunes[len(currentRunes)-1]
 			copy(currentRunes[1:], currentRunes[:len(currentRunes)-1])
 			currentRunes[0] = lastChar
