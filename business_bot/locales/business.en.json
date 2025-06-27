@@ -116,7 +116,7 @@
     }
   },
   "userHandlers": {
-    "help": "<b>no implemented yet...</b>"
+    "help": "<b>commands:</b>\n<blockquote>• .a (text) — text animation</blockquote>\n\n📂 other\nto save self-destructing messages — reply to the message with any text."
   },
   "inlineQuery": {
     "needBusiness": {
