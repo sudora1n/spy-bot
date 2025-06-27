@@ -117,8 +117,8 @@ func (h *Handler) HandleUserLoveUa(c *th.Context, update telego.Update) error {
 				tu.EditMessageText(
 					tu.ID(message.Chat.ID),
 					message.MessageID,
-					html.EscapeString(frame),
-				).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+					frame,
+				).WithBusinessConnectionID(connection.ID),
 			)
 			if err != nil {
 				return err
@@ -149,8 +149,40 @@ func (h *Handler) HandleUserLoveRu(c *th.Context, update telego.Update) error {
 				tu.EditMessageText(
 					tu.ID(message.Chat.ID),
 					message.MessageID,
-					html.EscapeString(frame),
-				).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+					frame,
+				).WithBusinessConnectionID(connection.ID),
+			)
+			if err != nil {
+				return err
+			}
+
+			time.Sleep(400 * time.Millisecond)
+		}
+	}
+
+	return nil
+}
+
+func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
+	message := update.BusinessMessage
+	loc := c.Value("loc").(*i18n.Localizer)
+	iUser := c.Value("iUser").(*repository.IUser)
+	rights := c.Value("rights").(*telego.BusinessBotRights)
+	connection := c.Value("userConnection").(*repository.BusinessConnection)
+
+	if !rights.CanReply {
+		return utils.OnCantReply(c, loc, iUser.User.ID, ".love")
+	}
+
+	for range 5 {
+		for _, frame := range consts.JustLove {
+			_, err := c.Bot().EditMessageText(
+				c,
+				tu.EditMessageText(
+					tu.ID(message.Chat.ID),
+					message.MessageID,
+					frame,
+				).WithBusinessConnectionID(connection.ID),
 			)
 			if err != nil {
 				return err

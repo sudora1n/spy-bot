@@ -364,6 +364,13 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 			th.AnyBusinessMessage(),
 		)
 
+		loveRegex := regexp.MustCompile(`^\s*\.love\b`)
+		userCommands.Handle(
+			utils.WithProm("handleUserLove", handlerGroup.HandleUserLove),
+			utils.BusinessMessageMatches(loveRegex),
+			th.AnyBusinessMessage(),
+		)
+
 		businessMessage.Handle(utils.WithProm("handleMessage", handlerGroup.HandleMessage), th.AnyBusinessMessage())
 	}
 }
