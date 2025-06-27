@@ -345,8 +345,15 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 
 		animRegex := regexp.MustCompile(`^\s*\.(a|anim)\b`)
 		userCommands.Handle(
-			utils.WithProm("HandleUserAnimation", handlerGroup.HandleUserAnimation),
+			utils.WithProm("handleUserAnimation", handlerGroup.HandleUserAnimation),
 			utils.BusinessMessageMatches(animRegex),
+			th.AnyBusinessMessage(),
+		)
+
+		loveuaRegex := regexp.MustCompile(`^\s*\.loveua\b`)
+		userCommands.Handle(
+			utils.WithProm("handleUserLoveUa", handlerGroup.HandleUserLoveUa),
+			utils.BusinessMessageMatches(loveuaRegex),
 			th.AnyBusinessMessage(),
 		)
 
