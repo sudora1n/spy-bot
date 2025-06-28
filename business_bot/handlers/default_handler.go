@@ -21,7 +21,7 @@ import (
 	"golang.org/x/text/language/display"
 )
 
-func buildStartText(loc *i18n.Localizer, connection *repository.BusinessConnection, firstName string, lastName string) string {
+func buildStartText(loc *i18n.Localizer, connection *repository.BotUserBusinessConnection, firstName string, lastName string) string {
 	name := format.Name(firstName, lastName)
 
 	enabled := false

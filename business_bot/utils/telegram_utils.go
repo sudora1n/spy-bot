@@ -221,7 +221,7 @@ func BusinessMessageMatches(pattern *regexp.Regexp) th.Predicate {
 	}
 }
 
-func GetBusinessRights(c *th.Context, localConnection *repository.BusinessConnection) (rights *telego.BusinessBotRights, err error) {
+func GetBusinessRights(c *th.Context, localConnection *repository.BotUserBusinessConnection) (rights *telego.BusinessBotRights, err error) {
 	if localConnection.Rights == nil {
 		connection, err := c.Bot().GetBusinessConnection(
 			c,
