@@ -43,13 +43,13 @@
     }
   },
   "settings": {
-    "message": "your settings :)\n\n<b>deleted messages:</b>\n • my deleted messages: {{.MyDel}}\n • partner's deleted messages: {{.PartnerDel}}\n\n<b>edited messages:</b>\n • my edited messages: {{.MyEdit}}\n • partner's edited messages: {{.PartnerEdit}}",
-    "on": "<i>✓ on</i>",
-    "off": "<i>✗ off</i>",
-    "myDel": "🗑️ my messages - {{if .Status}}✓{{else}}✗{{end}}",
-    "partnerDel": "🗑️ partner's messages - {{if .Status}}✓{{else}}✗{{end}}",
-    "myEdit": "✏️ my messages - {{if .Status}}✓{{else}}✗{{end}}",
-    "partnerEdit": "✏️ partner's messages - {{if .Status}}✓{{else}}✗{{end}}"
+    "message": "your settings :)\n\n<b>deleted messages:</b>\n • my messages: {{.MyDel}}\n • partner's messages: {{.PartnerDel}}\n\n<b>edited messages:</b>\n • my messages: {{.MyEdit}}\n • partner's messages: {{.PartnerEdit}}",
+    "on": "<i>on ✓</i>",
+    "off": "<i>off ✗</i>",
+    "myDel": "🗑️ my messages {{if .Status}}✓{{else}}✗{{end}}",
+    "partnerDel": "🗑️ partner's messages {{if .Status}}✓{{else}}✗{{end}}",
+    "myEdit": "✏️ my messages {{if .Status}}✓{{else}}✗{{end}}",
+    "partnerEdit": "✏️ partner's messages {{if .Status}}✓{{else}}✗{{end}}"
   },
   "github": {
     "message": "github bot page",
