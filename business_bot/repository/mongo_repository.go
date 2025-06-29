@@ -152,13 +152,26 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		customRegistry: customRegistry,
 	}
 
-	JsonToBsonMessagesMigrationIsNeeded, err := repository.MigrationIsNeeded(ctx, "json_to_bson_messages")
+	jsonToBsonMessages := "json_to_bson_messages"
+	JsonToBsonMessagesMigrationIsNeeded, err := repository.MigrationIsNeeded(ctx, jsonToBsonMessages)
 	if err != nil {
 		return nil, err
 	}
 	if JsonToBsonMessagesMigrationIsNeeded {
 		migrations.DoJsonToBsonMessagesMigrate(context.Background(), db, customRegistry)
-		if err := repository.ApplyMigration(ctx, "json_to_bson_messages"); err != nil {
+		if err := repository.ApplyMigration(ctx, jsonToBsonMessages); err != nil {
+			return nil, err
+		}
+	}
+
+	addUserSettings := "add_user_settings"
+	AddUserSettingsIsNeeded, err := repository.MigrationIsNeeded(ctx, addUserSettings)
+	if err != nil {
+		return nil, err
+	}
+	if AddUserSettingsIsNeeded {
+		migrations.DoAddUserSettingsMigrate(context.Background(), repository.users)
+		if err := repository.ApplyMigration(ctx, addUserSettings); err != nil {
 			return nil, err
 		}
 	}
