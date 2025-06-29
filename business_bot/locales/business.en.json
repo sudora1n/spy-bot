@@ -38,7 +38,8 @@
       "link": "https://shpioniro.bearblog.dev/business-bot-en/"
     },
     "buttons": {
-      "language": "сhange language"
+      "language": "сhange language",
+      "settings": "open bot settings"
     }
   },
   "github": {

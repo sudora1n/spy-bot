@@ -38,7 +38,8 @@
       "link": "https://shpioniro.bearblog.dev/business-bot-ru/"
     },
     "buttons": {
-      "language": "Изменить язык"
+      "language": "изменить язык",
+      "settings": "открыть настройки бота"
     }
   },
   "github": {
