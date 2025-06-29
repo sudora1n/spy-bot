@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"ssuspy-bot/types"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -446,4 +447,22 @@ func (r *MongoRepository) FindOrCreateIUser(
 	}
 
 	return iUser, isNew, nil
+}
+
+func (r *MongoRepository) UpdateUserSettings(ctx context.Context, userID int64, data *types.HandleSettingsData) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": userID}
+	update := bson.M{
+		"$setOnInsert": bson.M{
+			"settings.edited.show_my_edits":         data.ShowMyEdits,
+			"settings.edited.show_partner_edits":    data.ShowPartnerEdits,
+			"settings.deleted.show_my_deleted":      data.ShowMyDeleted,
+			"settings.deleted.show_partner_deleted": data.ShowPartnerDeleted,
+		},
+	}
+
+	_, err := r.users.UpdateOne(ctx, filter, update)
+	return err
 }
