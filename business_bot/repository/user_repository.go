@@ -18,12 +18,12 @@ type IUser struct {
 
 type UserSettingsEdited struct {
 	ShowMyEdits      bool `bson:"show_my_edits"`      // need false default
-	showPartnerEdits bool `bson:"show_partner_edits"` // need true default
+	ShowPartnerEdits bool `bson:"show_partner_edits"` // need true default
 }
 
 type UserSettingsDeleted struct {
 	ShowMyDeleted      bool `bson:"show_my_deleted"`      // need true default
-	showPartnerDeleted bool `bson:"show_partner_deleted"` // need true default
+	ShowPartnerDeleted bool `bson:"show_partner_deleted"` // need true default
 }
 
 type UserSettings struct {
