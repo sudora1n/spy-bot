@@ -38,8 +38,18 @@
       "link": "https://shpioniro.bearblog.dev/business-bot-en/"
     },
     "buttons": {
-      "language": "сhange language"
+      "language": "сhange language",
+      "settings": "open bot settings"
     }
+  },
+  "settings": {
+    "message": "your settings :)\n\n<b>deleted messages:</b>\n • my messages: {{.MyDel}}\n • partner's messages: {{.PartnerDel}}\n\n<b>edited messages:</b>\n • my messages: {{.MyEdit}}\n • partner's messages: {{.PartnerEdit}}",
+    "on": "<i>on ✓</i>",
+    "off": "<i>off ✗</i>",
+    "myDel": "🗑️ my messages {{if .Status}}✓{{else}}✗{{end}}",
+    "partnerDel": "🗑️ partner's messages {{if .Status}}✓{{else}}✗{{end}}",
+    "myEdit": "✏️ my messages {{if .Status}}✓{{else}}✗{{end}}",
+    "partnerEdit": "✏️ partner's messages {{if .Status}}✓{{else}}✗{{end}}"
   },
   "github": {
     "message": "github bot page",

@@ -38,8 +38,18 @@
       "link": "https://shpioniro.bearblog.dev/business-bot-ru/"
     },
     "buttons": {
-      "language": "Изменить язык"
+      "language": "изменить язык",
+      "settings": "открыть настройки бота"
     }
+  },
+  "settings": {
+    "message": "твои настройки :)\n\n<b>удаленные сообщения:</b>\n • мои сообщения: {{.MyDel}}\n • сообщения собеседника: {{.PartnerDel}}\n\n<b>изменённые сообщения:</b>\n • мои сообщения: {{.MyEdit}}\n • сообщения собеседника: {{.PartnerEdit}}",
+    "on": "<i>вкл ✓</i>",
+    "off": "<i>выкл ✗</i>",
+    "myDel": "🗑️ мои сообщения {{if .Status}}✓{{else}}✗{{end}}",
+    "partnerDel": "🗑️ сообщения собеседника {{if .Status}}✓{{else}}✗{{end}}",
+    "myEdit": "✏️ мои сообщения {{if .Status}}✓{{else}}✗{{end}}",
+    "partnerEdit": "✏️ сообщения собеседника {{if .Status}}✓{{else}}✗{{end}}"
   },
   "github": {
     "message": "страница бота на гитхаб",

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"ssuspy-bot/types"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -16,14 +17,31 @@ type IUser struct {
 	BotUser *BotUser `bson:"bot_user,omitempty"`
 }
 
+type UserSettingsEdited struct {
+	ShowMyEdits      bool `bson:"show_my_edits"`      // need false default
+	ShowPartnerEdits bool `bson:"show_partner_edits"` // need true default
+}
+
+type UserSettingsDeleted struct {
+	ShowMyDeleted      bool `bson:"show_my_deleted"`      // need true default
+	ShowPartnerDeleted bool `bson:"show_partner_deleted"` // need true default
+}
+
+type UserSettings struct {
+	Edited  *UserSettingsEdited  `bson:"edited"`
+	Deleted *UserSettingsDeleted `bson:"deleted"`
+}
+
 type User struct {
 	ID int64 `bson:"_id"`
 
-	LanguageCode string `bson:"language_code"`
-	CreatedAt    int64  `bson:"created_at"`
+	LanguageCode string        `bson:"language_code"`
+	Settings     *UserSettings `bson:"settings"`
+
+	CreatedAt int64 `bson:"created_at"`
 }
 
-type BusinessConnection struct {
+type BotUserBusinessConnection struct {
 	ID       string                    `bson:"id"`
 	Rights   *telego.BusinessBotRights `bson:"rights,omitempty"`
 	Enabled  bool                      `bson:"enabled"`
@@ -31,17 +49,17 @@ type BusinessConnection struct {
 }
 
 type BotUser struct {
-	InternalID          int64                `bson:"_id"`
-	BusinessConnections []BusinessConnection `bson:"business_connections"`
-	SendMessages        bool                 `bson:"send_messages"`
+	InternalID          int64                       `bson:"_id"`
+	BusinessConnections []BotUserBusinessConnection `bson:"business_connections"`
+	SendMessages        bool                        `bson:"send_messages"`
 
 	UserID    int64 `bson:"user_id"`
 	BotID     int64 `bson:"bot_id"`
 	CreatedAt int64 `bson:"created_at"`
 }
 
-func (b *BotUser) GetUserCurrentConnection() *BusinessConnection {
-	var latestConnection *BusinessConnection
+func (b *BotUser) GetUserCurrentConnection() *BotUserBusinessConnection {
+	var latestConnection *BotUserBusinessConnection
 	for i := range b.BusinessConnections {
 		conn := &b.BusinessConnections[i]
 		if conn.Enabled {
@@ -189,7 +207,7 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 
 			update := bson.M{
 				"$push": bson.M{
-					"business_connections": BusinessConnection{
+					"business_connections": BotUserBusinessConnection{
 						ID:       connection.ID,
 						Enabled:  true,
 						Unixtime: currentTime,
@@ -429,4 +447,22 @@ func (r *MongoRepository) FindOrCreateIUser(
 	}
 
 	return iUser, isNew, nil
+}
+
+func (r *MongoRepository) UpdateUserSettings(ctx context.Context, userID int64, data *types.HandleSettingsData) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": userID}
+	update := bson.M{
+		"$setOnInsert": bson.M{
+			"settings.edited.show_my_edits":         data.ShowMyEdits,
+			"settings.edited.show_partner_edits":    data.ShowPartnerEdits,
+			"settings.deleted.show_my_deleted":      data.ShowMyDeleted,
+			"settings.deleted.show_partner_deleted": data.ShowPartnerDeleted,
+		},
+	}
+
+	_, err := r.users.UpdateOne(ctx, filter, update)
+	return err
 }
