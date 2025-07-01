@@ -43,7 +43,7 @@
     }
   },
   "settings": {
-    "message": "<b>your settings :)</b>\n\n<b>deleted messages:</b>\n • my messages: {{.MyDel}}\n • partner's messages: {{.PartnerDel}}\n\n<b>edited messages:</b>\n • my messages: {{.MyEdit}}\n • partner's messages: {{.PartnerEdit}}<blockquote>here you can choose which changes in u'r pm the bot will notify you about</blockquote>",
+    "message": "<b>your settings :)</b>\n\n<b>deleted messages:</b>\n • my messages: {{.MyDel}}\n • partner's messages: {{.PartnerDel}}\n\n<b>edited messages:</b>\n • my messages: {{.MyEdit}}\n • partner's messages: {{.PartnerEdit}}\n\n<blockquote>here you can choose which changes in u'r pm the bot will notify you about</blockquote>",
     "on": "<i>on ✓</i>",
     "off": "<i>off ✗</i>",
     "buttons": {
