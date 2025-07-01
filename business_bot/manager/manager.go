@@ -276,6 +276,9 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 		if config.Config.BusinessGithubURL != "" {
 			standard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"))
 		}
+		standard.Handle(utils.WithProm("handleSettings", handlerGroup.HandleSettings), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS), th.AnyCallbackQueryWithMessage())
+		standard.Handle(utils.WithProm("handleSettingsDeleted", handlerGroup.HandleSettingsDeleted), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS_DELETED), th.AnyCallbackQueryWithMessage())
+		standard.Handle(utils.WithProm("handleSettingsEdited", handlerGroup.HandleSettingsEdited), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS_EDITED), th.AnyCallbackQueryWithMessage())
 		standard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())
 		standard.Handle(
 			utils.WithProm("handleLanguageChange", handlerGroup.HandleLanguageChange),

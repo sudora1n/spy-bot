@@ -38,7 +38,27 @@
       "link": "https://shpioniro.bearblog.dev/business-bot-en/"
     },
     "buttons": {
-      "language": "сhange language"
+      "language": "сhange language",
+      "settings": "open bot settings"
+    }
+  },
+  "settings": {
+    "message": "<b>your settings :)</b>\n\n<b>deleted messages:</b>\n • my messages: {{.MyDel}}\n • partner's messages: {{.PartnerDel}}\n\n<b>edited messages:</b>\n • my messages: {{.MyEdit}}\n • partner's messages: {{.PartnerEdit}}<blockquote>here you can choose which changes in u'r pm the bot will notify you about</blockquote>",
+    "on": "<i>on ✓</i>",
+    "off": "<i>off ✗</i>",
+    "buttons": {
+      "deleted": "\"deleted\" settings",
+      "edited": "\"edited\" settings"
+    },
+    "deleted": {
+      "message": "<b>your settings :)\n└ deleted messages:</b>\n\n • my messages: {{.My}}\n • partner's messages: {{.Partner}}",
+      "my": "🗑️ my messages {{if .Status}}✓{{else}}✗{{end}}",
+      "partner": "🗑️ partner's messages {{if .Status}}✓{{else}}✗{{end}}"
+    },
+    "edited": {
+      "message": "<b>your settings :)\n└ edited messages:</b>\n\n • my messages: {{.My}}\n • partner's messages: {{.Partner}}",
+      "my": "✏️ my messages {{if .Status}}✓{{else}}✗{{end}}",
+      "partner": "✏️ partner's messages {{if .Status}}✓{{else}}✗{{end}}"
     }
   },
   "github": {

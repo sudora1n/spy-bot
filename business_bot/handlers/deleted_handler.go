@@ -12,7 +12,6 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 
 	"ssuspy-bot/callbacks"
 	"ssuspy-bot/consts"
@@ -170,11 +169,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 	}
 
 	buttons = append(buttons, tu.InlineKeyboardRow(
-		tu.InlineKeyboardButton(
-			loc.MustLocalize(&i18n.LocalizeConfig{
-				MessageID: "back",
-			}),
-		).WithCallbackData(callbackData.ToString()),
+		utils.GetBackButton(loc, callbackData.ToString()),
 	))
 
 	summaryText := format.SummarizeDeletedMessage(msg, loc, true)
@@ -264,6 +259,7 @@ func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) err
 	query := update.CallbackQuery
 	iUser := c.Value("iUser").(*repository.IUser)
 	loc := c.Value("loc").(*i18n.Localizer)
+	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedFilesFromString(query.Data)
 	if err != nil {

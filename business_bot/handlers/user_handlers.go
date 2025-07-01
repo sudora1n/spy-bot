@@ -20,7 +20,7 @@ func (h *Handler) HandleUserHelp(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BusinessConnection)
+	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
 
 	if !rights.CanReply {
 		return utils.OnCantReply(c, loc, iUser.User.ID, ".help")
@@ -41,7 +41,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 	log := c.Value("log").(*zerolog.Logger)
 	iUser := c.Value("iUser").(*repository.IUser)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BusinessConnection)
+	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
 
 	var text string
 	parts := strings.SplitN(message.Text, " ", 2)
@@ -104,7 +104,7 @@ func (h *Handler) HandleUserLoveUa(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BusinessConnection)
+	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
 
 	if !rights.CanReply {
 		return utils.OnCantReply(c, loc, iUser.User.ID, ".loveua")
@@ -136,7 +136,7 @@ func (h *Handler) HandleUserLoveRu(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BusinessConnection)
+	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
 
 	if !rights.CanReply {
 		return utils.OnCantReply(c, loc, iUser.User.ID, ".loveru")
@@ -168,7 +168,7 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BusinessConnection)
+	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
 
 	if !rights.CanReply {
 		return utils.OnCantReply(c, loc, iUser.User.ID, ".love")

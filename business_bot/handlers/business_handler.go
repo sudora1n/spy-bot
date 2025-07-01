@@ -144,7 +144,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		offset = max(offset-consts.MAX_BUTTONS, 0)
 	}
 
-	oldMsgs, pagination, err := h.service.GetMessages(
+	unfilteredOldMsgs, pagination, err := h.service.GetMessages(
 		context.Background(),
 		&repository.GetMessagesOptions{
 			ChatID:        chatID,
@@ -158,17 +158,33 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	if len(oldMsgs) == 0 {
+	if len(unfilteredOldMsgs) == 0 {
 		log.Warn().Ints("messageIDs", messageIDs).Int("offset", offset).Str("typeOfPagination", typeOfPagination).Msg("no messages found in the database")
 		return nil
 	}
 
+	var oldMsgs []*telego.Message
 	filesLen := 0
-	for _, msg := range oldMsgs {
+	for _, msg := range unfilteredOldMsgs {
+		switch {
+		case !iUser.User.Settings.ShowMyDeleted && iUser.User.ID == msg.From.ID:
+			log.Debug().Msg("skip due user settings (self)")
+			continue
+		case !iUser.User.Settings.ShowPartnerDeleted && iUser.User.ID != msg.From.ID:
+			log.Debug().Msg("skip due user settings (partner)")
+			continue
+		}
+
 		media := utils.GetFile(msg)
 		if media != nil {
 			filesLen++
 		}
+
+		oldMsgs = append(oldMsgs, msg)
+	}
+	if len(oldMsgs) == 0 {
+		log.Warn().Msg("no messages found after filter by user settings")
+		return nil
 	}
 
 	if !itsCallbackQuery {
@@ -369,6 +385,15 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 			log.Error().Err(errSave).Msg("error saving edited business message after failing to retrieve old message")
 		}
 		return err
+	}
+
+	switch {
+	case !iUser.User.Settings.ShowMyEdits && iUser.User.ID == oldMsg.From.ID:
+		log.Debug().Msg("skip due user settings (self)")
+		return nil
+	case !iUser.User.Settings.ShowPartnerEdits && iUser.User.ID != oldMsg.From.ID:
+		log.Debug().Msg("skip due user settings (partner)")
+		return nil
 	}
 
 	changes, mediaDiff := format.EditedDiff(oldMsg, message, loc, true)

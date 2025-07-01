@@ -10,6 +10,7 @@ import (
 	"ssuspy-bot/locales"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/types"
+	"ssuspy-bot/utils"
 
 	"strings"
 
@@ -21,24 +22,19 @@ import (
 	"golang.org/x/text/language/display"
 )
 
-func buildStartText(loc *i18n.Localizer, connection *repository.BusinessConnection, firstName string, lastName string) string {
+func buildStartText(loc *i18n.Localizer, firstName string, lastName string, isConnected bool) string {
 	name := format.Name(firstName, lastName)
-
-	enabled := false
-	if connection != nil {
-		enabled = connection.Enabled
-	}
 
 	return loc.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "start.message",
 		TemplateData: map[string]any{
 			"Name":    name,
-			"Enabled": enabled,
+			"Enabled": isConnected,
 		},
 	})
 }
 
-func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
+func buildStartReplyMarkup(loc *i18n.Localizer, isConnected bool) *telego.InlineKeyboardMarkup {
 	rows := make([][]telego.InlineKeyboardButton, 0, 3)
 	rows = append(rows, tu.InlineKeyboardRow(
 		tu.InlineKeyboardButton(
@@ -47,8 +43,18 @@ func buildStartReplyMarkup(loc *i18n.Localizer) *telego.InlineKeyboardMarkup {
 			}),
 		).WithCallbackData(consts.CALLBACK_PREFIX_LANG),
 	))
-	helpRows := keyboard.BuildOnNewReplyMarkup(loc)
-	rows = append(rows, helpRows...)
+	if isConnected {
+		rows = append(rows, tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton(
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "start.buttons.settings",
+				}),
+			).WithCallbackData(consts.CALLBACK_PREFIX_SETTINGS),
+		))
+	} else {
+		helpRows := keyboard.BuildOnNewReplyMarkup(loc)
+		rows = append(rows, helpRows...)
+	}
 	return tu.InlineKeyboard(rows...)
 }
 
@@ -66,8 +72,14 @@ func HandleStart(c *th.Context, update telego.Update) error {
 		queryID, messageID = update.CallbackQuery.ID, update.CallbackQuery.Message.GetMessageID()
 	}
 
-	text := buildStartText(loc, iUser.BotUser.GetUserCurrentConnection(), internalUser.FirstName, internalUser.LastName)
-	replyMarkup := buildStartReplyMarkup(loc)
+	connection := iUser.BotUser.GetUserCurrentConnection()
+	enabled := false
+	if connection != nil {
+		enabled = connection.Enabled
+	}
+
+	text := buildStartText(loc, internalUser.FirstName, internalUser.LastName, enabled)
+	replyMarkup := buildStartReplyMarkup(loc, enabled)
 	if queryID == "" {
 		_, err := c.Bot().SendMessage(c, tu.Message(
 			tu.ID(internalUser.ID),
@@ -108,11 +120,7 @@ func HandleLanguage(c *th.Context, update telego.Update) error {
 				WithCallbackData(fmt.Sprintf("%s|%s", consts.CALLBACK_PREFIX_LANG_CHANGE, i18nTag)),
 			))
 	}
-	rows = append(rows, tu.InlineKeyboardRow(tu.InlineKeyboardButton(
-		loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "back",
-		}),
-	).WithCallbackData(consts.CALLBACK_PREFIX_BACK_TO_START)))
+	rows = append(rows, tu.InlineKeyboardRow(utils.GetBackButton(loc, consts.CALLBACK_PREFIX_BACK_TO_START)))
 
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
 		tu.ID(query.From.ID),
@@ -138,8 +146,14 @@ func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) erro
 
 	loc := locales.NewLocalizer(parts[1])
 
-	text := buildStartText(loc, iUser.BotUser.GetUserCurrentConnection(), internalUser.FirstName, internalUser.LastName)
-	replyMarkup := buildStartReplyMarkup(loc)
+	connection := iUser.BotUser.GetUserCurrentConnection()
+	enabled := false
+	if connection != nil {
+		enabled = connection.Enabled
+	}
+
+	text := buildStartText(loc, internalUser.FirstName, internalUser.LastName, enabled)
+	replyMarkup := buildStartReplyMarkup(loc, enabled)
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
 		tu.ID(query.From.ID),
 		query.Message.GetMessageID(),
