@@ -17,19 +17,11 @@ type IUser struct {
 	BotUser *BotUser `bson:"bot_user,omitempty"`
 }
 
-type UserSettingsEdited struct {
-	ShowMyEdits      bool `bson:"show_my_edits"`      // need false default
-	ShowPartnerEdits bool `bson:"show_partner_edits"` // need true default
-}
-
-type UserSettingsDeleted struct {
+type UserSettings struct {
+	ShowMyEdits        bool `bson:"show_my_edits"`        // need false default
+	ShowPartnerEdits   bool `bson:"show_partner_edits"`   // need true default
 	ShowMyDeleted      bool `bson:"show_my_deleted"`      // need true default
 	ShowPartnerDeleted bool `bson:"show_partner_deleted"` // need true default
-}
-
-type UserSettings struct {
-	Edited  *UserSettingsEdited  `bson:"edited"`
-	Deleted *UserSettingsDeleted `bson:"deleted"`
 }
 
 type User struct {
@@ -456,10 +448,10 @@ func (r *MongoRepository) UpdateUserSettings(ctx context.Context, userID int64, 
 	filter := bson.M{"_id": userID}
 	update := bson.M{
 		"$setOnInsert": bson.M{
-			"settings.edited.show_my_edits":         data.ShowMyEdits,
-			"settings.edited.show_partner_edits":    data.ShowPartnerEdits,
-			"settings.deleted.show_my_deleted":      data.ShowMyDeleted,
-			"settings.deleted.show_partner_deleted": data.ShowPartnerDeleted,
+			"settings.show_my_edits":        data.ShowMyEdits,
+			"settings.show_partner_edits":   data.ShowPartnerEdits,
+			"settings.show_my_deleted":      data.ShowMyDeleted,
+			"settings.show_partner_deleted": data.ShowPartnerDeleted,
 		},
 	}
 

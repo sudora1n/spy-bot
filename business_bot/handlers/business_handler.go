@@ -167,10 +167,10 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	filesLen := 0
 	for _, msg := range unfilteredOldMsgs {
 		switch {
-		case !iUser.User.Settings.Deleted.ShowMyDeleted && iUser.User.ID == msg.From.ID:
+		case !iUser.User.Settings.ShowMyDeleted && iUser.User.ID == msg.From.ID:
 			log.Debug().Msg("skip due user settings (self)")
 			continue
-		case !iUser.User.Settings.Deleted.ShowPartnerDeleted && iUser.User.ID != msg.From.ID:
+		case !iUser.User.Settings.ShowPartnerDeleted && iUser.User.ID != msg.From.ID:
 			log.Debug().Msg("skip due user settings (partner)")
 			continue
 		}
@@ -388,10 +388,10 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 	}
 
 	switch {
-	case !iUser.User.Settings.Edited.ShowMyEdits && iUser.User.ID == oldMsg.From.ID:
+	case !iUser.User.Settings.ShowMyEdits && iUser.User.ID == oldMsg.From.ID:
 		log.Debug().Msg("skip due user settings (self)")
 		return nil
-	case !iUser.User.Settings.Edited.ShowPartnerEdits && iUser.User.ID != oldMsg.From.ID:
+	case !iUser.User.Settings.ShowPartnerEdits && iUser.User.ID != oldMsg.From.ID:
 		log.Debug().Msg("skip due user settings (partner)")
 		return nil
 	}

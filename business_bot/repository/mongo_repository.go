@@ -176,6 +176,18 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 		}
 	}
 
+	userSettingsShorter := "user_settings_shorter"
+	UserSettingsShorterIsNeeded, err := repository.MigrationIsNeeded(ctx, userSettingsShorter)
+	if err != nil {
+		return nil, err
+	}
+	if UserSettingsShorterIsNeeded {
+		migrations.DoUserSettingsShorterMigrate(context.Background(), repository.users)
+		if err := repository.ApplyMigration(ctx, userSettingsShorter); err != nil {
+			return nil, err
+		}
+	}
+
 	return &repository, nil
 }
 

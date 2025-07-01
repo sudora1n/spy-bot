@@ -23,10 +23,10 @@ func (h *Handler) HandleSettings(c *th.Context, update telego.Update) error {
 		if err == callbacks.NoSettingsPartsError {
 			needUpdate = false
 			data = &types.HandleSettingsData{
-				ShowMyDeleted:      iUser.User.Settings.Deleted.ShowMyDeleted,
-				ShowPartnerDeleted: iUser.User.Settings.Deleted.ShowPartnerDeleted,
-				ShowMyEdits:        iUser.User.Settings.Edited.ShowMyEdits,
-				ShowPartnerEdits:   iUser.User.Settings.Edited.ShowPartnerEdits,
+				ShowMyDeleted:      iUser.User.Settings.ShowMyDeleted,
+				ShowPartnerDeleted: iUser.User.Settings.ShowPartnerDeleted,
+				ShowMyEdits:        iUser.User.Settings.ShowMyEdits,
+				ShowPartnerEdits:   iUser.User.Settings.ShowPartnerEdits,
 			}
 		} else {
 			return err
