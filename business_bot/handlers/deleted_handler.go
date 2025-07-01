@@ -169,11 +169,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 	}
 
 	buttons = append(buttons, tu.InlineKeyboardRow(
-		tu.InlineKeyboardButton(
-			loc.MustLocalize(&i18n.LocalizeConfig{
-				MessageID: "back",
-			}),
-		).WithCallbackData(callbackData.ToString()),
+		utils.GetBackButton(loc, callbackData.ToString()),
 	))
 
 	summaryText := format.SummarizeDeletedMessage(msg, loc, true)

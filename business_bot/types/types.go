@@ -155,35 +155,3 @@ func (h HandleBusinessData) ToString(dataType HandleBusinessDataType) string {
 
 	return fmt.Sprintf("%s|%d|%d", prefix, h.DataID, h.ChatID)
 }
-
-const (
-	BitShowMyEdits      = 1 << 3
-	BitShowPartnerEdits = 1 << 2
-	BitShowMyDeleted    = 1 << 1
-	BitShowPartnerDel   = 1 << 0
-)
-
-type HandleSettingsData struct {
-	ShowMyDeleted      bool
-	ShowPartnerDeleted bool
-	ShowMyEdits        bool
-	ShowPartnerEdits   bool
-}
-
-func (h HandleSettingsData) ToString() string {
-	var mask uint8 = 0
-	if h.ShowMyEdits {
-		mask |= BitShowMyEdits
-	}
-	if h.ShowPartnerEdits {
-		mask |= BitShowPartnerEdits
-	}
-	if h.ShowMyDeleted {
-		mask |= BitShowMyDeleted
-	}
-	if h.ShowPartnerDeleted {
-		mask |= BitShowPartnerDel
-	}
-
-	return fmt.Sprintf("%s|%d", consts.CALLBACK_PREFIX_SETTINGS, mask)
-}

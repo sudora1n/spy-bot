@@ -182,7 +182,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 		oldMsgs = append(oldMsgs, msg)
 	}
-	if len(unfilteredOldMsgs) == 0 {
+	if len(oldMsgs) == 0 {
 		log.Warn().Msg("no messages found after filter by user settings")
 		return nil
 	}

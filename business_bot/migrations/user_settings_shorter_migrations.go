@@ -2,7 +2,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -49,7 +48,7 @@ func DoUserSettingsShorterMigrate(ctx context.Context, userCollection *mongo.Col
 		}
 
 		if err := cursor.Decode(&user); err != nil {
-			log.Printf("decode error: %v", err)
+			log.Warn().Err(err).Msg("decode error")
 			continue
 		}
 
@@ -85,9 +84,9 @@ func DoUserSettingsShorterMigrate(ctx context.Context, userCollection *mongo.Col
 			},
 		})
 		if err != nil {
-			log.Printf("failed to update user %d: %v", user.ID, err)
+			log.Warn().Int64("userID", user.ID).Msg("failed update user")
 		} else {
-			fmt.Printf("updated user %d\n", user.ID)
+			log.Debug().Int64("userID", user.ID).Msg("updated user")
 		}
 	}
 
