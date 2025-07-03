@@ -15,8 +15,8 @@ import (
 
 	"ssuspy-bot/callbacks"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/format"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
 )

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/format"
 	"ssuspy-bot/keyboard"
-	"ssuspy-bot/locales"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/format"
+	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
 

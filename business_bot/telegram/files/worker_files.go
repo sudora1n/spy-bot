@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/format"
-	"ssuspy-bot/locales"
 	"ssuspy-bot/manager"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/format"
+	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/utils"
 	"time"
 

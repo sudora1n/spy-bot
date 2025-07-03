@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"ssuspy-bot/consts"
-	"ssuspy-bot/format"
+	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
 )

@@ -3,9 +3,9 @@ package middleware
 import (
 	"context"
 	"errors"
-	"ssuspy-bot/locales"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/types"
 	"ssuspy-bot/utils"
 
