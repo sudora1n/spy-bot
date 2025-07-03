@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"ssuspy-bot/keyboard"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/utils"
+	"ssuspy-bot/telegram/keyboard"
+	"ssuspy-bot/telegram/utils"
 	"strings"
 
 	"github.com/mymmrac/telego"

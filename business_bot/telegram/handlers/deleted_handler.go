@@ -17,8 +17,9 @@ import (
 	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/format"
+	"ssuspy-bot/telegram/keyboard"
+	"ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
-	"ssuspy-bot/utils"
 )
 
 func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
@@ -169,7 +170,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 	}
 
 	buttons = append(buttons, tu.InlineKeyboardRow(
-		utils.GetBackButton(loc, callbackData.ToString()),
+		keyboard.BuildBackButton(loc, callbackData.ToString()),
 	))
 
 	summaryText := format.SummarizeDeletedMessage(msg, loc, true)

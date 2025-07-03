@@ -4,7 +4,7 @@ import (
 	"html"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/utils"
+	"ssuspy-bot/telegram/utils"
 	"strings"
 	"time"
 

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/keyboard"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/format"
+	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/types"
-	"ssuspy-bot/utils"
 
 	"strings"
 
@@ -120,7 +119,7 @@ func HandleLanguage(c *th.Context, update telego.Update) error {
 				WithCallbackData(fmt.Sprintf("%s|%s", consts.CALLBACK_PREFIX_LANG_CHANGE, i18nTag)),
 			))
 	}
-	rows = append(rows, tu.InlineKeyboardRow(utils.GetBackButton(loc, consts.CALLBACK_PREFIX_BACK_TO_START)))
+	rows = append(rows, tu.InlineKeyboardRow(keyboard.BuildBackButton(loc, consts.CALLBACK_PREFIX_BACK_TO_START)))
 
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
 		tu.ID(query.From.ID),

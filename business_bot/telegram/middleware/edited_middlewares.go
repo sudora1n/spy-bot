@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"ssuspy-bot/callbacks"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/utils"
+	"ssuspy-bot/telegram/utils"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"

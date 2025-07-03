@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"ssuspy-bot/config"
 	"ssuspy-bot/grpc_server"
-	"ssuspy-bot/manager"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/files"
+	"ssuspy-bot/telegram/manager"
 
 	"github.com/rs/zerolog/log"
 )

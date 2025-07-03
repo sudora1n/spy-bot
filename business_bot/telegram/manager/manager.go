@@ -11,7 +11,7 @@ import (
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/handlers"
 	"ssuspy-bot/telegram/middleware"
-	"ssuspy-bot/utils"
+	"ssuspy-bot/telegram/utils"
 	"sync"
 	"time"
 

@@ -5,7 +5,8 @@ import (
 	"ssuspy-bot/callbacks"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/utils"
+	"ssuspy-bot/telegram/keyboard"
+	"ssuspy-bot/telegram/utils"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -37,7 +38,7 @@ func makeSettingsRows(loc *i18n.Localizer, handler string, settings []settingMet
 	}
 
 	rows = append(rows, tu.InlineKeyboardRow(
-		utils.GetBackButton(loc, consts.CALLBACK_PREFIX_SETTINGS),
+		keyboard.BuildBackButton(loc, consts.CALLBACK_PREFIX_SETTINGS),
 	))
 
 	return rows
@@ -88,7 +89,7 @@ func (h *Handler) HandleSettings(c *th.Context, update telego.Update) error {
 				).WithCallbackData(consts.CALLBACK_PREFIX_SETTINGS_EDITED),
 			),
 			tu.InlineKeyboardRow(
-				utils.GetBackButton(loc, consts.CALLBACK_PREFIX_BACK_TO_START),
+				keyboard.BuildBackButton(loc, consts.CALLBACK_PREFIX_BACK_TO_START),
 			),
 		),
 	))

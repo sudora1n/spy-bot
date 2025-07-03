@@ -4,8 +4,8 @@ import (
 	"errors"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/locales"
+	"ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
-	"ssuspy-bot/utils"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"

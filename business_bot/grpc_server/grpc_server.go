@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"ssuspy-bot/manager"
 	pb "ssuspy-bot/pb"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/manager"
 )
 
 type BotServer struct {
