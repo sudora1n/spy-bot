@@ -250,7 +250,10 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 		// }))
 		chosenInline.Use(middlewareGroup.SyncUserMiddleware)
 		chosenInline.Handle(
-			utils.WithProm("handleUserGiftUpgrade", handlers.HandleUserGiftUpgrade),
+			utils.WithProm(
+				"handleUserGiftUpgrade",
+				handlers.HandleUserGiftUpgrade,
+			),
 			th.AnyChosenInlineResult(),
 		)
 	}
@@ -269,39 +272,85 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 			QueueSize: 3,
 		}))
 		standard.Use(middlewareGroup.SyncUserMiddleware)
-		standard.Handle(utils.WithProm("handleStart", handlers.HandleStart), th.Or(
-			th.CallbackDataEqual(consts.CALLBACK_PREFIX_BACK_TO_START),
-			th.CommandEqual("start"),
-		))
+		standard.Handle(
+			utils.WithProm("handleStart", handlers.HandleStart),
+			th.Or(
+				th.CallbackDataEqual(consts.CALLBACK_PREFIX_BACK_TO_START),
+				th.CommandEqual("start"),
+			),
+		)
 		if config.Config.BusinessGithubURL != "" {
 			standard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"))
 		}
-		standard.Handle(utils.WithProm("handleSettings", handlerGroup.HandleSettings), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS), th.AnyCallbackQueryWithMessage())
-		standard.Handle(utils.WithProm("handleSettingsDeleted", handlerGroup.HandleSettingsDeleted), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS_DELETED), th.AnyCallbackQueryWithMessage())
-		standard.Handle(utils.WithProm("handleSettingsEdited", handlerGroup.HandleSettingsEdited), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS_EDITED), th.AnyCallbackQueryWithMessage())
-		standard.Handle(utils.WithProm("handleLanguage", handlers.HandleLanguage), th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG), th.AnyCallbackQueryWithMessage())
+		standard.Handle(
+			utils.WithProm("handleSettings", handlerGroup.HandleSettings),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS),
+			th.AnyCallbackQueryWithMessage(),
+		)
+		standard.Handle(
+			utils.WithProm("handleSettingsDeleted", handlerGroup.HandleSettingsDeleted),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS_DELETED),
+			th.AnyCallbackQueryWithMessage(),
+		)
+		standard.Handle(
+			utils.WithProm("handleSettingsEdited", handlerGroup.HandleSettingsEdited),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS_EDITED),
+			th.AnyCallbackQueryWithMessage(),
+		)
+		standard.Handle(
+			utils.WithProm("handleLanguage", handlers.HandleLanguage),
+			th.CallbackDataEqual(consts.CALLBACK_PREFIX_LANG),
+			th.AnyCallbackQueryWithMessage(),
+		)
 		standard.Handle(
 			utils.WithProm("handleLanguageChange", handlerGroup.HandleLanguageChange),
 			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_LANG_CHANGE),
 			th.AnyCallbackQueryWithMessage(),
 		)
 
-		standard.Handle(utils.WithProm("handleDeletedLog", handlerGroup.HandleDeletedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG), th.AnyCallbackQueryWithMessage())
-		standard.Handle(utils.WithProm("handleDeletedMessage", handlerGroup.HandleDeletedMessage), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE), th.AnyCallbackQueryWithMessage())
-		standard.Handle(utils.WithProm("handleDeletedMessageDetails", handlerGroup.HandleDeletedMessageDetails), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS), th.AnyCallbackQueryWithMessage())
-		standard.Handle(utils.WithProm("handleGetDeletedFiles", handlerGroup.HandleGetDeletedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES), th.AnyCallbackQueryWithMessage())
+		standard.Handle(
+			utils.WithProm("handleDeletedLog", handlerGroup.HandleDeletedLog),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_LOG),
+			th.AnyCallbackQueryWithMessage(),
+		)
+		standard.Handle(
+			utils.WithProm("handleDeletedMessage", handlerGroup.HandleDeletedMessage),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_MESSAGE),
+			th.AnyCallbackQueryWithMessage(),
+		)
+		standard.Handle(
+			utils.WithProm("handleDeletedMessageDetails", handlerGroup.HandleDeletedMessageDetails),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_DETAILS),
+			th.AnyCallbackQueryWithMessage(),
+		)
+		standard.Handle(
+			utils.WithProm("handleGetDeletedFiles", handlerGroup.HandleGetDeletedFiles),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED_FILES),
+			th.AnyCallbackQueryWithMessage(),
+		)
 
 		edited := standard.Group(th.AnyCallbackQueryWithMessage())
 		edited.Use(middlewareGroup.EditedGetMessages)
-		edited.Handle(utils.WithProm("handleEditedLog", handlerGroup.HandleEditedLog), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG), th.AnyCallbackQueryWithMessage())
-		edited.Handle(utils.WithProm("handleEditedFiles", handlerGroup.HandleEditedFiles), th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_FILES), th.AnyCallbackQueryWithMessage())
+		edited.Handle(
+			utils.WithProm("handleEditedLog", handlerGroup.HandleEditedLog),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_LOG),
+			th.AnyCallbackQueryWithMessage(),
+		)
+		edited.Handle(
+			utils.WithProm("handleEditedFiles", handlerGroup.HandleEditedFiles),
+			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_EDITED_FILES),
+			th.AnyCallbackQueryWithMessage(),
+		)
 	}
 
 	{
 		businessConnection := instance.Handler.Group(th.AnyBusinessConnection())
 		businessConnection.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION, 5))
 		businessConnection.Use(middlewareGroup.SyncUserMiddleware)
-		businessConnection.Handle(utils.WithProm("handleConnection", handlerGroup.HandleConnection), th.AnyBusinessConnection())
+		businessConnection.Handle(
+			utils.WithProm("handleConnection", handlerGroup.HandleConnection),
+			th.AnyBusinessConnection(),
+		)
 	}
 
 	{
@@ -321,7 +370,10 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 				th.CallbackDataPrefix(consts.CALLBACK_PREFIX_DELETED),
 				th.AnyDeletedBusinessMessages(),
 			))
-		business.Handle(utils.WithProm("handleEdited", handlerGroup.HandleEdited), th.AnyEditedBusinessMessage())
+		business.Handle(
+			utils.WithProm("handleEdited", handlerGroup.HandleEdited),
+			th.AnyEditedBusinessMessage(),
+		)
 	}
 
 	{
