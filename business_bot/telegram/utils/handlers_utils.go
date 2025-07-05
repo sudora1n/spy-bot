@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"ssuspy-bot/prom"
+	"ssuspy-bot/metrics"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -11,16 +11,16 @@ import (
 func WithProm(name string, handler th.Handler) th.Handler {
 	return func(c *th.Context, update telego.Update) error {
 		start := time.Now()
-		prom.RequestsTotal.WithLabelValues(name).Inc()
+		metrics.RequestsTotal.WithLabelValues(name).Inc()
 
 		defer func() {
 			duration := time.Since(start).Seconds()
-			prom.ProcessingTime.WithLabelValues(name).Observe(duration)
+			metrics.ProcessingTime.WithLabelValues(name).Observe(duration)
 		}()
 
 		err := handler(c, update)
 		if err != nil {
-			prom.ErrorsTotal.WithLabelValues(name).Inc()
+			metrics.ErrorsTotal.WithLabelValues(name).Inc()
 		}
 
 		return err

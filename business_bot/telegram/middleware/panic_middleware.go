@@ -3,13 +3,13 @@ package middleware
 import (
 	"fmt"
 	"runtime/debug"
-	"ssuspy-bot/prom"
+	"ssuspy-bot/metrics"
 
 	"github.com/rs/zerolog/log"
 )
 
 func LogPanicHandler(recovered any) error {
-	prom.PanicsTotal.Inc()
+	metrics.PanicsTotal.Inc()
 
 	stack := debug.Stack()
 	log.Error().

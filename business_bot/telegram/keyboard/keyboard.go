@@ -28,3 +28,11 @@ func BuildOnNewReplyMarkup(loc *i18n.Localizer) [][]telego.InlineKeyboardButton 
 		),
 	}
 }
+
+func BuildBackButton(loc *i18n.Localizer, data string) telego.InlineKeyboardButton {
+	return tu.InlineKeyboardButton(
+		loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "back",
+		}),
+	).WithCallbackData(data)
+}

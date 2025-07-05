@@ -1,33 +1,37 @@
+FROM bufbuild/buf:1.53.0 AS buf-gen
+WORKDIR /workspace
+
+COPY --from=root proto ./proto
+COPY --from=root buf.gen.yaml buf.yaml ./
+
+RUN buf generate --template buf.gen.yaml
+
+
 FROM golang:1.24.1-alpine3.21 AS builder
 
-COPY --from=root Makefile /
-COPY --from=root proto /proto
-WORKDIR /
-
-RUN apk add --no-cache make protoc
-
-COPY . /creator_bot/
-
-RUN make install-tools && make generate-creator
-
 WORKDIR /creator_bot
-RUN CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "-static"' -o /creator_bot/appbin cmd/main.go
 
-WORKDIR /
-RUN make generate-creator
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY --from=buf-gen /workspace/creator_bot/pb ./pb
+
+COPY . .
+
+
+RUN CGO_ENABLED=0 \
+    go build -ldflags='-s -w -extldflags "-static"' \
+    -o /creator_bot/appbin cmd/main.go
+
 
 FROM alpine:3.21
-RUN apk --update add ca-certificates && \
-    rm -rf /var/cache/apk/*
 
-RUN addgroup -g 101 appgroup && \
-    adduser -D -u 101 -G appgroup appuser
+RUN apk add --no-cache ca-certificates
+RUN addgroup -g 101 appgroup && adduser -D -u 101 -G appgroup appuser
 USER appuser
-
-COPY --from=builder /creator_bot /home/appuser/creator_bot
-
 WORKDIR /home/appuser/creator_bot
 
-EXPOSE 8080
+COPY --from=builder /creator_bot/appbin ./
 
+EXPOSE 8080
 CMD ["./appbin"]

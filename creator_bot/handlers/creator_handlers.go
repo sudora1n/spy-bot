@@ -7,7 +7,7 @@ import (
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
 	"ssuspy-creator-bot/keyboard"
-	pb "ssuspy-creator-bot/pb"
+	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/types"
 	"ssuspy-creator-bot/utils"
 
@@ -121,7 +121,7 @@ func (h *Handler) HandleToken(c *th.Context, update telego.Update) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	resp, err := h.grpcClient.AddBot(ctx, &pb.AddBotRequest{Id: botUser.ID})
+	resp, err := h.grpcClient.AddBot(ctx, &proto.AddBotRequest{Id: botUser.ID})
 	if err != nil {
 		return onCreatingBotFail(c, loc, internalUser.ID)
 	}
@@ -295,7 +295,7 @@ func (h *Handler) HandleBotRemove(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	resp, err := h.grpcClient.RemoveBot(c, &pb.RemoveBotRequest{Id: data.BotID})
+	resp, err := h.grpcClient.RemoveBot(c, &proto.RemoveBotRequest{Id: data.BotID})
 	if err != nil {
 		return onCreatingBotFail(c, loc, internalUser.ID)
 	}

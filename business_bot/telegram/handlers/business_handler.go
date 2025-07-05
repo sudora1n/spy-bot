@@ -14,13 +14,13 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"ssuspy-bot/callbacks"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/format"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/callbacks"
+	"ssuspy-bot/telegram/format"
+	"ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
-	"ssuspy-bot/utils"
 )
 
 func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
