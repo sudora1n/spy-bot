@@ -8,7 +8,7 @@ import (
 	"ssuspy-creator-bot/format"
 	"ssuspy-creator-bot/keyboard"
 	"ssuspy-creator-bot/locales"
-	pb "ssuspy-creator-bot/pb"
+	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/repository"
 	"ssuspy-creator-bot/types"
 
@@ -24,10 +24,10 @@ import (
 
 type Handler struct {
 	service    *repository.MongoRepository
-	grpcClient pb.BotClient
+	grpcClient proto.BotClient
 }
 
-func NewHandlerGroup(service *repository.MongoRepository, grpcClient pb.BotClient) *Handler {
+func NewHandlerGroup(service *repository.MongoRepository, grpcClient proto.BotClient) *Handler {
 	return &Handler{
 		service:    service,
 		grpcClient: grpcClient,

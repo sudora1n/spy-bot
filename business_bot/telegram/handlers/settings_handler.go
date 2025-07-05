@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"ssuspy-bot/callbacks"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/callbacks"
 	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/utils"
 

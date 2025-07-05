@@ -10,13 +10,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "ssuspy-bot/pb"
+	proto "ssuspy-bot/pb"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/manager"
 )
 
 type BotServer struct {
-	pb.UnimplementedBotServer
+	proto.UnimplementedBotServer
 	manager *manager.BotManager
 	repo    *repository.MongoRepository
 }
@@ -27,7 +27,7 @@ func NewBotServer(manager *manager.BotManager, repo *repository.MongoRepository)
 		repo:    repo,
 	}
 }
-func (s *BotServer) AddBot(ctx context.Context, req *pb.AddBotRequest) (*pb.AddBotReply, error) {
+func (s *BotServer) AddBot(ctx context.Context, req *proto.AddBotRequest) (*proto.AddBotReply, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "botID is required")
 	}
@@ -52,7 +52,7 @@ func (s *BotServer) AddBot(ctx context.Context, req *pb.AddBotRequest) (*pb.AddB
 	botInfo, err := botInstance.Bot.GetMe(ctx)
 	if err != nil {
 		log.Error().Err(err).Int64("botID", req.Id).Msg("failed to get bot info")
-		return &pb.AddBotReply{
+		return &proto.AddBotReply{
 			Id:       req.Id,
 			Username: "unknown",
 		}, nil
@@ -60,13 +60,13 @@ func (s *BotServer) AddBot(ctx context.Context, req *pb.AddBotRequest) (*pb.AddB
 
 	log.Info().Int64("botID", req.Id).Str("username", botInfo.Username).Msg("bot added successfully")
 
-	return &pb.AddBotReply{
+	return &proto.AddBotReply{
 		Id:       req.Id,
 		Username: botInfo.Username,
 	}, nil
 }
 
-func (s *BotServer) RemoveBot(ctx context.Context, req *pb.RemoveBotRequest) (*pb.RemoveBotReply, error) {
+func (s *BotServer) RemoveBot(ctx context.Context, req *proto.RemoveBotRequest) (*proto.RemoveBotReply, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "botID is required")
 	}
@@ -89,7 +89,7 @@ func (s *BotServer) RemoveBot(ctx context.Context, req *pb.RemoveBotRequest) (*p
 
 	log.Info().Int64("botID", req.Id).Str("username", username).Msg("bot removed successfully")
 
-	return &pb.RemoveBotReply{
+	return &proto.RemoveBotReply{
 		Id:       req.Id,
 		Username: username,
 	}, nil
@@ -104,7 +104,7 @@ func StartGRPCServer(port string, manager *manager.BotManager, repo *repository.
 	grpcServer := grpc.NewServer()
 	botServer := NewBotServer(manager, repo)
 
-	pb.RegisterBotServer(grpcServer, botServer)
+	proto.RegisterBotServer(grpcServer, botServer)
 
 	log.Info().Str("port", port).Msg("starting gRPC server")
 	return grpcServer.Serve(lis)

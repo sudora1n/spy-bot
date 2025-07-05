@@ -1,0 +1,23 @@
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.6
+    out: business_bot/pb
+    opt:
+      - paths=source_relative
+      - Mbot.proto=./proto
+  - remote: buf.build/grpc/go:v1.5.1
+    out: business_bot/pb
+    opt:
+      - paths=source_relative
+      - Mbot.proto=./proto
+
+  - remote: buf.build/protocolbuffers/go:v1.36.6
+    out: creator_bot/pb
+    opt:
+      - paths=source_relative
+      - Mbot.proto=./proto
+  - remote: buf.build/grpc/go:v1.5.1
+    out: creator_bot/pb
+    opt:
+      - paths=source_relative
+      - Mbot.proto=./proto

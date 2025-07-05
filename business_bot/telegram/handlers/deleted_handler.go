@@ -13,9 +13,9 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog"
 
-	"ssuspy-bot/callbacks"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/callbacks"
 	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/utils"

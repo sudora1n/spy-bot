@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"ssuspy-bot/callbacks"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/telegram/callbacks"
 	"ssuspy-bot/telegram/utils"
 
 	"github.com/mymmrac/telego"

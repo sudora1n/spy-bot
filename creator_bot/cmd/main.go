@@ -22,7 +22,7 @@ import (
 	"ssuspy-creator-bot/handlers"
 	"ssuspy-creator-bot/locales"
 	"ssuspy-creator-bot/middleware"
-	pb "ssuspy-creator-bot/pb"
+	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/redis"
 	"ssuspy-creator-bot/repository"
 	"ssuspy-creator-bot/utils"
@@ -76,7 +76,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to GRPC")
 	}
-	grpcClient := pb.NewBotClient(grpcConn)
+	grpcClient := proto.NewBotClient(grpcConn)
 
 	bot, err := telego.NewBot(cfg.TelegramBot.Token, telego.WithAPIServer(cfg.TelegramBot.ApiURL))
 	if err != nil {
