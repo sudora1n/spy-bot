@@ -62,7 +62,13 @@ func (r *MongoRepository) UpdateUser(
 	update := bson.M{
 		"$set": setFields,
 		"$setOnInsert": bson.M{
-			"created_at":    time.Now().Unix(),
+			"created_at": time.Now().Unix(),
+			"settings": bson.M{
+				"show_my_edits":        false,
+				"show_partner_edits":   true,
+				"show_my_deleted":      true,
+				"show_partner_deleted": true,
+			},
 			"language_code": languageCode,
 		},
 	}
