@@ -112,15 +112,21 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	rights := c.Value("rights").(*telego.BusinessBotRights)
 	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
 
+	var text string
+	parts := strings.SplitN(message.Text, " ", 2)
+	if len(parts) > 0 {
+		text = parts[0]
+	}
+
 	var (
 		repeat  = 5
 		command = LOVE_COMMAND
 		frames  = consts.JustLove
 	)
 	switch {
-	case strings.HasSuffix(message.Text, "ua"):
+	case strings.HasSuffix(text, "ua"):
 		command = LOVEUA_COMMAND
-	case strings.HasSuffix(message.Text, "ru"):
+	case strings.HasSuffix(text, "ru"):
 		repeat = 3
 		command = LOVERU_COMMAND
 	}
