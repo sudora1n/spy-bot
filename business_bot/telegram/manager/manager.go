@@ -405,21 +405,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 			th.AnyBusinessMessage(),
 		)
 
-		loveuaRegex := regexp.MustCompile(`^\s*\.loveua\b`)
-		userCommands.Handle(
-			utils.WithProm("handleUserLoveUa", handlerGroup.HandleUserLoveUa),
-			utils.BusinessMessageMatches(loveuaRegex),
-			th.AnyBusinessMessage(),
-		)
-
-		loveruRegex := regexp.MustCompile(`^\s*\.loveru\b`)
-		userCommands.Handle(
-			utils.WithProm("handleUserLoveRu", handlerGroup.HandleUserLoveRu),
-			utils.BusinessMessageMatches(loveruRegex),
-			th.AnyBusinessMessage(),
-		)
-
-		loveRegex := regexp.MustCompile(`^\s*\.love\b`)
+		loveRegex := regexp.MustCompile(`^\s*\.love(ua|ru)?\b`)
 		userCommands.Handle(
 			utils.WithProm("handleUserLove", handlerGroup.HandleUserLove),
 			utils.BusinessMessageMatches(loveRegex),

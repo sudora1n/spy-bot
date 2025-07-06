@@ -15,6 +15,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const (
+	LOVE_COMMAND   = ".love"
+	LOVEUA_COMMAND = ".loveua"
+	LOVERU_COMMAND = ".loveru"
+)
+
 func (h *Handler) HandleUserHelp(c *th.Context, update telego.Update) error {
 	message := update.BusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
@@ -99,70 +105,6 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 	return nil
 }
 
-func (h *Handler) HandleUserLoveUa(c *th.Context, update telego.Update) error {
-	message := update.BusinessMessage
-	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
-	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
-
-	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, iUser.User.ID, ".loveua")
-	}
-
-	for range 5 {
-		for _, frame := range consts.UA {
-			_, err := c.Bot().EditMessageText(
-				c,
-				tu.EditMessageText(
-					tu.ID(message.Chat.ID),
-					message.MessageID,
-					frame,
-				).WithBusinessConnectionID(connection.ID),
-			)
-			if err != nil {
-				return err
-			}
-
-			time.Sleep(400 * time.Millisecond)
-		}
-	}
-
-	return nil
-}
-
-func (h *Handler) HandleUserLoveRu(c *th.Context, update telego.Update) error {
-	message := update.BusinessMessage
-	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
-	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
-
-	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, iUser.User.ID, ".loveru")
-	}
-
-	for range 3 {
-		for _, frame := range consts.RU {
-			_, err := c.Bot().EditMessageText(
-				c,
-				tu.EditMessageText(
-					tu.ID(message.Chat.ID),
-					message.MessageID,
-					frame,
-				).WithBusinessConnectionID(connection.ID),
-			)
-			if err != nil {
-				return err
-			}
-
-			time.Sleep(400 * time.Millisecond)
-		}
-	}
-
-	return nil
-}
-
 func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	message := update.BusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
@@ -170,12 +112,25 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	rights := c.Value("rights").(*telego.BusinessBotRights)
 	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
 
-	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, iUser.User.ID, ".love")
+	var (
+		repeat  = 5
+		command = LOVE_COMMAND
+		frames  = consts.JustLove
+	)
+	switch {
+	case strings.HasSuffix(message.Text, "ua"):
+		command = LOVEUA_COMMAND
+	case strings.HasSuffix(message.Text, "ru"):
+		repeat = 3
+		command = LOVERU_COMMAND
 	}
 
-	for range 5 {
-		for _, frame := range consts.JustLove {
+	if !rights.CanReply {
+		return utils.OnCantReply(c, loc, iUser.User.ID, command)
+	}
+
+	for range repeat {
+		for _, frame := range frames {
 			_, err := c.Bot().EditMessageText(
 				c,
 				tu.EditMessageText(
