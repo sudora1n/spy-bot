@@ -3,13 +3,14 @@ package handlers
 import (
 	"context"
 	"fmt"
+
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
-	"ssuspy-creator-bot/format"
-	"ssuspy-creator-bot/keyboard"
-	"ssuspy-creator-bot/locales"
 	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/repository"
+	"ssuspy-creator-bot/telegram/format"
+	"ssuspy-creator-bot/telegram/keyboard"
+	"ssuspy-creator-bot/telegram/locales"
 	"ssuspy-creator-bot/types"
 
 	"strings"

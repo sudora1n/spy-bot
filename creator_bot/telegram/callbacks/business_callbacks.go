@@ -2,9 +2,10 @@ package callbacks
 
 import (
 	"fmt"
-	"ssuspy-creator-bot/types"
 	"strconv"
 	"strings"
+
+	"ssuspy-creator-bot/types"
 )
 
 func NewHandleBotItemFromString(s string) (data *types.HandleBotItem, err error) {

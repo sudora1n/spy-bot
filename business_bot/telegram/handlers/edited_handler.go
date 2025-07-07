@@ -13,9 +13,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"ssuspy-bot/consts"
-	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
+	"ssuspy-common/telegram/format"
 )
 
 func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {

@@ -3,13 +3,14 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"ssuspy-creator-bot/callbacks"
+
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
-	"ssuspy-creator-bot/keyboard"
 	proto "ssuspy-creator-bot/pb"
+	"ssuspy-creator-bot/telegram/callbacks"
+	"ssuspy-creator-bot/telegram/keyboard"
+	"ssuspy-creator-bot/telegram/utils"
 	"ssuspy-creator-bot/types"
-	"ssuspy-creator-bot/utils"
 
 	"time"
 

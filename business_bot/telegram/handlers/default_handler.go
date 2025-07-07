@@ -6,10 +6,10 @@ import (
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/types"
+	"ssuspy-common/telegram/format"
 
 	"strings"
 

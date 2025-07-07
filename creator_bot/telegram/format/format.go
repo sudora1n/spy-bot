@@ -3,8 +3,9 @@ package format
 import (
 	"fmt"
 	"html"
-	"ssuspy-creator-bot/consts"
 	"unicode/utf8"
+
+	"ssuspy-creator-bot/consts"
 )
 
 func TruncateText(text string, maxLength int) (result string) {

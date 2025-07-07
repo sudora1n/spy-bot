@@ -1,0 +1,7 @@
+go 1.24.4
+
+use (
+	./business_bot
+	./common
+	./creator_bot
+)

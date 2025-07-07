@@ -7,10 +7,10 @@ import (
 	"ssuspy-bot/consts"
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
-	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/telegram/manager"
 	"ssuspy-bot/telegram/utils"
+	"ssuspy-common/telegram/format"
 	"time"
 
 	"github.com/dustin/go-humanize"

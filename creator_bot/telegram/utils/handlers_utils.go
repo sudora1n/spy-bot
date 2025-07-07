@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"ssuspy-creator-bot/prom"
 	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+
+	"ssuspy-creator-bot/prom"
 )
 
 func WithProm(name string, handler th.Handler) th.Handler {

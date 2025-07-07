@@ -19,13 +19,13 @@ import (
 
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
-	"ssuspy-creator-bot/handlers"
-	"ssuspy-creator-bot/locales"
-	"ssuspy-creator-bot/middleware"
 	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/redis"
 	"ssuspy-creator-bot/repository"
-	"ssuspy-creator-bot/utils"
+	"ssuspy-creator-bot/telegram/handlers"
+	"ssuspy-creator-bot/telegram/locales"
+	"ssuspy-creator-bot/telegram/middleware"
+	"ssuspy-creator-bot/telegram/utils"
 )
 
 func main() {

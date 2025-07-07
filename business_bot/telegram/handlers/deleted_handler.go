@@ -16,10 +16,10 @@ import (
 	"ssuspy-bot/consts"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/callbacks"
-	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
+	"ssuspy-common/telegram/format"
 )
 
 func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {

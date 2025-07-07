@@ -5,7 +5,6 @@ go 1.24.3
 replace github.com/mymmrac/telego => github.com/sudora1n/telego v0.0.0-20250530200435-91a69d7bb91c
 
 require (
-	github.com/JohannesKaufmann/html-to-markdown/v2 v2.3.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/uuid v1.6.0
 	github.com/mymmrac/telego v1.1.1
@@ -21,7 +20,6 @@ require (
 )
 
 require (
-	github.com/JohannesKaufmann/dom v0.2.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect

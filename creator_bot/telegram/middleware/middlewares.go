@@ -3,12 +3,13 @@ package middleware
 import (
 	"context"
 	"errors"
-	"ssuspy-creator-bot/locales"
+	"time"
+
 	"ssuspy-creator-bot/prom"
 	"ssuspy-creator-bot/redis"
 	"ssuspy-creator-bot/repository"
+	"ssuspy-creator-bot/telegram/locales"
 	"ssuspy-creator-bot/types"
-	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"

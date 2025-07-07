@@ -18,9 +18,9 @@ import (
 	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/callbacks"
-	"ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
+	"ssuspy-common/telegram/format"
 )
 
 func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {

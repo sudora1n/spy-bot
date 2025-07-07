@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"runtime/debug"
+
 	"ssuspy-creator-bot/prom"
 
 	"github.com/rs/zerolog/log"
