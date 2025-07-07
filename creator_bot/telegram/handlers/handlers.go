@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"ssuspy-common/telegram/format"
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
 	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/repository"
-	"ssuspy-creator-bot/telegram/format"
 	"ssuspy-creator-bot/telegram/keyboard"
 	"ssuspy-creator-bot/telegram/locales"
 	"ssuspy-creator-bot/types"
