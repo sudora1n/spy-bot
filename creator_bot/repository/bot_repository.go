@@ -53,39 +53,41 @@ func (r *MongoRepository) FindBotWithUserCounts(
 			{Key: "let", Value: bson.D{{Key: "botId", Value: "$_id"}}},
 			{Key: "pipeline", Value: mongo.Pipeline{
 				bson.D{{Key: "$match", Value: bson.D{
-					{Key: "$expr", Value: bson.D{
-						{Key: "$eq", Value: bson.A{"$bot_id", "$$botId"}},
-					}},
+					{Key: "$expr", Value: bson.D{{Key: "$eq", Value: bson.A{"$bot_id", "$$botId"}}}},
 				}}},
-			}},
-			{Key: "as", Value: "users"},
-		}}},
-		bson.D{{Key: "$addFields", Value: bson.D{
-			{Key: "totalUsers", Value: bson.D{{Key: "$size", Value: "$users"}}},
-			{Key: "activeUsers", Value: bson.D{{Key: "$size", Value: bson.D{
-				{Key: "$filter", Value: bson.D{
-					{Key: "input", Value: "$users"},
-					{Key: "as", Value: "u"},
-					{Key: "cond", Value: bson.D{
-						{Key: "$gt", Value: bson.A{
-							bson.D{{Key: "$size", Value: bson.D{
-								{Key: "$filter", Value: bson.D{
-									{Key: "input", Value: bson.D{
-										{Key: "$ifNull", Value: bson.A{"$$u.business_connections", bson.A{}}},
+				bson.D{{Key: "$group", Value: bson.D{
+					{Key: "_id", Value: nil},
+					{Key: "totalUsers", Value: bson.D{{Key: "$sum", Value: 1}}},
+					{Key: "totalBusinessUsers", Value: bson.D{{Key: "$sum", Value: bson.D{
+						{Key: "$cond", Value: bson.A{
+							// условие: есть хоть одно enabled=true в business_connections
+							bson.D{{Key: "$gt", Value: bson.A{
+								bson.D{{Key: "$size", Value: bson.D{
+									{Key: "$filter", Value: bson.D{
+										{Key: "input", Value: bson.D{{Key: "$ifNull", Value: bson.A{"$business_connections", bson.A{}}}}},
+										{Key: "as", Value: "bc"},
+										{Key: "cond", Value: bson.D{{Key: "$eq", Value: bson.A{"$$bc.enabled", true}}}},
 									}},
-									{Key: "as", Value: "bc"},
-									{Key: "cond", Value: bson.D{
-										{Key: "$eq", Value: bson.A{"$$bc.enabled", true}},
-									}},
-								}},
+								}}},
+								0,
 							}}},
+							1,
 							0,
 						}},
-					}},
-				}},
-			}}}},
+					}}}},
+				}}},
+			}},
+			{Key: "as", Value: "counts"},
 		}}},
-		bson.D{{Key: "$project", Value: bson.D{{Key: "users", Value: 0}}}},
+
+		bson.D{{Key: "$unwind", Value: "$counts"}},
+		bson.D{{Key: "$addFields", Value: bson.D{
+			{Key: "totalUsers", Value: "$counts.totalUsers"},
+			{Key: "totalBusinessUsers", Value: "$counts.totalBusinessUsers"},
+		}}},
+		bson.D{{Key: "$project", Value: bson.D{
+			{Key: "counts", Value: 0},
+		}}},
 	}
 
 	cursor, err := r.bots.Aggregate(ctx, pipeline)
