@@ -92,12 +92,10 @@ func (pmc *PaidMediaCodec) DecodeValue(dc bsoncodec.DecodeContext, vr bsonrw.Val
 	if !val.CanSet() {
 		return errors.New("value is not settable")
 	}
-	// Исправлено: bsontype.Null -> bson.TypeNull
 	if vr.Type() == bson.TypeNull {
 		val.Set(reflect.Zero(val.Type()))
 		return vr.ReadNull()
 	}
-	// Исправлено: bsontype.EmbeddedDocument -> bson.TypeEmbeddedDocument
 	if vr.Type() != bson.TypeEmbeddedDocument {
 		return errors.New("expected document for PaidMedia")
 	}
@@ -135,17 +133,17 @@ func (pmc *PaidMediaCodec) DecodeValue(dc bsoncodec.DecodeContext, vr bsonrw.Val
 
 			switch mediaType {
 			case telego.PaidMediaTypePreview:
-				var preview telego.PaidMediaPreview
-				concreteMedia = &preview
-				valueToDecode = reflect.ValueOf(&preview)
+				preview := &telego.PaidMediaPreview{}
+				concreteMedia = preview
+				valueToDecode = reflect.ValueOf(preview).Elem()
 			case telego.PaidMediaTypePhoto:
-				var photo telego.PaidMediaPhoto
-				concreteMedia = &photo
-				valueToDecode = reflect.ValueOf(&photo)
+				photo := &telego.PaidMediaPhoto{}
+				concreteMedia = photo
+				valueToDecode = reflect.ValueOf(photo).Elem()
 			case telego.PaidMediaTypeVideo:
-				var video telego.PaidMediaVideo
-				concreteMedia = &video
-				valueToDecode = reflect.ValueOf(&video)
+				video := &telego.PaidMediaVideo{}
+				concreteMedia = video
+				valueToDecode = reflect.ValueOf(video).Elem()
 			default:
 				if errSkip := vrElementValue.Skip(); errSkip != nil {
 					return errSkip
@@ -262,12 +260,10 @@ func (moc *MessageOriginCodec) DecodeValue(dc bsoncodec.DecodeContext, vr bsonrw
 	if !val.CanSet() {
 		return errors.New("value is not settable")
 	}
-	// Исправлено: bsontype.Null -> bson.TypeNull
 	if vr.Type() == bson.TypeNull {
 		val.Set(reflect.Zero(val.Type()))
 		return vr.ReadNull()
 	}
-	// Исправлено: bsontype.EmbeddedDocument -> bson.TypeEmbeddedDocument
 	if vr.Type() != bson.TypeEmbeddedDocument {
 		return errors.New("expected document for MessageOrigin")
 	}
@@ -305,21 +301,21 @@ func (moc *MessageOriginCodec) DecodeValue(dc bsoncodec.DecodeContext, vr bsonrw
 
 			switch originType {
 			case telego.OriginTypeUser:
-				var user telego.MessageOriginUser
-				concreteOrigin = &user
-				valueToDecode = reflect.ValueOf(&user)
+				user := &telego.MessageOriginUser{}
+				concreteOrigin = user
+				valueToDecode = reflect.ValueOf(user).Elem()
 			case telego.OriginTypeHiddenUser:
-				var hiddenUser telego.MessageOriginHiddenUser
-				concreteOrigin = &hiddenUser
-				valueToDecode = reflect.ValueOf(&hiddenUser)
+				hiddenUser := &telego.MessageOriginHiddenUser{}
+				concreteOrigin = hiddenUser
+				valueToDecode = reflect.ValueOf(hiddenUser).Elem()
 			case telego.OriginTypeChat:
-				var chat telego.MessageOriginChat
-				concreteOrigin = &chat
-				valueToDecode = reflect.ValueOf(&chat)
+				chat := &telego.MessageOriginChat{}
+				concreteOrigin = chat
+				valueToDecode = reflect.ValueOf(chat).Elem()
 			case telego.OriginTypeChannel:
-				var channel telego.MessageOriginChannel
-				concreteOrigin = &channel
-				valueToDecode = reflect.ValueOf(&channel)
+				channel := &telego.MessageOriginChannel{}
+				concreteOrigin = channel
+				valueToDecode = reflect.ValueOf(channel).Elem()
 			default:
 				if errSkip := vrElementValue.Skip(); errSkip != nil {
 					return errSkip
