@@ -398,7 +398,8 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 			th.AnyBusinessMessage(),
 		)
 
-		animRegex := regexp.MustCompile(`^\s*\.(a|anim)\b`)
+		// вторая "а" - кириллическая
+		animRegex := regexp.MustCompile(`^\s*\.(a|а|anim)\s`)
 		userCommands.Handle(
 			utils.WithProm("handleUserAnimation", handlerGroup.HandleUserAnimation),
 			utils.BusinessMessageMatches(animRegex),
