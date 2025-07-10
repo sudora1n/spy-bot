@@ -13,6 +13,7 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -117,18 +118,18 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	if len(parts) > 0 {
 		text = parts[0]
 	}
+	log.Debug().Strs("parts", parts).Str("text", text).Msg("text part's of love handler")
 
 	var (
 		repeat  = 5
 		command = LOVE_COMMAND
 		frames  = consts.JustLove
 	)
-	switch {
-	case strings.HasSuffix(text, "ua"):
-		command = LOVEUA_COMMAND
-	case strings.HasSuffix(text, "ru"):
-		repeat = 3
-		command = LOVERU_COMMAND
+	switch text {
+	case LOVEUA_COMMAND:
+		command, frames = LOVEUA_COMMAND, consts.UA
+	case LOVERU_COMMAND:
+		command, frames, repeat = LOVERU_COMMAND, consts.RU, 3
 	}
 
 	if !rights.CanReply {
