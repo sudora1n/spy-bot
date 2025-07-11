@@ -1,17 +1,19 @@
 syntax = "proto3";
 
-package pb;
+package manager.v1;
 
-service Bot {
-    rpc AddBot (AddBotRequest) returns (AddBotReply);
+option go_package = "ssuspy-proto/gen/manager/v1;managerv1";
+
+service ManagerService {
+    rpc CreateBot (CreateBotRequest) returns (CreateBotReply);
     rpc RemoveBot (RemoveBotRequest) returns (RemoveBotReply);
 }
 
-message AddBotRequest {
+message CreateBotRequest {
     int64 id = 1;
 }
 
-message AddBotReply {
+message CreateBotReply {
     int64 id = 1;
     string username = 2;
 }

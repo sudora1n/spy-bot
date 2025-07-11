@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package business_data.v1;
+
+option go_package = "ssuspy-proto/gen/business_data/v1;business_datav1";

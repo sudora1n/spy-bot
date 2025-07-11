@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package internal_bots.v1;
+
+option go_package = "ssuspy-proto/gen/internal_bots/v1;internal_botsv1";
+
+import "types/bot.proto";
+import "google/protobuf/timestamp.proto";
+
+service BotsService {
+  rpc GetBotByID(GetBotByIDRequest) returns (GetBotByIDResponse);
+  rpc GetBots(GetBotsRequest) returns (GetBotsResponse);
+}
+
+message GetBotByIDRequest {
+  int64 bot_id = 1;
+}
+
+message GetBotByIDResponse {
+  shared.types.Bot bot = 1;
+}
+
+message GetBotsRequest {}
+
+message GetBotsResponse {
+  repeated shared.types.Bot bots = 1;
+}

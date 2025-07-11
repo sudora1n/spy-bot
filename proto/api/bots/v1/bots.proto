@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package bots.v1;
+
+option go_package = "ssuspy-proto/gen/bots/v1;botsv1";
+
+import "types/bot.proto";
+
+service BotsService {
+  rpc GetBots(GetBotsRequest) returns (GetBotsResponse);
+
+  rpc GetBotStat(GetBotStatRequest) returns (GetBotStatResponse);
+  rpc GetBotByTokenHash(GetBotByTokenHashRequest) returns (GetBotByTokenHashResponse);
+
+  rpc AddBot(AddBotRequest) returns (AddBotResponse);
+  rpc RemoveBot(RemoveBotRequest) returns (RemoveBotResponse);
+}
+
+message BotStat {
+  shared.types.Bot bot = 1;
+  int64 total_users = 2;
+  int64 total_business_users = 3;
+}
+
+message GetBotsRequest {
+  int64 user_id = 1;
+}
+
+message GetBotsResponse {
+  repeated shared.types.Bot bots = 1;
+}
+
+message GetBotStatRequest {
+  int64 user_id = 1;
+  int64 bot_id = 2;
+}
+
+message GetBotStatResponse {
+  BotStat bot_stat = 1;
+}
+
+message GetBotByTokenHashRequest {
+  int64 user_id = 1;
+  string token_hash = 2;
+}
+
+message GetBotByTokenHashResponse {
+  shared.types.Bot bot = 1;
+}
+
+message AddBotRequest {
+  int64 user_id = 1;
+  string token = 2;
+}
+
+message AddBotResponse {}
+
+message RemoveBotRequest {
+  int64 user_id = 1;
+  int64 bot_id = 2;
+}
+
+message RemoveBotResponse {}

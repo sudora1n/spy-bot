@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package users.v1;
+
+option go_package = "ssuspy-proto/gen/users/v1;usersv1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+service UsersService {
+  rpc UpdateUserLanguage(UpdateUserLanguageRequest) returns (UpdateUserLanguageResponse);
+  rpc UpdateBotUserConnection(UpdateBotUserConnectionRequest) returns (UpdateBotUserConnectionResponse);
+  rpc UpdateBotUserSendMessages(UpdateBotUserSendMessagesRequest) returns (UpdateBotUserSendMessagesResponse);
+
+  rpc GetIUser(GetIUserRequest) returns (GetIUserResponse);
+  rpc CreateIUser(CreateIUserRequest) returns (CreateIUserResponse);
+
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message UserSettings {
+  bool show_my_edits = 1;
+  bool show_partner_edits = 2;
+  bool show_my_deleted = 3;
+  bool show_partner_deleted = 4;
+}
+
+message User {
+  int64 id = 1;
+  string language_code = 2;
+  UserSettings settings = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message BotUserBusinessConnection {
+  string id = 1;
+  google.protobuf.Struct rights = 2;
+  bool enabled = 3;
+  int64 unixtime = 4;
+}
+
+message BotUser {
+  int64 internal_id = 1;
+  repeated BotUserBusinessConnection business_connections = 2;
+  bool send_messages = 3;
+  int64 user_id = 4;
+  int64 bot_id = 5;
+  int64 created_at = 6;
+}
+
+message UpdateUserLanguageRequest {
+  int64 user_id = 1;
+  string language_code = 2;
+}
+
+message UpdateUserLanguageResponse {}
+
+message UpdateBotUserConnectionRequest {
+  int64 user_id = 1;
+  google.protobuf.Struct business_connection = 2;
+  int64 bot_id = 3;
+}
+
+message UpdateBotUserConnectionResponse {
+  bool is_updated = 1;
+}
+
+message UpdateBotUserSendMessagesRequest {
+  int64 user_id = 1;
+  bool send_messages = 2;
+  int64 bot_id = 3;
+}
+
+message UpdateBotUserSendMessagesResponse {}
+
+message GetIUserRequest {
+  oneof id {
+    int64 user_id = 1;
+    string business_connection_id = 2;
+  }
+  int64 bot_id = 3;
+}
+
+message GetIUserResponse {
+  User user = 1;
+  BotUser bot_user = 2;
+}
+
+message CreateIUserRequest {
+  int64 user_id = 1;
+  int64 bot_id = 2;
+  optional string language_code = 3;
+}
+
+message CreateIUserResponse {
+  User user = 1;
+  BotUser bot_user = 2;
+}
+
+message CreateUserRequest {
+  int64 user_id = 1;
+  optional string language_code = 2;
+}
+
+message CreateUserResponse {}
+
+message GetUserRequest {
+  int64 user_id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
