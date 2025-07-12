@@ -27,7 +27,7 @@ func NewBotServer(manager *manager.BotManager, repo *repository.MongoRepository)
 		repo:    repo,
 	}
 }
-func (s *BotServer) AddBot(ctx context.Context, req *manager_proto.CreateBotRequest) (*manager_proto.CreateBotReply, error) {
+func (s *BotServer) AddBot(ctx context.Context, req *manager_proto.CreateBotRequest) (*manager_proto.CreateBotResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "botID is required")
 	}
@@ -52,7 +52,7 @@ func (s *BotServer) AddBot(ctx context.Context, req *manager_proto.CreateBotRequ
 	botInfo, err := botInstance.Bot.GetMe(ctx)
 	if err != nil {
 		log.Error().Err(err).Int64("botID", req.Id).Msg("failed to get bot info")
-		return &manager_proto.CreateBotReply{
+		return &manager_proto.CreateBotResponse{
 			Id:       req.Id,
 			Username: "unknown",
 		}, nil
@@ -60,13 +60,13 @@ func (s *BotServer) AddBot(ctx context.Context, req *manager_proto.CreateBotRequ
 
 	log.Info().Int64("botID", req.Id).Str("username", botInfo.Username).Msg("bot added successfully")
 
-	return &manager_proto.CreateBotReply{
+	return &manager_proto.CreateBotResponse{
 		Id:       req.Id,
 		Username: botInfo.Username,
 	}, nil
 }
 
-func (s *BotServer) RemoveBot(ctx context.Context, req *manager_proto.RemoveBotRequest) (*manager_proto.RemoveBotReply, error) {
+func (s *BotServer) RemoveBot(ctx context.Context, req *manager_proto.RemoveBotRequest) (*manager_proto.RemoveBotResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "botID is required")
 	}
@@ -89,7 +89,7 @@ func (s *BotServer) RemoveBot(ctx context.Context, req *manager_proto.RemoveBotR
 
 	log.Info().Int64("botID", req.Id).Str("username", username).Msg("bot removed successfully")
 
-	return &manager_proto.RemoveBotReply{
+	return &manager_proto.RemoveBotResponse{
 		Id:       req.Id,
 		Username: username,
 	}, nil
