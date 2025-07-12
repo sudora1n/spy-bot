@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	connectrpc.com/connect v1.18.1
+	github.com/go-chi/chi/v5 v5.2.2
 	golang.org/x/net v0.40.0
 )
 

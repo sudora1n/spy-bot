@@ -517,3 +517,63 @@ func (r *MongoRepository) ListIUsers(
 
 	return results, nil
 }
+
+func (r *MongoRepository) UpdateUser(
+	ctx context.Context,
+	userId int64,
+	languageCode string,
+	sendMessage bool,
+) (new bool, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": userId}
+
+	setFields := bson.M{}
+	if sendMessage {
+		setFields["creator_send_messages"] = true
+	}
+
+	update := bson.M{
+		"$set": setFields,
+		"$setOnInsert": bson.M{
+			"created_at": time.Now().Unix(),
+			"settings": bson.M{
+				"show_my_edits":        false,
+				"show_partner_edits":   true,
+				"show_my_deleted":      true,
+				"show_partner_deleted": true,
+			},
+			"language_code": languageCode,
+		},
+	}
+
+	res, err := r.users.UpdateOne(
+		ctx,
+		filter,
+		update,
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return false, err
+	}
+
+	new = (res.MatchedCount == 0 && res.UpsertedCount == 1)
+	return new, nil
+}
+
+func (r *MongoRepository) FindUser(
+	ctx context.Context,
+	userId int64,
+) (*User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": userId}
+
+	var user User
+	if err := r.users.FindOne(ctx, filter).Decode(&user); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

@@ -19,9 +19,9 @@ type Bot struct {
 }
 
 type FindBotWithUserCountsResult struct {
-	Bot                Bot `bson:"bot"`
-	TotalUsers         int `bson:"totalUsers"`
-	TotalBusinessUsers int `bson:"totalBusinessUsers"`
+	Bot                Bot   `bson:"bot"`
+	TotalUsers         int64 `bson:"totalUsers"`
+	TotalBusinessUsers int64 `bson:"totalBusinessUsers"`
 }
 
 func (r *MongoRepository) LenBots(
@@ -86,6 +86,9 @@ func (r *MongoRepository) FindBotWithUserCounts(
 			{Key: "totalBusinessUsers", Value: "$counts.totalBusinessUsers"},
 		}}},
 		bson.D{{Key: "$project", Value: bson.D{
+			{Key: "bot", Value: "$$ROOT"},
+			{Key: "totalUsers", Value: "$totalUsers"},
+			{Key: "totalBusinessUsers", Value: "$totalBusinessUsers"},
 			{Key: "counts", Value: 0},
 		}}},
 	}
