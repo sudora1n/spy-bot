@@ -65,7 +65,7 @@ func (x *CreateBotRequest) GetId() int64 {
 	return 0
 }
 
-type CreateBotReply struct {
+type CreateBotResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
@@ -73,20 +73,20 @@ type CreateBotReply struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateBotReply) Reset() {
-	*x = CreateBotReply{}
+func (x *CreateBotResponse) Reset() {
+	*x = CreateBotResponse{}
 	mi := &file_manager_v1_manager_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateBotReply) String() string {
+func (x *CreateBotResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateBotReply) ProtoMessage() {}
+func (*CreateBotResponse) ProtoMessage() {}
 
-func (x *CreateBotReply) ProtoReflect() protoreflect.Message {
+func (x *CreateBotResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_manager_v1_manager_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -98,19 +98,19 @@ func (x *CreateBotReply) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateBotReply.ProtoReflect.Descriptor instead.
-func (*CreateBotReply) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateBotResponse.ProtoReflect.Descriptor instead.
+func (*CreateBotResponse) Descriptor() ([]byte, []int) {
 	return file_manager_v1_manager_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *CreateBotReply) GetId() int64 {
+func (x *CreateBotResponse) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *CreateBotReply) GetUsername() string {
+func (x *CreateBotResponse) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
@@ -161,7 +161,7 @@ func (x *RemoveBotRequest) GetId() int64 {
 	return 0
 }
 
-type RemoveBotReply struct {
+type RemoveBotResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
@@ -169,20 +169,20 @@ type RemoveBotReply struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RemoveBotReply) Reset() {
-	*x = RemoveBotReply{}
+func (x *RemoveBotResponse) Reset() {
+	*x = RemoveBotResponse{}
 	mi := &file_manager_v1_manager_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RemoveBotReply) String() string {
+func (x *RemoveBotResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RemoveBotReply) ProtoMessage() {}
+func (*RemoveBotResponse) ProtoMessage() {}
 
-func (x *RemoveBotReply) ProtoReflect() protoreflect.Message {
+func (x *RemoveBotResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_manager_v1_manager_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -194,19 +194,19 @@ func (x *RemoveBotReply) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RemoveBotReply.ProtoReflect.Descriptor instead.
-func (*RemoveBotReply) Descriptor() ([]byte, []int) {
+// Deprecated: Use RemoveBotResponse.ProtoReflect.Descriptor instead.
+func (*RemoveBotResponse) Descriptor() ([]byte, []int) {
 	return file_manager_v1_manager_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *RemoveBotReply) GetId() int64 {
+func (x *RemoveBotResponse) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *RemoveBotReply) GetUsername() string {
+func (x *RemoveBotResponse) GetUsername() string {
 	if x != nil {
 		return x.Username
 	}
@@ -220,18 +220,18 @@ const file_manager_v1_manager_proto_rawDesc = "" +
 	"\x18manager/v1/manager.proto\x12\n" +
 	"manager.v1\"\"\n" +
 	"\x10CreateBotRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"<\n" +
-	"\x0eCreateBotReply\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"?\n" +
+	"\x11CreateBotResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\"\"\n" +
 	"\x10RemoveBotRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"<\n" +
-	"\x0eRemoveBotReply\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"?\n" +
+	"\x11RemoveBotResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername2\x9e\x01\n" +
-	"\x0eManagerService\x12E\n" +
-	"\tCreateBot\x12\x1c.manager.v1.CreateBotRequest\x1a\x1a.manager.v1.CreateBotReply\x12E\n" +
-	"\tRemoveBot\x12\x1c.manager.v1.RemoveBotRequest\x1a\x1a.manager.v1.RemoveBotReplyB'Z%ssuspy-proto/gen/manager/v1;managerv1b\x06proto3"
+	"\busername\x18\x02 \x01(\tR\busername2\xa4\x01\n" +
+	"\x0eManagerService\x12H\n" +
+	"\tCreateBot\x12\x1c.manager.v1.CreateBotRequest\x1a\x1d.manager.v1.CreateBotResponse\x12H\n" +
+	"\tRemoveBot\x12\x1c.manager.v1.RemoveBotRequest\x1a\x1d.manager.v1.RemoveBotResponseB'Z%ssuspy-proto/gen/manager/v1;managerv1b\x06proto3"
 
 var (
 	file_manager_v1_manager_proto_rawDescOnce sync.Once
@@ -247,16 +247,16 @@ func file_manager_v1_manager_proto_rawDescGZIP() []byte {
 
 var file_manager_v1_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_manager_v1_manager_proto_goTypes = []any{
-	(*CreateBotRequest)(nil), // 0: manager.v1.CreateBotRequest
-	(*CreateBotReply)(nil),   // 1: manager.v1.CreateBotReply
-	(*RemoveBotRequest)(nil), // 2: manager.v1.RemoveBotRequest
-	(*RemoveBotReply)(nil),   // 3: manager.v1.RemoveBotReply
+	(*CreateBotRequest)(nil),  // 0: manager.v1.CreateBotRequest
+	(*CreateBotResponse)(nil), // 1: manager.v1.CreateBotResponse
+	(*RemoveBotRequest)(nil),  // 2: manager.v1.RemoveBotRequest
+	(*RemoveBotResponse)(nil), // 3: manager.v1.RemoveBotResponse
 }
 var file_manager_v1_manager_proto_depIdxs = []int32{
 	0, // 0: manager.v1.ManagerService.CreateBot:input_type -> manager.v1.CreateBotRequest
 	2, // 1: manager.v1.ManagerService.RemoveBot:input_type -> manager.v1.RemoveBotRequest
-	1, // 2: manager.v1.ManagerService.CreateBot:output_type -> manager.v1.CreateBotReply
-	3, // 3: manager.v1.ManagerService.RemoveBot:output_type -> manager.v1.RemoveBotReply
+	1, // 2: manager.v1.ManagerService.CreateBot:output_type -> manager.v1.CreateBotResponse
+	3, // 3: manager.v1.ManagerService.RemoveBot:output_type -> manager.v1.RemoveBotResponse
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

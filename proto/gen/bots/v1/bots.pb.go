@@ -10,7 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	types "ssuspy-proto/gen/types"
+	v1 "ssuspy-proto/gen/types/v1"
 	sync "sync"
 	unsafe "unsafe"
 )
@@ -24,7 +24,7 @@ const (
 
 type BotStat struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	Bot                *types.Bot             `protobuf:"bytes,1,opt,name=bot,proto3" json:"bot,omitempty"`
+	Bot                *v1.Bot                `protobuf:"bytes,1,opt,name=bot,proto3" json:"bot,omitempty"`
 	TotalUsers         int64                  `protobuf:"varint,2,opt,name=total_users,json=totalUsers,proto3" json:"total_users,omitempty"`
 	TotalBusinessUsers int64                  `protobuf:"varint,3,opt,name=total_business_users,json=totalBusinessUsers,proto3" json:"total_business_users,omitempty"`
 	unknownFields      protoimpl.UnknownFields
@@ -61,7 +61,7 @@ func (*BotStat) Descriptor() ([]byte, []int) {
 	return file_bots_v1_bots_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *BotStat) GetBot() *types.Bot {
+func (x *BotStat) GetBot() *v1.Bot {
 	if x != nil {
 		return x.Bot
 	}
@@ -128,7 +128,7 @@ func (x *GetBotsRequest) GetUserId() int64 {
 
 type GetBotsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bots          []*types.Bot           `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
+	Bots          []*v1.Bot              `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -163,7 +163,7 @@ func (*GetBotsResponse) Descriptor() ([]byte, []int) {
 	return file_bots_v1_bots_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetBotsResponse) GetBots() []*types.Bot {
+func (x *GetBotsResponse) GetBots() []*v1.Bot {
 	if x != nil {
 		return x.Bots
 	}
@@ -320,7 +320,7 @@ func (x *GetBotByTokenHashRequest) GetTokenHash() string {
 
 type GetBotByTokenHashResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bot           *types.Bot             `protobuf:"bytes,1,opt,name=bot,proto3" json:"bot,omitempty"`
+	Bot           *v1.Bot                `protobuf:"bytes,1,opt,name=bot,proto3" json:"bot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -355,7 +355,7 @@ func (*GetBotByTokenHashResponse) Descriptor() ([]byte, []int) {
 	return file_bots_v1_bots_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *GetBotByTokenHashResponse) GetBot() *types.Bot {
+func (x *GetBotByTokenHashResponse) GetBot() *v1.Bot {
 	if x != nil {
 		return x.Bot
 	}
@@ -542,16 +542,16 @@ var File_bots_v1_bots_proto protoreflect.FileDescriptor
 
 const file_bots_v1_bots_proto_rawDesc = "" +
 	"\n" +
-	"\x12bots/v1/bots.proto\x12\abots.v1\x1a\x0ftypes/bot.proto\"\x81\x01\n" +
-	"\aBotStat\x12#\n" +
-	"\x03bot\x18\x01 \x01(\v2\x11.shared.types.BotR\x03bot\x12\x1f\n" +
+	"\x12bots/v1/bots.proto\x12\abots.v1\x1a\x12types/v1/bot.proto\"}\n" +
+	"\aBotStat\x12\x1f\n" +
+	"\x03bot\x18\x01 \x01(\v2\r.types.v1.BotR\x03bot\x12\x1f\n" +
 	"\vtotal_users\x18\x02 \x01(\x03R\n" +
 	"totalUsers\x120\n" +
 	"\x14total_business_users\x18\x03 \x01(\x03R\x12totalBusinessUsers\")\n" +
 	"\x0eGetBotsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"8\n" +
-	"\x0fGetBotsResponse\x12%\n" +
-	"\x04bots\x18\x01 \x03(\v2\x11.shared.types.BotR\x04bots\"C\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"4\n" +
+	"\x0fGetBotsResponse\x12!\n" +
+	"\x04bots\x18\x01 \x03(\v2\r.types.v1.BotR\x04bots\"C\n" +
 	"\x11GetBotStatRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x15\n" +
 	"\x06bot_id\x18\x02 \x01(\x03R\x05botId\"A\n" +
@@ -560,9 +560,9 @@ const file_bots_v1_bots_proto_rawDesc = "" +
 	"\x18GetBotByTokenHashRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x1d\n" +
 	"\n" +
-	"token_hash\x18\x02 \x01(\tR\ttokenHash\"@\n" +
-	"\x19GetBotByTokenHashResponse\x12#\n" +
-	"\x03bot\x18\x01 \x01(\v2\x11.shared.types.BotR\x03bot\"A\n" +
+	"token_hash\x18\x02 \x01(\tR\ttokenHash\"<\n" +
+	"\x19GetBotByTokenHashResponse\x12\x1f\n" +
+	"\x03bot\x18\x01 \x01(\v2\r.types.v1.BotR\x03bot\"A\n" +
 	"\x10CreateBotRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
 	"\x05token\x18\x02 \x01(\tR\x05token\"\x13\n" +
@@ -604,13 +604,13 @@ var file_bots_v1_bots_proto_goTypes = []any{
 	(*CreateBotResponse)(nil),         // 8: bots.v1.CreateBotResponse
 	(*RemoveBotRequest)(nil),          // 9: bots.v1.RemoveBotRequest
 	(*RemoveBotResponse)(nil),         // 10: bots.v1.RemoveBotResponse
-	(*types.Bot)(nil),                 // 11: shared.types.Bot
+	(*v1.Bot)(nil),                    // 11: types.v1.Bot
 }
 var file_bots_v1_bots_proto_depIdxs = []int32{
-	11, // 0: bots.v1.BotStat.bot:type_name -> shared.types.Bot
-	11, // 1: bots.v1.GetBotsResponse.bots:type_name -> shared.types.Bot
+	11, // 0: bots.v1.BotStat.bot:type_name -> types.v1.Bot
+	11, // 1: bots.v1.GetBotsResponse.bots:type_name -> types.v1.Bot
 	0,  // 2: bots.v1.GetBotStatResponse.bot_stat:type_name -> bots.v1.BotStat
-	11, // 3: bots.v1.GetBotByTokenHashResponse.bot:type_name -> shared.types.Bot
+	11, // 3: bots.v1.GetBotByTokenHashResponse.bot:type_name -> types.v1.Bot
 	1,  // 4: bots.v1.BotsService.GetBots:input_type -> bots.v1.GetBotsRequest
 	3,  // 5: bots.v1.BotsService.GetBotStat:input_type -> bots.v1.GetBotStatRequest
 	5,  // 6: bots.v1.BotsService.GetBotByTokenHash:input_type -> bots.v1.GetBotByTokenHashRequest

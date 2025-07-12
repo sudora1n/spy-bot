@@ -9,9 +9,8 @@ package internal_botsv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
-	types "ssuspy-proto/gen/types"
+	v1 "ssuspy-proto/gen/types/v1"
 	sync "sync"
 	unsafe "unsafe"
 )
@@ -69,7 +68,7 @@ func (x *GetBotByIDRequest) GetBotId() int64 {
 
 type GetBotByIDResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bot           *types.Bot             `protobuf:"bytes,1,opt,name=bot,proto3" json:"bot,omitempty"`
+	Bot           *v1.Bot                `protobuf:"bytes,1,opt,name=bot,proto3" json:"bot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -104,7 +103,7 @@ func (*GetBotByIDResponse) Descriptor() ([]byte, []int) {
 	return file_internal_bots_v1_internal_bots_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetBotByIDResponse) GetBot() *types.Bot {
+func (x *GetBotByIDResponse) GetBot() *v1.Bot {
 	if x != nil {
 		return x.Bot
 	}
@@ -149,7 +148,7 @@ func (*GetBotsRequest) Descriptor() ([]byte, []int) {
 
 type GetBotsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bots          []*types.Bot           `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
+	Bots          []*v1.Bot              `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -184,7 +183,7 @@ func (*GetBotsResponse) Descriptor() ([]byte, []int) {
 	return file_internal_bots_v1_internal_bots_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetBotsResponse) GetBots() []*types.Bot {
+func (x *GetBotsResponse) GetBots() []*v1.Bot {
 	if x != nil {
 		return x.Bots
 	}
@@ -195,14 +194,14 @@ var File_internal_bots_v1_internal_bots_proto protoreflect.FileDescriptor
 
 const file_internal_bots_v1_internal_bots_proto_rawDesc = "" +
 	"\n" +
-	"$internal_bots/v1/internal_bots.proto\x12\x10internal_bots.v1\x1a\x0ftypes/bot.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"*\n" +
+	"$internal_bots/v1/internal_bots.proto\x12\x10internal_bots.v1\x1a\x12types/v1/bot.proto\"*\n" +
 	"\x11GetBotByIDRequest\x12\x15\n" +
-	"\x06bot_id\x18\x01 \x01(\x03R\x05botId\"9\n" +
-	"\x12GetBotByIDResponse\x12#\n" +
-	"\x03bot\x18\x01 \x01(\v2\x11.shared.types.BotR\x03bot\"\x10\n" +
-	"\x0eGetBotsRequest\"8\n" +
-	"\x0fGetBotsResponse\x12%\n" +
-	"\x04bots\x18\x01 \x03(\v2\x11.shared.types.BotR\x04bots2\xb6\x01\n" +
+	"\x06bot_id\x18\x01 \x01(\x03R\x05botId\"5\n" +
+	"\x12GetBotByIDResponse\x12\x1f\n" +
+	"\x03bot\x18\x01 \x01(\v2\r.types.v1.BotR\x03bot\"\x10\n" +
+	"\x0eGetBotsRequest\"4\n" +
+	"\x0fGetBotsResponse\x12!\n" +
+	"\x04bots\x18\x01 \x03(\v2\r.types.v1.BotR\x04bots2\xb6\x01\n" +
 	"\vBotsService\x12W\n" +
 	"\n" +
 	"GetBotByID\x12#.internal_bots.v1.GetBotByIDRequest\x1a$.internal_bots.v1.GetBotByIDResponse\x12N\n" +
@@ -226,11 +225,11 @@ var file_internal_bots_v1_internal_bots_proto_goTypes = []any{
 	(*GetBotByIDResponse)(nil), // 1: internal_bots.v1.GetBotByIDResponse
 	(*GetBotsRequest)(nil),     // 2: internal_bots.v1.GetBotsRequest
 	(*GetBotsResponse)(nil),    // 3: internal_bots.v1.GetBotsResponse
-	(*types.Bot)(nil),          // 4: shared.types.Bot
+	(*v1.Bot)(nil),             // 4: types.v1.Bot
 }
 var file_internal_bots_v1_internal_bots_proto_depIdxs = []int32{
-	4, // 0: internal_bots.v1.GetBotByIDResponse.bot:type_name -> shared.types.Bot
-	4, // 1: internal_bots.v1.GetBotsResponse.bots:type_name -> shared.types.Bot
+	4, // 0: internal_bots.v1.GetBotByIDResponse.bot:type_name -> types.v1.Bot
+	4, // 1: internal_bots.v1.GetBotsResponse.bots:type_name -> types.v1.Bot
 	0, // 2: internal_bots.v1.BotsService.GetBotByID:input_type -> internal_bots.v1.GetBotByIDRequest
 	2, // 3: internal_bots.v1.BotsService.GetBots:input_type -> internal_bots.v1.GetBotsRequest
 	1, // 4: internal_bots.v1.BotsService.GetBotByID:output_type -> internal_bots.v1.GetBotByIDResponse

@@ -4,8 +4,7 @@ package internal_bots.v1;
 
 option go_package = "ssuspy-proto/gen/internal_bots/v1;internal_botsv1";
 
-import "types/bot.proto";
-import "google/protobuf/timestamp.proto";
+import "types/v1/bot.proto";
 
 service BotsService {
   rpc GetBotByID(GetBotByIDRequest) returns (GetBotByIDResponse);
@@ -17,11 +16,11 @@ message GetBotByIDRequest {
 }
 
 message GetBotByIDResponse {
-  shared.types.Bot bot = 1;
+  types.v1.Bot bot = 1;
 }
 
 message GetBotsRequest {}
 
 message GetBotsResponse {
-  repeated shared.types.Bot bots = 1;
+  repeated types.v1.Bot bots = 1;
 }

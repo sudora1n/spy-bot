@@ -4,7 +4,7 @@ package bots.v1;
 
 option go_package = "ssuspy-proto/gen/bots/v1;botsv1";
 
-import "types/bot.proto";
+import "types/v1/bot.proto";
 
 service BotsService {
   rpc GetBots(GetBotsRequest) returns (GetBotsResponse);
@@ -17,7 +17,7 @@ service BotsService {
 }
 
 message BotStat {
-  shared.types.Bot bot = 1;
+  types.v1.Bot bot = 1;
   int64 total_users = 2;
   int64 total_business_users = 3;
 }
@@ -27,7 +27,7 @@ message GetBotsRequest {
 }
 
 message GetBotsResponse {
-  repeated shared.types.Bot bots = 1;
+  repeated types.v1.Bot bots = 1;
 }
 
 message GetBotStatRequest {
@@ -45,7 +45,7 @@ message GetBotByTokenHashRequest {
 }
 
 message GetBotByTokenHashResponse {
-  shared.types.Bot bot = 1;
+  types.v1.Bot bot = 1;
 }
 
 message CreateBotRequest {

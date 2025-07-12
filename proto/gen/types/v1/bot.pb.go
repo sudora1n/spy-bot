@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        (unknown)
-// source: types/bot.proto
+// source: types/v1/bot.proto
 
-package types
+package typesv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -36,7 +36,7 @@ type Bot struct {
 
 func (x *Bot) Reset() {
 	*x = Bot{}
-	mi := &file_types_bot_proto_msgTypes[0]
+	mi := &file_types_v1_bot_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +48,7 @@ func (x *Bot) String() string {
 func (*Bot) ProtoMessage() {}
 
 func (x *Bot) ProtoReflect() protoreflect.Message {
-	mi := &file_types_bot_proto_msgTypes[0]
+	mi := &file_types_v1_bot_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +61,7 @@ func (x *Bot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Bot.ProtoReflect.Descriptor instead.
 func (*Bot) Descriptor() ([]byte, []int) {
-	return file_types_bot_proto_rawDescGZIP(), []int{0}
+	return file_types_v1_bot_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Bot) GetId() int64 {
@@ -106,11 +106,11 @@ func (x *Bot) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-var File_types_bot_proto protoreflect.FileDescriptor
+var File_types_v1_bot_proto protoreflect.FileDescriptor
 
-const file_types_bot_proto_rawDesc = "" +
+const file_types_v1_bot_proto_rawDesc = "" +
 	"\n" +
-	"\x0ftypes/bot.proto\x12\fshared.types\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd4\x01\n" +
+	"\x12types/v1/bot.proto\x12\btypes.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd4\x01\n" +
 	"\x03Bot\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
@@ -118,27 +118,27 @@ const file_types_bot_proto_rawDesc = "" +
 	"\x11secret_token_hash\x18\x04 \x01(\tR\x0fsecretTokenHash\x12\x17\n" +
 	"\auser_id\x18\x05 \x01(\x03R\x06userId\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\x1eZ\x1cssuspy-proto/gen/types;typesb\x06proto3"
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB#Z!ssuspy-proto/gen/types/v1;typesv1b\x06proto3"
 
 var (
-	file_types_bot_proto_rawDescOnce sync.Once
-	file_types_bot_proto_rawDescData []byte
+	file_types_v1_bot_proto_rawDescOnce sync.Once
+	file_types_v1_bot_proto_rawDescData []byte
 )
 
-func file_types_bot_proto_rawDescGZIP() []byte {
-	file_types_bot_proto_rawDescOnce.Do(func() {
-		file_types_bot_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_types_bot_proto_rawDesc), len(file_types_bot_proto_rawDesc)))
+func file_types_v1_bot_proto_rawDescGZIP() []byte {
+	file_types_v1_bot_proto_rawDescOnce.Do(func() {
+		file_types_v1_bot_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_types_v1_bot_proto_rawDesc), len(file_types_v1_bot_proto_rawDesc)))
 	})
-	return file_types_bot_proto_rawDescData
+	return file_types_v1_bot_proto_rawDescData
 }
 
-var file_types_bot_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_types_bot_proto_goTypes = []any{
-	(*Bot)(nil),                   // 0: shared.types.Bot
+var file_types_v1_bot_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_types_v1_bot_proto_goTypes = []any{
+	(*Bot)(nil),                   // 0: types.v1.Bot
 	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
-var file_types_bot_proto_depIdxs = []int32{
-	1, // 0: shared.types.Bot.created_at:type_name -> google.protobuf.Timestamp
+var file_types_v1_bot_proto_depIdxs = []int32{
+	1, // 0: types.v1.Bot.created_at:type_name -> google.protobuf.Timestamp
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -146,26 +146,26 @@ var file_types_bot_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_types_bot_proto_init() }
-func file_types_bot_proto_init() {
-	if File_types_bot_proto != nil {
+func init() { file_types_v1_bot_proto_init() }
+func file_types_v1_bot_proto_init() {
+	if File_types_v1_bot_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_types_bot_proto_rawDesc), len(file_types_bot_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_types_v1_bot_proto_rawDesc), len(file_types_v1_bot_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_types_bot_proto_goTypes,
-		DependencyIndexes: file_types_bot_proto_depIdxs,
-		MessageInfos:      file_types_bot_proto_msgTypes,
+		GoTypes:           file_types_v1_bot_proto_goTypes,
+		DependencyIndexes: file_types_v1_bot_proto_depIdxs,
+		MessageInfos:      file_types_v1_bot_proto_msgTypes,
 	}.Build()
-	File_types_bot_proto = out.File
-	file_types_bot_proto_goTypes = nil
-	file_types_bot_proto_depIdxs = nil
+	File_types_v1_bot_proto = out.File
+	file_types_v1_bot_proto_goTypes = nil
+	file_types_v1_bot_proto_depIdxs = nil
 }

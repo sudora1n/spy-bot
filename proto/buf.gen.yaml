@@ -1,8 +1,11 @@
 version: v2
 plugins:
-  - remote: buf.build/protocolbuffers/go:v1.36.6
-    out: gen/
+  - local: protoc-gen-go
+    out: gen
     opt: paths=source_relative
-  - remote: buf.build/grpc/go:v1.5.1
-    out: gen/
+  - local: protoc-gen-connect-go
+    out: gen
+    opt: paths=source_relative
+  - local: protoc-gen-go-grpc
+    out: gen
     opt: paths=source_relative

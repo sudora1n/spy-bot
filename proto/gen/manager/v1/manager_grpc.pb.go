@@ -27,8 +27,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ManagerServiceClient interface {
-	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*CreateBotReply, error)
-	RemoveBot(ctx context.Context, in *RemoveBotRequest, opts ...grpc.CallOption) (*RemoveBotReply, error)
+	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*CreateBotResponse, error)
+	RemoveBot(ctx context.Context, in *RemoveBotRequest, opts ...grpc.CallOption) (*RemoveBotResponse, error)
 }
 
 type managerServiceClient struct {
@@ -39,9 +39,9 @@ func NewManagerServiceClient(cc grpc.ClientConnInterface) ManagerServiceClient {
 	return &managerServiceClient{cc}
 }
 
-func (c *managerServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*CreateBotReply, error) {
+func (c *managerServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*CreateBotResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateBotReply)
+	out := new(CreateBotResponse)
 	err := c.cc.Invoke(ctx, ManagerService_CreateBot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -49,9 +49,9 @@ func (c *managerServiceClient) CreateBot(ctx context.Context, in *CreateBotReque
 	return out, nil
 }
 
-func (c *managerServiceClient) RemoveBot(ctx context.Context, in *RemoveBotRequest, opts ...grpc.CallOption) (*RemoveBotReply, error) {
+func (c *managerServiceClient) RemoveBot(ctx context.Context, in *RemoveBotRequest, opts ...grpc.CallOption) (*RemoveBotResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveBotReply)
+	out := new(RemoveBotResponse)
 	err := c.cc.Invoke(ctx, ManagerService_RemoveBot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -63,8 +63,8 @@ func (c *managerServiceClient) RemoveBot(ctx context.Context, in *RemoveBotReque
 // All implementations must embed UnimplementedManagerServiceServer
 // for forward compatibility.
 type ManagerServiceServer interface {
-	CreateBot(context.Context, *CreateBotRequest) (*CreateBotReply, error)
-	RemoveBot(context.Context, *RemoveBotRequest) (*RemoveBotReply, error)
+	CreateBot(context.Context, *CreateBotRequest) (*CreateBotResponse, error)
+	RemoveBot(context.Context, *RemoveBotRequest) (*RemoveBotResponse, error)
 	mustEmbedUnimplementedManagerServiceServer()
 }
 
@@ -75,10 +75,10 @@ type ManagerServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedManagerServiceServer struct{}
 
-func (UnimplementedManagerServiceServer) CreateBot(context.Context, *CreateBotRequest) (*CreateBotReply, error) {
+func (UnimplementedManagerServiceServer) CreateBot(context.Context, *CreateBotRequest) (*CreateBotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBot not implemented")
 }
-func (UnimplementedManagerServiceServer) RemoveBot(context.Context, *RemoveBotRequest) (*RemoveBotReply, error) {
+func (UnimplementedManagerServiceServer) RemoveBot(context.Context, *RemoveBotRequest) (*RemoveBotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveBot not implemented")
 }
 func (UnimplementedManagerServiceServer) mustEmbedUnimplementedManagerServiceServer() {}

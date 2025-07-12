@@ -5,15 +5,15 @@ package manager.v1;
 option go_package = "ssuspy-proto/gen/manager/v1;managerv1";
 
 service ManagerService {
-    rpc CreateBot (CreateBotRequest) returns (CreateBotReply);
-    rpc RemoveBot (RemoveBotRequest) returns (RemoveBotReply);
+    rpc CreateBot (CreateBotRequest) returns (CreateBotResponse);
+    rpc RemoveBot (RemoveBotRequest) returns (RemoveBotResponse);
 }
 
 message CreateBotRequest {
     int64 id = 1;
 }
 
-message CreateBotReply {
+message CreateBotResponse {
     int64 id = 1;
     string username = 2;
 }
@@ -22,7 +22,7 @@ message RemoveBotRequest {
     int64 id = 1;
 }
 
-message RemoveBotReply {
+message RemoveBotResponse {
     int64 id = 1;
     string username = 2;
 }
