@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -274,26 +275,6 @@ func (r *MongoRepository) UpdateBotUserSendMessages(ctx context.Context, userId 
 	return err
 }
 
-func (r *MongoRepository) FindBotUser(
-	ctx context.Context,
-	userId int64,
-	botID int64,
-) (*BotUser, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	filter := bson.M{
-		"user_id": userId,
-		"bot_id":  botID,
-	}
-
-	var botUser BotUser
-	if err := r.botUsers.FindOne(ctx, filter).Decode(&botUser); err != nil {
-		return nil, err
-	}
-	return &botUser, nil
-}
-
 func (r *MongoRepository) FindIUserByConnectionID(
 	ctx context.Context,
 	businessConnectionID string,
@@ -462,4 +443,77 @@ func (r *MongoRepository) UpdateUserSettings(ctx context.Context, userID int64, 
 
 	_, err := r.users.UpdateOne(ctx, filter, update)
 	return err
+}
+
+func (r *MongoRepository) ListIUsers(
+	ctx context.Context,
+	botID int64,
+	page int64,
+	pageSize int64,
+) ([]IUser, error) {
+	if page < 1 || pageSize < 1 {
+		return nil, fmt.Errorf("invalid pagination params: page=%d, pageSize=%d", page, pageSize)
+	}
+
+	skip := (page - 1) * pageSize
+
+	pipeline := []bson.M{
+		{
+			"$sort": bson.M{"_id": 1},
+		},
+		{
+			"$skip": skip,
+		},
+		{
+			"$limit": pageSize,
+		},
+		{
+			"$lookup": bson.M{
+				"from":         "bot_users",
+				"localField":   "_id",
+				"foreignField": "user_id",
+				"as":           "bot_users",
+			},
+		},
+		{
+			"$unwind": bson.M{
+				"path":                       "$bot_users",
+				"preserveNullAndEmptyArrays": true,
+			},
+		},
+		{
+			"$match": bson.M{
+				"bot_users.bot_id": botID,
+			},
+		},
+		{
+			"$project": bson.M{
+				"user":     "$$ROOT",
+				"bot_user": "$bot_users",
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	cursor, err := r.users.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []IUser
+	for cursor.Next(ctx) {
+		var iUser IUser
+		if err := cursor.Decode(&iUser); err != nil {
+			return nil, err
+		}
+		results = append(results, iUser)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }

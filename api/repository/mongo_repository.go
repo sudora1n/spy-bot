@@ -11,7 +11,7 @@ import (
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
 	"ssuspy-bot/migrations"
-	custom_registry "ssuspy-bot/repository/bson_custon_registry"
+	custom_registry "ssuspy-common/bson"
 )
 
 type MongoRepository struct {
@@ -123,11 +123,19 @@ func NewMongoRepository(cfg *config.MongoConfig) (*MongoRepository, error) {
 
 	chatResolveCollection := db.Collection("chats_resolve")
 	botsCollection := db.Collection("bots")
+	idxModel = mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "user_id", Value: 1},
+		},
+		Options: options.Index().SetUnique(true),
+	}
+	_, err = botsCollection.Indexes().CreateOne(ctx, idxModel)
+
 	botUsersCollection := db.Collection("bot_users")
 	idxModel = mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "bot_id", Value: 1},
-			{Key: "userId", Value: 1},
+			{Key: "user_id", Value: 1},
 		},
 		Options: options.Index().SetUnique(true),
 	}
