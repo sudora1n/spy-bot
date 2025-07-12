@@ -362,7 +362,7 @@ func (x *GetBotByTokenHashResponse) GetBot() *types.Bot {
 	return nil
 }
 
-type AddBotRequest struct {
+type CreateBotRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Token         string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
@@ -370,20 +370,20 @@ type AddBotRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AddBotRequest) Reset() {
-	*x = AddBotRequest{}
+func (x *CreateBotRequest) Reset() {
+	*x = CreateBotRequest{}
 	mi := &file_bots_v1_bots_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AddBotRequest) String() string {
+func (x *CreateBotRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddBotRequest) ProtoMessage() {}
+func (*CreateBotRequest) ProtoMessage() {}
 
-func (x *AddBotRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateBotRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_bots_v1_bots_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -395,45 +395,45 @@ func (x *AddBotRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddBotRequest.ProtoReflect.Descriptor instead.
-func (*AddBotRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateBotRequest.ProtoReflect.Descriptor instead.
+func (*CreateBotRequest) Descriptor() ([]byte, []int) {
 	return file_bots_v1_bots_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *AddBotRequest) GetUserId() int64 {
+func (x *CreateBotRequest) GetUserId() int64 {
 	if x != nil {
 		return x.UserId
 	}
 	return 0
 }
 
-func (x *AddBotRequest) GetToken() string {
+func (x *CreateBotRequest) GetToken() string {
 	if x != nil {
 		return x.Token
 	}
 	return ""
 }
 
-type AddBotResponse struct {
+type CreateBotResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AddBotResponse) Reset() {
-	*x = AddBotResponse{}
+func (x *CreateBotResponse) Reset() {
+	*x = CreateBotResponse{}
 	mi := &file_bots_v1_bots_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AddBotResponse) String() string {
+func (x *CreateBotResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddBotResponse) ProtoMessage() {}
+func (*CreateBotResponse) ProtoMessage() {}
 
-func (x *AddBotResponse) ProtoReflect() protoreflect.Message {
+func (x *CreateBotResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_bots_v1_bots_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -445,8 +445,8 @@ func (x *AddBotResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddBotResponse.ProtoReflect.Descriptor instead.
-func (*AddBotResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateBotResponse.ProtoReflect.Descriptor instead.
+func (*CreateBotResponse) Descriptor() ([]byte, []int) {
 	return file_bots_v1_bots_proto_rawDescGZIP(), []int{8}
 }
 
@@ -562,21 +562,21 @@ const file_bots_v1_bots_proto_rawDesc = "" +
 	"\n" +
 	"token_hash\x18\x02 \x01(\tR\ttokenHash\"@\n" +
 	"\x19GetBotByTokenHashResponse\x12#\n" +
-	"\x03bot\x18\x01 \x01(\v2\x11.shared.types.BotR\x03bot\">\n" +
-	"\rAddBotRequest\x12\x17\n" +
+	"\x03bot\x18\x01 \x01(\v2\x11.shared.types.BotR\x03bot\"A\n" +
+	"\x10CreateBotRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\"\x10\n" +
-	"\x0eAddBotResponse\"B\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\"\x13\n" +
+	"\x11CreateBotResponse\"B\n" +
 	"\x10RemoveBotRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x15\n" +
 	"\x06bot_id\x18\x02 \x01(\x03R\x05botId\"\x13\n" +
-	"\x11RemoveBotResponse2\xed\x02\n" +
+	"\x11RemoveBotResponse2\xf6\x02\n" +
 	"\vBotsService\x12<\n" +
 	"\aGetBots\x12\x17.bots.v1.GetBotsRequest\x1a\x18.bots.v1.GetBotsResponse\x12E\n" +
 	"\n" +
 	"GetBotStat\x12\x1a.bots.v1.GetBotStatRequest\x1a\x1b.bots.v1.GetBotStatResponse\x12Z\n" +
-	"\x11GetBotByTokenHash\x12!.bots.v1.GetBotByTokenHashRequest\x1a\".bots.v1.GetBotByTokenHashResponse\x129\n" +
-	"\x06AddBot\x12\x16.bots.v1.AddBotRequest\x1a\x17.bots.v1.AddBotResponse\x12B\n" +
+	"\x11GetBotByTokenHash\x12!.bots.v1.GetBotByTokenHashRequest\x1a\".bots.v1.GetBotByTokenHashResponse\x12B\n" +
+	"\tCreateBot\x12\x19.bots.v1.CreateBotRequest\x1a\x1a.bots.v1.CreateBotResponse\x12B\n" +
 	"\tRemoveBot\x12\x19.bots.v1.RemoveBotRequest\x1a\x1a.bots.v1.RemoveBotResponseB!Z\x1fssuspy-proto/gen/bots/v1;botsv1b\x06proto3"
 
 var (
@@ -600,8 +600,8 @@ var file_bots_v1_bots_proto_goTypes = []any{
 	(*GetBotStatResponse)(nil),        // 4: bots.v1.GetBotStatResponse
 	(*GetBotByTokenHashRequest)(nil),  // 5: bots.v1.GetBotByTokenHashRequest
 	(*GetBotByTokenHashResponse)(nil), // 6: bots.v1.GetBotByTokenHashResponse
-	(*AddBotRequest)(nil),             // 7: bots.v1.AddBotRequest
-	(*AddBotResponse)(nil),            // 8: bots.v1.AddBotResponse
+	(*CreateBotRequest)(nil),          // 7: bots.v1.CreateBotRequest
+	(*CreateBotResponse)(nil),         // 8: bots.v1.CreateBotResponse
 	(*RemoveBotRequest)(nil),          // 9: bots.v1.RemoveBotRequest
 	(*RemoveBotResponse)(nil),         // 10: bots.v1.RemoveBotResponse
 	(*types.Bot)(nil),                 // 11: shared.types.Bot
@@ -614,12 +614,12 @@ var file_bots_v1_bots_proto_depIdxs = []int32{
 	1,  // 4: bots.v1.BotsService.GetBots:input_type -> bots.v1.GetBotsRequest
 	3,  // 5: bots.v1.BotsService.GetBotStat:input_type -> bots.v1.GetBotStatRequest
 	5,  // 6: bots.v1.BotsService.GetBotByTokenHash:input_type -> bots.v1.GetBotByTokenHashRequest
-	7,  // 7: bots.v1.BotsService.AddBot:input_type -> bots.v1.AddBotRequest
+	7,  // 7: bots.v1.BotsService.CreateBot:input_type -> bots.v1.CreateBotRequest
 	9,  // 8: bots.v1.BotsService.RemoveBot:input_type -> bots.v1.RemoveBotRequest
 	2,  // 9: bots.v1.BotsService.GetBots:output_type -> bots.v1.GetBotsResponse
 	4,  // 10: bots.v1.BotsService.GetBotStat:output_type -> bots.v1.GetBotStatResponse
 	6,  // 11: bots.v1.BotsService.GetBotByTokenHash:output_type -> bots.v1.GetBotByTokenHashResponse
-	8,  // 12: bots.v1.BotsService.AddBot:output_type -> bots.v1.AddBotResponse
+	8,  // 12: bots.v1.BotsService.CreateBot:output_type -> bots.v1.CreateBotResponse
 	10, // 13: bots.v1.BotsService.RemoveBot:output_type -> bots.v1.RemoveBotResponse
 	9,  // [9:14] is the sub-list for method output_type
 	4,  // [4:9] is the sub-list for method input_type

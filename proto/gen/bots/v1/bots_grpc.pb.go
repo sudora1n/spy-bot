@@ -22,7 +22,7 @@ const (
 	BotsService_GetBots_FullMethodName           = "/bots.v1.BotsService/GetBots"
 	BotsService_GetBotStat_FullMethodName        = "/bots.v1.BotsService/GetBotStat"
 	BotsService_GetBotByTokenHash_FullMethodName = "/bots.v1.BotsService/GetBotByTokenHash"
-	BotsService_AddBot_FullMethodName            = "/bots.v1.BotsService/AddBot"
+	BotsService_CreateBot_FullMethodName         = "/bots.v1.BotsService/CreateBot"
 	BotsService_RemoveBot_FullMethodName         = "/bots.v1.BotsService/RemoveBot"
 )
 
@@ -33,7 +33,7 @@ type BotsServiceClient interface {
 	GetBots(ctx context.Context, in *GetBotsRequest, opts ...grpc.CallOption) (*GetBotsResponse, error)
 	GetBotStat(ctx context.Context, in *GetBotStatRequest, opts ...grpc.CallOption) (*GetBotStatResponse, error)
 	GetBotByTokenHash(ctx context.Context, in *GetBotByTokenHashRequest, opts ...grpc.CallOption) (*GetBotByTokenHashResponse, error)
-	AddBot(ctx context.Context, in *AddBotRequest, opts ...grpc.CallOption) (*AddBotResponse, error)
+	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*CreateBotResponse, error)
 	RemoveBot(ctx context.Context, in *RemoveBotRequest, opts ...grpc.CallOption) (*RemoveBotResponse, error)
 }
 
@@ -75,10 +75,10 @@ func (c *botsServiceClient) GetBotByTokenHash(ctx context.Context, in *GetBotByT
 	return out, nil
 }
 
-func (c *botsServiceClient) AddBot(ctx context.Context, in *AddBotRequest, opts ...grpc.CallOption) (*AddBotResponse, error) {
+func (c *botsServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*CreateBotResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddBotResponse)
-	err := c.cc.Invoke(ctx, BotsService_AddBot_FullMethodName, in, out, cOpts...)
+	out := new(CreateBotResponse)
+	err := c.cc.Invoke(ctx, BotsService_CreateBot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ type BotsServiceServer interface {
 	GetBots(context.Context, *GetBotsRequest) (*GetBotsResponse, error)
 	GetBotStat(context.Context, *GetBotStatRequest) (*GetBotStatResponse, error)
 	GetBotByTokenHash(context.Context, *GetBotByTokenHashRequest) (*GetBotByTokenHashResponse, error)
-	AddBot(context.Context, *AddBotRequest) (*AddBotResponse, error)
+	CreateBot(context.Context, *CreateBotRequest) (*CreateBotResponse, error)
 	RemoveBot(context.Context, *RemoveBotRequest) (*RemoveBotResponse, error)
 	mustEmbedUnimplementedBotsServiceServer()
 }
@@ -123,8 +123,8 @@ func (UnimplementedBotsServiceServer) GetBotStat(context.Context, *GetBotStatReq
 func (UnimplementedBotsServiceServer) GetBotByTokenHash(context.Context, *GetBotByTokenHashRequest) (*GetBotByTokenHashResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBotByTokenHash not implemented")
 }
-func (UnimplementedBotsServiceServer) AddBot(context.Context, *AddBotRequest) (*AddBotResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddBot not implemented")
+func (UnimplementedBotsServiceServer) CreateBot(context.Context, *CreateBotRequest) (*CreateBotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBot not implemented")
 }
 func (UnimplementedBotsServiceServer) RemoveBot(context.Context, *RemoveBotRequest) (*RemoveBotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveBot not implemented")
@@ -204,20 +204,20 @@ func _BotsService_GetBotByTokenHash_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BotsService_AddBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddBotRequest)
+func _BotsService_CreateBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateBotRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BotsServiceServer).AddBot(ctx, in)
+		return srv.(BotsServiceServer).CreateBot(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: BotsService_AddBot_FullMethodName,
+		FullMethod: BotsService_CreateBot_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BotsServiceServer).AddBot(ctx, req.(*AddBotRequest))
+		return srv.(BotsServiceServer).CreateBot(ctx, req.(*CreateBotRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -260,8 +260,8 @@ var BotsService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BotsService_GetBotByTokenHash_Handler,
 		},
 		{
-			MethodName: "AddBot",
-			Handler:    _BotsService_AddBot_Handler,
+			MethodName: "CreateBot",
+			Handler:    _BotsService_CreateBot_Handler,
 		},
 		{
 			MethodName: "RemoveBot",

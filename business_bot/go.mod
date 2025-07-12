@@ -6,7 +6,6 @@ replace github.com/mymmrac/telego => github.com/sudora1n/telego v0.0.0-202505302
 
 require (
 	github.com/dustin/go-humanize v1.0.1
-	github.com/google/uuid v1.6.0
 	github.com/mymmrac/telego v1.1.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/prometheus/client_golang v1.22.0
@@ -15,8 +14,7 @@ require (
 	github.com/sethvargo/go-envconfig v1.3.0
 	go.mongodb.org/mongo-driver v1.17.3
 	golang.org/x/text v0.25.0
-	google.golang.org/grpc v1.72.2
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/grpc v1.73.0
 )
 
 require (
@@ -52,4 +50,5 @@ require (
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250528174236-200df99c418a // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 )

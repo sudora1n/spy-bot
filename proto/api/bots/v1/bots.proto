@@ -12,7 +12,7 @@ service BotsService {
   rpc GetBotStat(GetBotStatRequest) returns (GetBotStatResponse);
   rpc GetBotByTokenHash(GetBotByTokenHashRequest) returns (GetBotByTokenHashResponse);
 
-  rpc AddBot(AddBotRequest) returns (AddBotResponse);
+  rpc CreateBot(CreateBotRequest) returns (CreateBotResponse);
   rpc RemoveBot(RemoveBotRequest) returns (RemoveBotResponse);
 }
 
@@ -48,12 +48,12 @@ message GetBotByTokenHashResponse {
   shared.types.Bot bot = 1;
 }
 
-message AddBotRequest {
+message CreateBotRequest {
   int64 user_id = 1;
   string token = 2;
 }
 
-message AddBotResponse {}
+message CreateBotResponse {}
 
 message RemoveBotRequest {
   int64 user_id = 1;
