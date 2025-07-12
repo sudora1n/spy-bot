@@ -3,11 +3,11 @@ package handlers
 import (
 	"context"
 	"fmt"
+	managerv1 "ssuspy-proto/gen/manager/v1"
 
 	"ssuspy-common/telegram/format"
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
-	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/repository"
 	"ssuspy-creator-bot/telegram/keyboard"
 	"ssuspy-creator-bot/telegram/locales"
@@ -25,10 +25,10 @@ import (
 
 type Handler struct {
 	service    *repository.MongoRepository
-	grpcClient proto.BotClient
+	grpcClient managerv1.ManagerServiceClient
 }
 
-func NewHandlerGroup(service *repository.MongoRepository, grpcClient proto.BotClient) *Handler {
+func NewHandlerGroup(service *repository.MongoRepository, grpcClient managerv1.ManagerServiceClient) *Handler {
 	return &Handler{
 		service:    service,
 		grpcClient: grpcClient,

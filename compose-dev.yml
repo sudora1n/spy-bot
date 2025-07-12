@@ -72,7 +72,7 @@ services:
     container_name: ssuspy-business-bot
     profiles: ["dev", "prod"]
     build:
-      dockerfile: deploy/Dockerfile.business_bot
+      dockerfile: deploy/business_bot.Dockerfile
       context: .
     environment:
       - MONGO_HOST=mongodb
@@ -122,7 +122,7 @@ services:
     container_name: ssuspy-creator-bot
     profiles: ["dev", "prod"]
     build:
-      dockerfile: deploy/Dockerfile.creator_bot
+      dockerfile: deploy/creator_bot.Dockerfile
       context: .
     environment:
       - MONGO_HOST=mongodb

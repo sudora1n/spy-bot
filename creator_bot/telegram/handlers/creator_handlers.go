@@ -3,10 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
+	managerv1 "ssuspy-proto/gen/manager/v1"
 
 	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
-	proto "ssuspy-creator-bot/pb"
 	"ssuspy-creator-bot/telegram/callbacks"
 	"ssuspy-creator-bot/telegram/keyboard"
 	"ssuspy-creator-bot/telegram/utils"
@@ -122,7 +122,7 @@ func (h *Handler) HandleToken(c *th.Context, update telego.Update) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	resp, err := h.grpcClient.AddBot(ctx, &proto.AddBotRequest{Id: botUser.ID})
+	resp, err := h.grpcClient.CreateBot(ctx, &managerv1.CreateBotRequest{Id: botUser.ID})
 	if err != nil {
 		return onCreatingBotFail(c, loc, internalUser.ID)
 	}
@@ -296,7 +296,7 @@ func (h *Handler) HandleBotRemove(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	resp, err := h.grpcClient.RemoveBot(c, &proto.RemoveBotRequest{Id: data.BotID})
+	resp, err := h.grpcClient.RemoveBot(c, &managerv1.RemoveBotRequest{Id: data.BotID})
 	if err != nil {
 		return onCreatingBotFail(c, loc, internalUser.ID)
 	}

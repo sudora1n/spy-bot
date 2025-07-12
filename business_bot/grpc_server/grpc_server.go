@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 	"net"
+	manager_proto "ssuspy-proto/gen/manager/v1"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	proto "ssuspy-bot/pb"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/manager"
 )
 
 type BotServer struct {
-	proto.UnimplementedBotServer
+	manager_proto.UnimplementedManagerServiceServer
 	manager *manager.BotManager
 	repo    *repository.MongoRepository
 }
@@ -27,7 +27,7 @@ func NewBotServer(manager *manager.BotManager, repo *repository.MongoRepository)
 		repo:    repo,
 	}
 }
-func (s *BotServer) AddBot(ctx context.Context, req *proto.AddBotRequest) (*proto.AddBotReply, error) {
+func (s *BotServer) AddBot(ctx context.Context, req *manager_proto.CreateBotRequest) (*manager_proto.CreateBotResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "botID is required")
 	}
@@ -52,7 +52,7 @@ func (s *BotServer) AddBot(ctx context.Context, req *proto.AddBotRequest) (*prot
 	botInfo, err := botInstance.Bot.GetMe(ctx)
 	if err != nil {
 		log.Error().Err(err).Int64("botID", req.Id).Msg("failed to get bot info")
-		return &proto.AddBotReply{
+		return &manager_proto.CreateBotResponse{
 			Id:       req.Id,
 			Username: "unknown",
 		}, nil
@@ -60,13 +60,13 @@ func (s *BotServer) AddBot(ctx context.Context, req *proto.AddBotRequest) (*prot
 
 	log.Info().Int64("botID", req.Id).Str("username", botInfo.Username).Msg("bot added successfully")
 
-	return &proto.AddBotReply{
+	return &manager_proto.CreateBotResponse{
 		Id:       req.Id,
 		Username: botInfo.Username,
 	}, nil
 }
 
-func (s *BotServer) RemoveBot(ctx context.Context, req *proto.RemoveBotRequest) (*proto.RemoveBotReply, error) {
+func (s *BotServer) RemoveBot(ctx context.Context, req *manager_proto.RemoveBotRequest) (*manager_proto.RemoveBotResponse, error) {
 	if req.Id == 0 {
 		return nil, status.Error(codes.InvalidArgument, "botID is required")
 	}
@@ -89,7 +89,7 @@ func (s *BotServer) RemoveBot(ctx context.Context, req *proto.RemoveBotRequest) 
 
 	log.Info().Int64("botID", req.Id).Str("username", username).Msg("bot removed successfully")
 
-	return &proto.RemoveBotReply{
+	return &manager_proto.RemoveBotResponse{
 		Id:       req.Id,
 		Username: username,
 	}, nil
@@ -104,7 +104,7 @@ func StartGRPCServer(port string, manager *manager.BotManager, repo *repository.
 	grpcServer := grpc.NewServer()
 	botServer := NewBotServer(manager, repo)
 
-	proto.RegisterBotServer(grpcServer, botServer)
+	manager_proto.RegisterManagerServiceServer(grpcServer, botServer)
 
 	log.Info().Str("port", port).Msg("starting gRPC server")
 	return grpcServer.Serve(lis)
