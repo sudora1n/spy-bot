@@ -11,11 +11,11 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,source=api/go.sum,target=api/go.sum \
     --mount=type=bind,source=proto/,target=proto/ \
     --mount=type=bind,source=common/,target=common/ \
-    cd creator_bot && go mod download -x
+    cd api && go mod download -x
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
-    CGO_ENABLED=0 go build -ldflags='-s -w -extldflags "-static"' -o /bin/creator_bot ./creator_bot/cmd/main.go
+    CGO_ENABLED=0 go build -ldflags='-s -w -extldflags "-static"' -o /bin/api ./api/cmd/main.go
 
 
 FROM alpine:3.21
@@ -23,9 +23,9 @@ FROM alpine:3.21
 RUN apk add --no-cache ca-certificates
 RUN addgroup -g 101 appgroup && adduser -D -u 101 -G appgroup appuser
 USER appuser
-WORKDIR /home/appuser/creator_bot
+WORKDIR /home/appuser/api
 
-COPY --from=builder /bin/creator_bot ./
+COPY --from=builder /bin/api ./
 
 EXPOSE 8080
-CMD ["./creator_bot"]
+CMD ["./api"]
