@@ -26,6 +26,7 @@ type StructConfig struct {
 	Redis         *RedisConfig `env:", prefix=REDIS_"`
 	TelegramBot   *BotConfig   `env:", prefix=TELEGRAM_"`
 	MaxBotsByUser int64        `env:"MAX_BOTS_BY_USER, default=10"`
+	BusinessURL   string       `env:"BUSINESS_URL, default=http://business-bot:8080"`
 	DevMode       bool         `env:"DEV_MODE, default=false"`
 }
 

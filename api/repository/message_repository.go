@@ -37,16 +37,11 @@ type PaginationAnswer struct {
 	Backward bool
 }
 
-func (r *MongoRepository) SaveMessage(ctx context.Context, message *telego.Message) error {
+func (r *MongoRepository) SaveMessage(ctx context.Context, message []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	msgBytes, err := r.customRegistry.SaveMessage(message)
-	if err != nil {
-		return fmt.Errorf("failed to marshal message to BSON: %w", err)
-	}
-	msgRaw := bson.Raw(msgBytes)
-
+	msgRaw := bson.Raw(message)
 	_id, err := r.GetNextSequence(ctx, r.telegramMessages.Name())
 	if err != nil {
 		return fmt.Errorf("failed get next seq: %w", err)

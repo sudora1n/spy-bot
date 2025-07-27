@@ -8,10 +8,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"ssuspy-bot/config"
-	"ssuspy-bot/consts"
-	"ssuspy-bot/migrations"
+	"ssuspy-api/config"
+	"ssuspy-api/migrations"
 	custom_registry "ssuspy-common/bson"
+	"ssuspy-common/consts"
 )
 
 type MongoRepository struct {

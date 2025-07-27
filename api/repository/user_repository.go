@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/mymmrac/telego"
-	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -70,88 +69,6 @@ func (b *BotUser) GetUserCurrentConnectionIDs() []string {
 	}
 
 	return connectionIDs
-}
-
-func (r *MongoRepository) updateUser(
-	ctx context.Context,
-	userId int64,
-	languageCode string,
-) (new bool, err error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	filter := bson.M{"_id": userId}
-	update := bson.M{
-		"$setOnInsert": bson.M{
-			"language_code": languageCode,
-			"settings": bson.M{
-				"show_my_edits":        false,
-				"show_partner_edits":   true,
-				"show_my_deleted":      true,
-				"show_partner_deleted": true,
-			},
-			"created_at": time.Now().Unix(),
-		},
-	}
-
-	res, err := r.users.UpdateOne(
-		ctx,
-		filter,
-		update,
-		options.Update().SetUpsert(true),
-	)
-	if err != nil {
-		return false, err
-	}
-
-	new = (res.MatchedCount == 0 && res.UpsertedCount == 1)
-	return new, nil
-}
-
-func (r *MongoRepository) updateBotUser(
-	ctx context.Context,
-	userId int64,
-	botID int64,
-	sendMessage bool,
-) (new bool, err error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	filter := bson.M{
-		"user_id": userId,
-		"bot_id":  botID,
-	}
-
-	setFields := bson.M{}
-	if sendMessage {
-		setFields["send_messages"] = true
-	}
-
-	_id, err := r.GetNextSequence(ctx, r.botUsers.Name())
-	if err != nil {
-		return false, err
-	}
-
-	update := bson.M{
-		"$set": setFields,
-		"$setOnInsert": bson.M{
-			"_id":        _id.Value,
-			"created_at": time.Now().Unix(),
-		},
-	}
-
-	res, err := r.botUsers.UpdateOne(
-		ctx,
-		filter,
-		update,
-		options.Update().SetUpsert(true),
-	)
-	if err != nil {
-		return false, err
-	}
-
-	new = (res.MatchedCount == 0 && res.UpsertedCount == 1)
-	return new, nil
 }
 
 func (r *MongoRepository) UpdateUserLanguage(ctx context.Context, userId int64, languageCode string) error {
@@ -258,6 +175,20 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 	}
 }
 
+func (r *MongoRepository) UpdateUserSendMessages(ctx context.Context, userId int64, sendMessages bool) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": userId}
+	update := bson.M{
+		"$set": bson.M{
+			"creator_send_messages": sendMessages,
+		},
+	}
+	_, err := r.users.UpdateOne(ctx, filter, update)
+	return err
+}
+
 func (r *MongoRepository) UpdateBotUserSendMessages(ctx context.Context, userId int64, botID int64, sendMessages bool) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -272,6 +203,24 @@ func (r *MongoRepository) UpdateBotUserSendMessages(ctx context.Context, userId 
 		},
 	}
 	_, err := r.botUsers.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *MongoRepository) UpdateUserSettings(ctx context.Context, userID int64, data *UserSettings) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": userID}
+	update := bson.M{
+		"$set": bson.M{
+			"settings.show_my_edits":        data.ShowMyEdits,
+			"settings.show_partner_edits":   data.ShowPartnerEdits,
+			"settings.show_my_deleted":      data.ShowMyDeleted,
+			"settings.show_partner_deleted": data.ShowPartnerDeleted,
+		},
+	}
+
+	_, err := r.users.UpdateOne(ctx, filter, update)
 	return err
 }
 
@@ -390,59 +339,37 @@ func (r *MongoRepository) FindIUserByID(
 	return nil, mongo.ErrNoDocuments
 }
 
-func (r *MongoRepository) FindOrCreateIUser(
+func (r *MongoRepository) FindUser(
 	ctx context.Context,
 	userId int64,
-	botID int64,
-	languageCode string,
-) (*IUser, bool, error) {
-	iUser, err := r.FindIUserByID(ctx, userId, botID)
-	if err == nil {
-		return iUser, false, nil
-	}
-
-	if err != mongo.ErrNoDocuments {
-		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err find user")
-		return nil, false, err
-	}
-
-	_, err = r.updateUser(ctx, userId, languageCode)
-	if err != nil {
-		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err update user")
-		return nil, false, err
-	}
-
-	isNew, err := r.updateBotUser(ctx, userId, botID, false)
-	if err != nil {
-		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err update bot user")
-		return nil, false, err
-	}
-
-	iUser, err = r.FindIUserByID(ctx, userId, botID)
-	if err != nil {
-		log.Debug().Int64("userID", userId).Int64("botID", botID).Err(err).Msg("err find user by id")
-		return nil, false, err
-	}
-
-	return iUser, isNew, nil
-}
-
-func (r *MongoRepository) UpdateUserSettings(ctx context.Context, userID int64, data *UserSettings) error {
+) (*User, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	filter := bson.M{"_id": userID}
-	update := bson.M{
-		"$set": bson.M{
-			"settings.show_my_edits":        data.ShowMyEdits,
-			"settings.show_partner_edits":   data.ShowPartnerEdits,
-			"settings.show_my_deleted":      data.ShowMyDeleted,
-			"settings.show_partner_deleted": data.ShowPartnerDeleted,
-		},
-	}
+	filter := bson.M{"_id": userId}
 
-	_, err := r.users.UpdateOne(ctx, filter, update)
-	return err
+	var user User
+	if err := r.users.FindOne(ctx, filter).Decode(&user); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *MongoRepository) FindBotUser(
+	ctx context.Context,
+	userId int64,
+	botId int64,
+) (*BotUser, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"user_id": userId, "bot_ud": botId}
+
+	var botUser BotUser
+	if err := r.users.FindOne(ctx, filter).Decode(&botUser); err != nil {
+		return nil, err
+	}
+	return &botUser, nil
 }
 
 func (r *MongoRepository) ListIUsers(
@@ -518,26 +445,18 @@ func (r *MongoRepository) ListIUsers(
 	return results, nil
 }
 
-func (r *MongoRepository) UpdateUser(
+func (r *MongoRepository) CreateUser(
 	ctx context.Context,
 	userId int64,
 	languageCode string,
-	sendMessage bool,
-) (new bool, err error) {
+	fromCreator bool,
+) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	filter := bson.M{"_id": userId}
-
-	setFields := bson.M{}
-	if sendMessage {
-		setFields["creator_send_messages"] = true
-	}
-
-	update := bson.M{
-		"$set": setFields,
-		"$setOnInsert": bson.M{
-			"created_at": time.Now().Unix(),
+	insert := bson.M{
+		"$set": bson.M{
+			"_id": userId,
 			"settings": bson.M{
 				"show_my_edits":        false,
 				"show_partner_edits":   true,
@@ -545,35 +464,49 @@ func (r *MongoRepository) UpdateUser(
 				"show_partner_deleted": true,
 			},
 			"language_code": languageCode,
+			"created_at":    time.Now().Unix(),
 		},
 	}
 
-	res, err := r.users.UpdateOne(
-		ctx,
-		filter,
-		update,
-		options.Update().SetUpsert(true),
-	)
-	if err != nil {
-		return false, err
+	if fromCreator {
+		insert["creator_send_messages"] = true
 	}
 
-	new = (res.MatchedCount == 0 && res.UpsertedCount == 1)
-	return new, nil
+	_, err = r.users.InsertOne(ctx, insert)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (r *MongoRepository) FindUser(
+func (r *MongoRepository) CreateBotUser(
 	ctx context.Context,
 	userId int64,
-) (*User, error) {
+	botID int64,
+) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	filter := bson.M{"_id": userId}
-
-	var user User
-	if err := r.users.FindOne(ctx, filter).Decode(&user); err != nil {
-		return nil, err
+	_id, err := r.GetNextSequence(ctx, r.botUsers.Name())
+	if err != nil {
+		return err
 	}
-	return &user, nil
+
+	insert := bson.M{
+		"$set": bson.M{
+			"_id":           _id.Value,
+			"user_id":       userId,
+			"bot_id":        botID,
+			"send_messages": true,
+			"created_at":    time.Now().Unix(),
+		},
+	}
+
+	_, err = r.botUsers.InsertOne(ctx, insert)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
