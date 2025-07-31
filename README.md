@@ -55,6 +55,16 @@ Spy Bot is a Telegram bot designed for monitoring and logging user activities wi
 
 The application can be configured using the `.env` file. Ensure all required variables are set before running the application.
 
+### Acknowledgements
+
+Special thanks to the following projects and contributors:
+
+* [telego](https://github.com/mymmrac/telego) — good lib for telegram bots
+* [connect-go](https://github.com/connectrpc/connect-go) — connectrpc lib
+* [reactjs-template](https://github.com/Telegram-Mini-Apps/reactjs-template) — good template for telegram miniapps
+* [telegram-apps](https://github.com/Telegram-Mini-Apps/telegram-apps) — good react sdk for telegram miniapps
+* [TelegramUI](https://github.com/Telegram-Mini-Apps/TelegramUI) — good react ui for telegram miniapps
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
