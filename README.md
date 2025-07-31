@@ -55,7 +55,7 @@ Spy Bot is a Telegram bot designed for monitoring and logging user activities wi
 
 The application can be configured using the `.env` file. Ensure all required variables are set before running the application.
 
-### Acknowledgements
+## Acknowledgements
 
 Special thanks to the following projects and contributors:
 
