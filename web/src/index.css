@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+        "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    height: 100%;
+}
+
+@layer utilities {
+    .text-telegram {
+        color: var(--tg-theme-text-color);
+    }
+
+    .text-telegram-hint {
+        color: var(--tg-theme-hint-color);
+    }
+
+    .text-telegram-link {
+        color: var(--tg-theme-link-color);
+    }
+
+    .text-telegram-button {
+        color: var(--tg-theme-button-text-color);
+    }
+
+    .text-telegram-accent {
+        color: var(--tg-theme-accent-text-color);
+    }
+
+    .text-telegram-subtitle {
+        color: var(--tg-theme-subtitle-text-color);
+    }
+
+    .text-telegram-destructive {
+        color: var(--tg-theme-destructive-text-color);
+    }
+
+    .bg-telegram {
+        background-color: var(--tg-theme-bg-color);
+    }
+
+    .bg-telegram-secondary {
+        background-color: var(--tg-theme-secondary-bg-color);
+    }
+
+    .bg-telegram-header {
+        background-color: var(--tg-theme-header-bg-color);
+    }
+
+    .bg-telegram-bottom-bar {
+        background-color: var(--tg-theme-bottom-bar-bg-color);
+    }
+
+    .bg-telegram-button {
+        background-color: var(--tg-theme-button-color);
+    }
+
+    .bg-telegram-accent {
+        background-color: var(--tg-theme-accent-text-color);
+    }
+
+    .bg-telegram-section {
+        background-color: var(--tg-theme-section-bg-color);
+    }
+
+    .hover\:bg-telegram-secondary:hover {
+        background-color: var(--tg-theme-secondary-bg-color);
+    }
+
+    .border-telegram-separator {
+        border-color: var(--tg-theme-section-separator-color);
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    @keyframes slide-up {
+        from {
+            transform: translateY(10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-in-out;
+    }
+    .animate-slide-up {
+        animation: slide-up 0.3s ease-out;
+    }
+}
