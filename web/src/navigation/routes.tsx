@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 
 import { ChatsPage } from "@/pages/ChatsPage";
 import { ChatDetailPage } from "@/pages/ChatDetailPage";
-import { IndexPage } from "@/pages/IndexPage/IndexPage";
+import { IndexPage } from "@/pages/IndexPage";
 
 interface Route {
   path: string;
