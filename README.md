@@ -57,7 +57,7 @@ The application can be configured using the `.env` file. Ensure all required var
 
 ## Acknowledgements
 
-Special thanks to the following projects and contributors:
+Special thanks to the following projects:
 
 * [telego](https://github.com/mymmrac/telego) — good lib for telegram bots
 * [connect-go](https://github.com/connectrpc/connect-go) — connectrpc lib
