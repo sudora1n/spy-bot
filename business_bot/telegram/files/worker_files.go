@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/repository/redis"
 	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/telegram/manager"
+	sendMedia "ssuspy-bot/telegram/service/send_media"
 	"ssuspy-bot/telegram/utils"
 	"ssuspy-common/telegram/format"
 	"time"
@@ -21,28 +22,25 @@ import (
 )
 
 type Worker struct {
-	service    *repository.MongoRepository
-	rdb        *redis.Redis
+	repository *repository.Repository
 	botManager *manager.BotManager
 }
 
 func NewWorker(
-	service *repository.MongoRepository,
-	rdb *redis.Redis,
+	repository *repository.Repository,
 	botManager *manager.BotManager,
 ) *Worker {
 	return &Worker{
-		service:    service,
-		rdb:        rdb,
+		repository: repository,
 		botManager: botManager,
 	}
 }
 
 func (w Worker) Work(ctx context.Context) {
 	for {
-		res, err := w.rdb.DequeueJob(ctx, consts.REDIS_QUEUE_FILES, 5*time.Second)
+		res, err := w.repository.LRedis.DequeueJob(ctx, consts.REDIS_QUEUE_FILES, 5*time.Second)
 		if err != nil {
-			log.Printf("Ошибка при чтении из Redis: %v", err)
+			log.Warn().Err(err).Msg("error while read data from Redis")
 			time.Sleep(time.Second)
 			continue
 		}
@@ -106,7 +104,7 @@ func (w Worker) process(job *redis.Job) (err error) {
 	}
 
 	file := tu.File(f)
-	inputMedia := utils.CreateInputMediaFromFileInfoByFile(file, job.File.Type, caption)
+	inputMedia := utils.CreateInputMediaFromFileInfoByFile(file, job.File.Type, caption, true)
 
-	return utils.SendMediaInGroups(bot.Bot, ctx, job.UserID, []telego.InputMedia{inputMedia}, job.MessageID)
+	return sendMedia.SendOneMedia(ctx, bot.Bot, job.UserID, inputMedia, job.MessageID)
 }

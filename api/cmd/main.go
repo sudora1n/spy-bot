@@ -2,25 +2,18 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
-	"ssuspy-api/api"
 	"ssuspy-api/config"
 	"ssuspy-api/repository"
+	"ssuspy-api/web"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-
-	"ssuspy-proto/gen/bots/v1/botsv1connect"
-	"ssuspy-proto/gen/manager/v1/managerv1connect"
-	"ssuspy-proto/gen/messages/v1/messagesv1connect"
-	"ssuspy-proto/gen/users/v1/usersv1connect"
 )
 
 type AuthType string
@@ -56,36 +49,11 @@ func main() {
 		},
 	}).With().Timestamp().Caller().Logger().Level(logLvl)
 
-	mongoRepo, err := repository.NewMongoRepository(cfg.Mongo)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to connect to MongoDB")
+	repo := repository.NewRepository(cfg.Mongo)
+	defer repo.Close(ctx)
+
+	err = web.RunWeb(repo, &cfg, 3000)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatal().Err(err).Msg("web server is down")
 	}
-	defer mongoRepo.Disconnect(ctx)
-
-	business := managerv1connect.NewManagerServiceClient(
-		http.DefaultClient,
-		cfg.BusinessURL,
-	)
-
-	r := chi.NewRouter()
-
-	botsServer := api.NewBotsServer(mongoRepo, business)
-	path, handler := botsv1connect.NewBotsServiceHandler(
-		botsServer,
-	)
-	r.Mount(path, h2c.NewHandler(handler, &http2.Server{}))
-
-	usersServer := &api.UsersServer{}
-	path, handler = usersv1connect.NewUsersServiceHandler(
-		usersServer,
-	)
-	r.Mount(path, h2c.NewHandler(handler, &http2.Server{}))
-
-	messagesServer := &api.MessagesServer{}
-	path, handler = messagesv1connect.NewMessagesServiceHandler(
-		messagesServer,
-	)
-	r.Mount(path, h2c.NewHandler(handler, &http2.Server{}))
-
-	http.ListenAndServe(":3000", r)
 }

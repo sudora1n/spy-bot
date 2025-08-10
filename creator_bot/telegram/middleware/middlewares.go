@@ -1,37 +1,34 @@
 package middleware
 
 import (
-	"context"
 	"errors"
+	"ssuspy-common/repository/mongoRepository"
 	"time"
 
 	"ssuspy-creator-bot/prom"
-	"ssuspy-creator-bot/redis"
 	"ssuspy-creator-bot/repository"
 	"ssuspy-creator-bot/telegram/locales"
 	"ssuspy-creator-bot/types"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type MiddlewareGroup struct {
-	service *repository.MongoRepository
-	rdb     *redis.Redis
+	repository *repository.Repository
 }
 
-func NewMiddlewareGroup(service *repository.MongoRepository, rdb *redis.Redis) *MiddlewareGroup {
+func NewMiddlewareGroup(repository *repository.Repository) *MiddlewareGroup {
 	return &MiddlewareGroup{
-		service: service,
-		rdb:     rdb,
+		repository: repository,
 	}
 }
 
 func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego.Update) error {
 	var (
-		user         *repository.User
+		user         *mongoRepository.User
 		internalUser types.InternalUser
 	)
 
@@ -79,26 +76,32 @@ func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update
 	if internalUser.LanguageCode != "" {
 		i18nLang = internalUser.LanguageCode
 	}
-	new, err := h.service.UpdateUser(context.TODO(), internalUser.ID, internalUser.LanguageCode, internalUser.SendMessages)
-	if err != nil {
-		return err
-	}
 
-	user, err := h.service.FindUser(context.TODO(), internalUser.ID)
+	user, err := h.repository.Mongo.FindUser(c, internalUser.ID)
 	if err != nil {
-		return err
-	}
-
-	if !new {
-		if user.LanguageCode != "" {
-			i18nLang = user.LanguageCode
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			err = h.repository.Mongo.CreateUser(c, internalUser.ID, i18nLang, true)
+			if err != nil {
+				log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed create user")
+				return err
+			}
 		}
+
+		user, err = h.repository.Mongo.FindUser(c, internalUser.ID)
+		if err != nil {
+			log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed get user")
+			return err
+		}
+	}
+
+	if user.LanguageCode != "" {
+		i18nLang = user.LanguageCode
 	}
 
 	loc := locales.NewLocalizer(i18nLang)
 	c = c.WithValue("loc", loc)
 	c = c.WithValue("languageCode", i18nLang)
-	c = c.WithValue("user", user)
+	// c = c.WithValue("user", user) // unused
 
 	return c.Next(update)
 }
@@ -120,14 +123,4 @@ func PromMiddleware(c *th.Context, update telego.Update) error {
 	}
 
 	return err
-}
-
-func AutoRespond(c *th.Context, update telego.Update) error {
-	if update.CallbackQuery != nil {
-		defer func() {
-			c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(update.CallbackQuery.ID))
-		}()
-	}
-
-	return c.Next(update)
 }

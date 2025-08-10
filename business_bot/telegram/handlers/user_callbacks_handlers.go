@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/utils"
+	"ssuspy-common/repository/mongoRepository"
 	"strings"
 
 	"github.com/mymmrac/telego"
@@ -16,7 +16,7 @@ import (
 func HandleInlineQuery(c *th.Context, update telego.Update) error {
 	query := update.InlineQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	botUser := c.Value("botUser").(*mongoRepository.BotUser)
 
 	button := tu.InlineKeyboard(
 		tu.InlineKeyboardRow(
@@ -33,7 +33,7 @@ func HandleInlineQuery(c *th.Context, update telego.Update) error {
 	)
 
 	var result *telego.AnswerInlineQueryParams
-	connection := iUser.BotUser.GetUserCurrentConnection()
+	connection := botUser.GetUserCurrentConnection()
 	if connection == nil {
 		result = tu.InlineQuery(
 			query.ID,
@@ -73,9 +73,9 @@ func HandleUserGiftUpgrade(c *th.Context, update telego.Update) error {
 	query := update.ChosenInlineResult
 	log := c.Value("log").(*zerolog.Logger)
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	botUser := c.Value("botUser").(*mongoRepository.BotUser)
 
-	connection := iUser.BotUser.GetUserCurrentConnection()
+	connection := botUser.GetUserCurrentConnection()
 	rights, err := utils.GetBusinessRights(c, connection)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed get business connection")

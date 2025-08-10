@@ -1,29 +1,26 @@
 package middleware
 
 import (
-	"context"
 	"errors"
-	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/locales"
-	"ssuspy-bot/telegram/utils"
-	"ssuspy-bot/types"
+	"ssuspy-common/repository/mongoRepository"
+	"ssuspy-common/types"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type MiddlewareGroup struct {
-	service *repository.MongoRepository
-	rdb     *redis.Redis
+	repository *repository.Repository
 }
 
-func NewMiddlewareGroup(service *repository.MongoRepository, rdb *redis.Redis) *MiddlewareGroup {
+func NewMiddlewareGroup(repository *repository.Repository) *MiddlewareGroup {
 	return &MiddlewareGroup{
-		service: service,
-		rdb:     rdb,
+		repository: repository,
 	}
 }
 
@@ -47,8 +44,9 @@ func SkipNonPrivateChatsMiddleware(c *th.Context, update telego.Update) error {
 func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego.Update) error {
 	botID := c.Value("botID").(int64)
 	var (
-		iUser        *repository.IUser
 		internalUser types.InternalUser
+		user         *mongoRepository.User
+		botUser      *mongoRepository.BotUser
 	)
 
 	switch {
@@ -77,40 +75,53 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 			SendMessages:         true,
 		}
 	case update.BusinessMessage != nil:
-		iUser = utils.ProcessBusinessBot(h.service, update.BusinessMessage.BusinessConnectionID, 0, botID)
-		if iUser == nil {
+		userWithBotUser, err := h.repository.Mongo.FindIUserByConnectionID(c, update.BusinessMessage.BusinessConnectionID, botID, false)
+		if userWithBotUser.BotUser == nil || err != nil {
 			return nil
 		}
+		user, botUser = &userWithBotUser.User, userWithBotUser.BotUser
 
 		internalUser = types.InternalUser{
-			ID:                   iUser.User.ID,
-			LanguageCode:         iUser.User.LanguageCode,
+			ID:                   user.ID,
+			LanguageCode:         user.LanguageCode,
 			BusinessConnectionID: update.BusinessMessage.BusinessConnectionID,
-			SendMessages:         iUser.BotUser.SendMessages,
+			SendMessages:         botUser.SendMessages,
 		}
 	case update.DeletedBusinessMessages != nil:
-		iUser = utils.ProcessBusinessBot(h.service, update.DeletedBusinessMessages.BusinessConnectionID, 0, botID)
-		if iUser == nil {
+		userWithBotUser, err := h.repository.Mongo.FindIUserByConnectionID(
+			c,
+			update.DeletedBusinessMessages.BusinessConnectionID,
+			botID,
+			true,
+		)
+		if userWithBotUser.BotUser == nil || err != nil {
 			return nil
 		}
+		user, botUser = &userWithBotUser.User, userWithBotUser.BotUser
 
 		internalUser = types.InternalUser{
-			ID:                   iUser.User.ID,
-			LanguageCode:         iUser.User.LanguageCode,
+			ID:                   user.ID,
+			LanguageCode:         user.LanguageCode,
 			BusinessConnectionID: update.DeletedBusinessMessages.BusinessConnectionID,
-			SendMessages:         iUser.BotUser.SendMessages,
+			SendMessages:         botUser.SendMessages,
 		}
 	case update.EditedBusinessMessage != nil:
-		iUser = utils.ProcessBusinessBot(h.service, update.EditedBusinessMessage.BusinessConnectionID, 0, botID)
-		if iUser == nil {
+		userWithBotUser, err := h.repository.Mongo.FindIUserByConnectionID(
+			c,
+			update.EditedBusinessMessage.BusinessConnectionID,
+			botID,
+			true,
+		)
+		if userWithBotUser.BotUser == nil || err != nil {
 			return nil
 		}
+		user, botUser = &userWithBotUser.User, userWithBotUser.BotUser
 
 		internalUser = types.InternalUser{
-			ID:                   iUser.User.ID,
-			LanguageCode:         iUser.User.LanguageCode,
+			ID:                   user.ID,
+			LanguageCode:         user.LanguageCode,
 			BusinessConnectionID: update.EditedBusinessMessage.BusinessConnectionID,
-			SendMessages:         iUser.BotUser.SendMessages,
+			SendMessages:         botUser.SendMessages,
 		}
 	case update.MyChatMember != nil:
 		internalUser = types.InternalUser{
@@ -137,7 +148,8 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 		return errors.New("userID not found")
 	}
 
-	c = c.WithValue("iUser", iUser)
+	c = c.WithValue("user", user)
+	c = c.WithValue("botUser", botUser)
 	c = c.WithValue("internalUser", &internalUser)
 
 	logger := log.With().Int64("userID", internalUser.ID).Logger()
@@ -156,22 +168,48 @@ func (h *MiddlewareGroup) SyncUserMiddleware(c *th.Context, update telego.Update
 		i18nLang = "en"
 	}
 
-	iUser, new, err := h.service.FindOrCreateIUser(context.TODO(), internalUser.ID, botID, internalUser.LanguageCode)
-	if err != nil {
-		log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed get data")
-		return err
-	}
+	var (
+		user    *mongoRepository.User
+		botUser *mongoRepository.BotUser
+	)
 
-	if !new {
-		if iUser.User.LanguageCode != "" {
-			i18nLang = iUser.User.LanguageCode
+	res, err := h.repository.Mongo.FindIUserByID(c, internalUser.ID, botID)
+	user, botUser = &res.User, res.BotUser
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			err := h.repository.Mongo.CreateUser(c, internalUser.ID, i18nLang, false)
+			if err != nil && !mongo.IsDuplicateKeyError(err) {
+				log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed create user")
+				return err
+			}
 		}
+
+		userRes, err := h.repository.Mongo.FindUser(c, internalUser.ID)
+		if err != nil {
+			log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed get user")
+			return err
+		}
+
+		err = h.repository.Mongo.CreateBotUser(c, internalUser.ID, botID)
+		if err != nil {
+			log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed create bot user")
+			return err
+		}
+
+		botUserRes, err := h.repository.Mongo.FindBotUser(c, internalUser.ID, botID)
+		if err != nil {
+			log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed get bot user")
+			return err
+		}
+
+		user, botUser = userRes, botUserRes
 	}
 
 	loc := locales.NewLocalizer(i18nLang)
 	c = c.WithValue("loc", loc)
 	c = c.WithValue("languageCode", i18nLang)
-	c = c.WithValue("iUser", iUser)
+	c = c.WithValue("user", user)
+	c = c.WithValue("botUser", botUser)
 
 	return c.Next(update)
 }

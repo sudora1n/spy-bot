@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -14,72 +13,69 @@ import (
 	"github.com/rs/zerolog"
 
 	"ssuspy-bot/consts"
-	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/callbacks"
+	lFormat "ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/keyboard"
-	"ssuspy-bot/telegram/utils"
+	sendMedia "ssuspy-bot/telegram/service/send_media"
+	lUtils "ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
+	"ssuspy-common/repository/mongoRepository"
 	"ssuspy-common/telegram/format"
+	"ssuspy-common/telegram/utils"
 )
 
 func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedLogDataFromString(query.Data)
 	if err != nil {
 		log.Warn().Err(err).Str("data", query.Data).Msg("invalid callback data")
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		return fmt.Errorf("invalid callback data")
 	}
 
-	result, err := h.service.GetDataDeleted(context.Background(), iUser.User.ID, data.DataID)
+	result, err := h.repository.Mongo.GetDataDeleted(context.Background(), user.ID, data.DataID)
 	if err != nil {
-		log.Error().Err(err).Int64("dataID", data.DataID).Msg("error GetDataFullDeletedLogByUUID")
-		utils.OnDataError(c, query.ID, loc)
+		log.Error().Err(err).Str("dataID", data.DataID.Hex()).Msg("error GetDataFullDeletedLogByUUID")
+		lUtils.OnDataError(c, query.ID, loc)
 		return err
 	}
 
-	msgs, _, err := h.service.GetMessages(
+	msgRes, err := h.repository.Mongo.GetMessages(
 		context.Background(),
-		&repository.GetMessagesOptions{
-			ChatID:        data.ChatID,
-			MessageIDs:    result.MessageIDs,
-			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
-			WithEdits:     true,
+		&mongoRepository.GetMessagesOptions{
+			MessageIDs: result.MessageIDs,
+			WithEdits:  true,
+			UserID:     user.ID,
+			PeerID:     data.ChatID,
 		},
 	)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed GetMessages")
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		return err
 	}
 
-	if len(msgs) == 0 {
-		utils.OnDataError(c, query.ID, loc)
+	if len(msgRes.Messages) == 0 {
+		lUtils.OnDataError(c, query.ID, loc)
 		return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 	}
 
-	var name string
-	chatResolve, err := h.service.FindChatName(c, data.ChatID)
-	if err != nil {
-		name = strconv.FormatInt(data.ChatID, 10)
-	} else {
-		name = chatResolve.Name
-	}
+	name := format.Name(msgRes.Messages[0].Chat.FirstName, msgRes.Messages[0].Chat.LastName)
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.Offset, len(msgs))
+	summaryText := lFormat.SummarizeDeletedMessages(msgRes.Messages, name, loc, false, data.Offset, len(msgRes.Messages))
 	files := []telego.InputMedia{
-		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("%d-summary-%s", data.ChatID, now))),
+		tu.MediaDocument(lFormat.GetMDInputFile(summaryText, fmt.Sprintf("%d-summary-%s", data.ChatID, now))),
 	}
 
-	filteredMsgs := format.FilterMessagesByDate(msgs)
-	withEdits := len(filteredMsgs) != len(msgs)
+	filteredMsgs := lFormat.FilterMessagesByDate(msgRes.Messages)
+	withEdits := len(filteredMsgs) != len(msgRes.Messages)
 	if withEdits {
-		jsonBytesWithEdits, _ := json.MarshalIndent(msgs, "", "  ")
+		jsonBytesWithEdits, _ := json.MarshalIndent(msgRes.Messages, "", "  ")
 		files = append(
 			files,
 			tu.MediaDocument(tu.FileFromBytes(jsonBytesWithEdits, fmt.Sprintf("%d-all-json-%s.json", data.ChatID, now))),
@@ -100,9 +96,9 @@ func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 			).WithParseMode(telego.ModeHTML),
 	)
 
-	if err := utils.SendMediaInGroups(c.Bot(), c, iUser.User.ID, files, query.Message.GetMessageID()); err != nil {
+	if err := sendMedia.SendMediaInGroups(c.Bot(), c, user.ID, files, query.Message.GetMessageID()); err != nil {
 		log.Warn().Err(err).Msg("Error sending media to user")
-		utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
+		lUtils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
 	}
 
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
@@ -111,21 +107,21 @@ func (h *Handler) HandleDeletedLog(c *th.Context, update telego.Update) error {
 func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedMessageDataFromString(query.Data)
 	if err != nil {
 		log.Warn().Err(err).Str("data", query.Data).Msg("invalid callback data")
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		return fmt.Errorf("invalid callback data")
 	}
 
-	msg, err := h.service.GetMessage(
-		context.Background(), &repository.GetMessageOptions{
-			ChatID:        data.ChatID,
-			MessageID:     data.MessageID,
-			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
+	msg, err := h.repository.Mongo.GetMessage(
+		context.Background(), &mongoRepository.GetMessageOptions{
+			UserID:    user.ID,
+			PeerID:    data.ChatID,
+			MessageID: data.MessageID,
 		},
 	)
 	if err != nil {
@@ -133,7 +129,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 			Err(err).
 			Int("messageID", data.MessageID).
 			Msg("error GetMessage for full deleted message")
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		return err
 	}
 
@@ -143,16 +139,16 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 				loc.MustLocalize(&i18n.LocalizeConfig{
 					MessageID: "business.deleted.request.oneDetails",
 				}),
-			).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeDetails)),
+			).WithCallbackData(data.ToString(callbacks.HandleDeletedMessageDataTypeDetails)),
 		),
 	}
 
 	file := utils.GetFile(msg)
 	if file != nil {
-		callbackData := types.HandleDeletedFilesData{
+		callbackData := callbacks.HandleDeletedFilesData{
 			MessageID: data.MessageID,
 			ChatID:    data.ChatID,
-			Type:      types.HandleDeletedFilesDataTypeMessage,
+			Type:      callbacks.HandleDeletedFilesDataTypeMessage,
 		}
 		buttons = append(buttons, tu.InlineKeyboardRow(
 			tu.InlineKeyboardButton(
@@ -163,7 +159,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 		))
 	}
 
-	callbackData := types.HandleDeletedPaginationData{
+	callbackData := callbacks.HandleDeletedPaginationData{
 		DataID: data.DataID,
 		ChatID: data.ChatID,
 		Offset: data.BackOffset,
@@ -173,7 +169,7 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 		keyboard.BuildBackButton(loc, callbackData.ToString()),
 	))
 
-	summaryText := format.SummarizeDeletedMessage(msg, loc, true)
+	summaryText := lFormat.SummarizeDeletedMessage(msg, loc, true)
 	if _, err := c.Bot().EditMessageText(c, tu.EditMessageText(tu.ID(query.From.ID), query.Message.GetMessageID(), summaryText).
 		WithParseMode(telego.ModeHTML).
 		WithReplyMarkup(tu.InlineKeyboard(buttons...)),
@@ -188,53 +184,47 @@ func (h *Handler) HandleDeletedMessage(c *th.Context, update telego.Update) erro
 func (h *Handler) HandleDeletedMessageDetails(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedMessageDataFromString(query.Data)
 	if err != nil {
 		log.Warn().Err(err).Str("data", query.Data).Msg("invalid callback data")
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		return fmt.Errorf("invalid callback data")
 	}
 
-	msgs, _, err := h.service.GetMessages(
+	msgRes, err := h.repository.Mongo.GetMessages(
 		context.Background(),
-		&repository.GetMessagesOptions{
-			ChatID:        data.ChatID,
-			MessageIDs:    []int{data.MessageID},
-			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
-			WithEdits:     true,
+		&mongoRepository.GetMessagesOptions{
+			UserID:     user.ID,
+			PeerID:     data.ChatID,
+			MessageIDs: []int{data.MessageID},
+			WithEdits:  true,
 		},
 	)
-	if err != nil || len(msgs) == 0 {
+	if err != nil || len(msgRes.Messages) == 0 {
 		log.Warn().Err(err).Int("messageID", data.MessageID).Msg("failed GetMessages")
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		if err == nil {
 			err = fmt.Errorf("no messages found for details")
 		}
 		return err
 	}
 
-	var name string
-	chatResolve, err := h.service.FindChatName(c, data.ChatID)
-	if err != nil {
-		name = strconv.FormatInt(data.ChatID, 10)
-	} else {
-		name = chatResolve.Name
-	}
+	name := format.Name(msgRes.Messages[0].Chat.FirstName, msgRes.Messages[0].Chat.LastName)
 
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
-	summaryText := format.SummarizeDeletedMessages(msgs, name, loc, false, data.BackOffset, len(msgs))
+	summaryText := lFormat.SummarizeDeletedMessages(msgRes.Messages, name, loc, false, data.BackOffset, len(msgRes.Messages))
 	files := []telego.InputMedia{
-		tu.MediaDocument(format.GetMDInputFile(summaryText, fmt.Sprintf("msg-%d-summary-%s", data.MessageID, now))),
+		tu.MediaDocument(lFormat.GetMDInputFile(summaryText, fmt.Sprintf("msg-%d-summary-%s", data.MessageID, now))),
 	}
-	if len(msgs) > 1 {
-		jsonBytesAllEdits, _ := json.MarshalIndent(msgs, "", "  ")
+	if len(msgRes.Messages) >= 2 {
+		jsonBytesAllEdits, _ := json.MarshalIndent(msgRes.Messages, "", "  ")
 		files = append(files, tu.MediaDocument(tu.FileFromBytes(jsonBytesAllEdits, fmt.Sprintf("msg-%d-all-json-%s.json", data.MessageID, now))))
 	}
 
-	latestMsg := format.FilterMessagesByDate(msgs)
+	latestMsg := lFormat.FilterMessagesByDate(msgRes.Messages)
 	jsonBytesLatest, _ := json.MarshalIndent(latestMsg, "", "  ")
 	files = append(
 		files,
@@ -243,58 +233,58 @@ func (h *Handler) HandleDeletedMessageDetails(c *th.Context, update telego.Updat
 				loc.MustLocalize(&i18n.LocalizeConfig{
 					MessageID: "business.deleted.request.message",
 					TemplateData: map[string]bool{
-						"WithEdits": len(msgs) > 1,
+						"WithEdits": len(msgRes.Messages) >= 2,
 					},
 				}),
 			).WithParseMode(telego.ModeHTML),
 	)
 
-	if err := utils.SendMediaInGroups(c.Bot(), c, iUser.User.ID, files, query.Message.GetMessageID()); err != nil {
+	if err := sendMedia.SendMediaInGroups(c.Bot(), c, user.ID, files, query.Message.GetMessageID()); err != nil {
 		log.Warn().Err(err).Msg("Error sending media to user")
-		utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
+		lUtils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
 	}
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 }
 
 func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	loc := c.Value("loc").(*i18n.Localizer)
 	log := c.Value("log").(*zerolog.Logger)
 
 	data, err := callbacks.NewHandleDeletedFilesFromString(query.Data)
 	if err != nil {
 		log.Warn().Err(err).Str("data", query.Data).Msg("invalid callback data")
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		return fmt.Errorf("invalid callback data")
 	}
 
 	var messageIDs []int
 	switch data.Type {
-	case types.HandleDeletedFilesDataTypeMessage:
+	case callbacks.HandleDeletedFilesDataTypeMessage:
 		messageIDs = []int{data.MessageID}
-	case types.HandleDeletedFilesDataTypeData:
-		callbackData, err := h.service.GetDataDeleted(context.Background(), iUser.User.ID, data.DataID)
+	case callbacks.HandleDeletedFilesDataTypeData:
+		callbackData, err := h.repository.Mongo.GetDataDeleted(context.Background(), user.ID, data.DataID)
 		if err != nil {
-			log.Warn().Int64("dataID", data.DataID).Err(err).Msg("failed GetDataDeleted")
-			utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
+			log.Warn().Str("dataID", data.DataID.Hex()).Err(err).Msg("failed GetDataDeleted")
+			lUtils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
 			return err
 		}
 
 		messageIDs = callbackData.MessageIDs
 	}
 
-	msgs, _, err := h.service.GetMessages(
+	msgRes, err := h.repository.Mongo.GetMessages(
 		context.Background(),
-		&repository.GetMessagesOptions{
-			ChatID:        data.ChatID,
-			MessageIDs:    messageIDs,
-			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
+		&mongoRepository.GetMessagesOptions{
+			UserID:     user.ID,
+			PeerID:     data.ChatID,
+			MessageIDs: messageIDs,
 		},
 	)
-	if err != nil || len(msgs) == 0 {
-		log.Warn().Err(err).Int64("userID", iUser.User.ID).Msg("Error GetMessages for get deleted files log")
-		utils.OnDataError(c, query.ID, loc)
+	if err != nil || len(msgRes.Messages) == 0 {
+		log.Warn().Err(err).Int64("userID", user.ID).Msg("Error GetMessages for get deleted files log")
+		lUtils.OnDataError(c, query.ID, loc)
 		if err == nil {
 			err = fmt.Errorf("no messages found for get deleted files log")
 		}
@@ -304,13 +294,13 @@ func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) err
 	var files []*types.MediaItemProcess
 	processedMediaGroupIDs := make(map[string]bool)
 
-	for _, msg := range msgs {
+	for _, msg := range msgRes.Messages {
 		if msg.MediaGroupID != "" {
 			if processedMediaGroupIDs[msg.MediaGroupID] {
 				continue
 			}
 			currentMediaGroupItems := []*telego.Message{}
-			for _, m := range msgs {
+			for _, m := range msgRes.Messages {
 				if m.MediaGroupID == msg.MediaGroupID {
 					currentMediaGroupItems = append(currentMediaGroupItems, m)
 				}
@@ -368,19 +358,17 @@ func (h *Handler) HandleGetDeletedFiles(c *th.Context, update telego.Update) err
 	}
 
 	if len(files) == 0 {
-		utils.OnDataError(c, query.ID, loc)
+		return lUtils.OnDataError(c, query.ID, loc)
 	} else {
-		sort := utils.SortFiles(files)
-		converted := utils.ConvertFileInfosGroupsToInputMediaGroups(sort)
+		sort := lUtils.SortFiles(files)
+		converted := lUtils.ConvertFileInfosGroupsToInputMediaGroups(sort)
 		for i, sortFiles := range converted {
-			if err = utils.SendMediaInGroups(c.Bot(), c, iUser.User.ID, sortFiles, query.Message.GetMessageID()); err != nil {
+			if err = sendMedia.SendMediaInGroups(c.Bot(), c, user.ID, sortFiles, query.Message.GetMessageID()); err != nil {
 				log.Warn().Err(err).Int("batchIndex", i).Msg("failed sending files for get deleted files")
-			}
-			if err != nil {
-				utils.OnFilesError(c, iUser.User.ID, loc, query.Message.GetMessageID())
+				lUtils.OnFilesError(c, user.ID, loc, query.Message.GetMessageID())
 			}
 		}
 	}
 
-	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
+	return nil
 }

@@ -1,9 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
-	managerv1 "ssuspy-proto/gen/manager/v1"
+	"strings"
 
 	"ssuspy-common/telegram/format"
 	"ssuspy-creator-bot/config"
@@ -12,8 +11,6 @@ import (
 	"ssuspy-creator-bot/telegram/keyboard"
 	"ssuspy-creator-bot/telegram/locales"
 	"ssuspy-creator-bot/types"
-
-	"strings"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -24,14 +21,12 @@ import (
 )
 
 type Handler struct {
-	service    *repository.MongoRepository
-	grpcClient managerv1.ManagerServiceClient
+	repository *repository.Repository
 }
 
-func NewHandlerGroup(service *repository.MongoRepository, grpcClient managerv1.ManagerServiceClient) *Handler {
+func NewHandlerGroup(repository *repository.Repository) *Handler {
 	return &Handler{
-		service:    service,
-		grpcClient: grpcClient,
+		repository: repository,
 	}
 }
 
@@ -144,7 +139,7 @@ func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) erro
 
 	parts := strings.Split(query.Data, "|")
 
-	err := h.service.UpdateUserLanguage(context.Background(), query.From.ID, parts[1])
+	err := h.repository.Mongo.UpdateUserLanguage(c, query.From.ID, parts[1])
 	if err != nil {
 		return err
 	}
@@ -185,11 +180,24 @@ func HandleGithub(c *th.Context, update telego.Update) error {
 	return err
 }
 
-func (h *Handler) HandleBlocked(_ *th.Context, update telego.Update) error {
-	chatMember := update.MyChatMember
-	if chatMember.NewChatMember.MemberStatus() == telego.MemberStatusBanned &&
-		chatMember.Chat.Type == "private" {
-		return h.service.UpdateUserSendMessages(context.Background(), chatMember.From.ID, false)
+func (h *Handler) HandleBlocked(ctx *th.Context, update telego.Update) error {
+	myChatMember := update.MyChatMember
+
+	if myChatMember.Chat.Type != "private" {
+		return nil
 	}
-	return nil
+
+	var canSendMessages bool
+	switch myChatMember.NewChatMember.MemberStatus() {
+	case telego.MemberStatusBanned:
+		canSendMessages = false
+	case telego.MemberStatusMember:
+		canSendMessages = true
+	}
+
+	return h.repository.Mongo.UpdateUserSendMessages(
+		ctx,
+		myChatMember.From.ID,
+		canSendMessages,
+	)
 }

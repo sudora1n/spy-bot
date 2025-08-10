@@ -3,10 +3,11 @@ package handlers
 import (
 	"fmt"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/callbacks"
 	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/utils"
+	"ssuspy-common/repository/mongoRepository"
+	"ssuspy-common/types"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -14,25 +15,19 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-type settingMeta struct {
-	messageID string
-	status    bool
-	data      int
-}
-
-func makeSettingsRows(loc *i18n.Localizer, handler string, settings []settingMeta) (rows [][]telego.InlineKeyboardButton) {
+func makeSettingsRows(loc *i18n.Localizer, handler string, settings []types.SettingMeta) (rows [][]telego.InlineKeyboardButton) {
 	for _, s := range settings {
 		label := loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: s.messageID,
+			MessageID: s.MessageID,
 			TemplateData: map[string]bool{
-				"Status": s.status,
+				"Status": s.Status,
 			},
 		})
 
 		rows = append(rows, tu.InlineKeyboardRow(
 			tu.InlineKeyboardButton(label).
 				WithCallbackData(
-					fmt.Sprintf("%s|%d", handler, s.data),
+					fmt.Sprintf("%s|%d", handler, s.Data),
 				),
 		))
 	}
@@ -47,7 +42,7 @@ func makeSettingsRows(loc *i18n.Localizer, handler string, settings []settingMet
 func (h *Handler) HandleSettings(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 
 	status := map[bool]string{
 		true: loc.MustLocalize(&i18n.LocalizeConfig{
@@ -61,15 +56,15 @@ func (h *Handler) HandleSettings(c *th.Context, update telego.Update) error {
 	messageText := loc.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "settings.message",
 		TemplateData: map[string]string{
-			"MyDel":       status[iUser.User.Settings.ShowMyDeleted],
-			"PartnerDel":  status[iUser.User.Settings.ShowPartnerDeleted],
-			"MyEdit":      status[iUser.User.Settings.ShowMyEdits],
-			"PartnerEdit": status[iUser.User.Settings.ShowPartnerEdits],
+			"MyDel":       status[user.Settings.ShowMyDeleted],
+			"PartnerDel":  status[user.Settings.ShowPartnerDeleted],
+			"MyEdit":      status[user.Settings.ShowMyEdits],
+			"PartnerEdit": status[user.Settings.ShowPartnerEdits],
 		},
 	})
 
 	_, err := c.Bot().EditMessageText(c, tu.EditMessageText(
-		tu.ID(iUser.User.ID),
+		tu.ID(user.ID),
 		query.Message.GetMessageID(),
 		messageText,
 	).WithParseMode(telego.ModeHTML).WithReplyMarkup(
@@ -99,7 +94,7 @@ func (h *Handler) HandleSettings(c *th.Context, update telego.Update) error {
 func (h *Handler) HandleSettingsDeleted(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 
 	needUpdate := true
 	data, err := callbacks.NewHandleSettingsDataFromString(query.Data)
@@ -114,34 +109,34 @@ func (h *Handler) HandleSettingsDeleted(c *th.Context, update telego.Update) err
 	if needUpdate {
 		switch data {
 		case consts.SETTINGS_SHOW_MY_DELETED:
-			iUser.User.Settings.ShowMyDeleted = !iUser.User.Settings.ShowMyDeleted
+			user.Settings.ShowMyDeleted = !user.Settings.ShowMyDeleted
 		case consts.SETTINGS_SHOW_PARTNER_DELETED:
-			iUser.User.Settings.ShowPartnerDeleted = !iUser.User.Settings.ShowPartnerDeleted
+			user.Settings.ShowPartnerDeleted = !user.Settings.ShowPartnerDeleted
 		default:
 			utils.OnDataError(c, query.ID, loc)
 			return fmt.Errorf("no seting found")
 		}
 
-		err = h.service.UpdateUserSettings(
+		err = h.repository.Mongo.UpdateUserSettings(
 			c,
-			iUser.User.ID,
-			iUser.User.Settings,
+			user.ID,
+			user.Settings,
 		)
 		if err != nil {
 			return err
 		}
 	}
 
-	settings := []settingMeta{
+	settings := []types.SettingMeta{
 		{
-			messageID: "settings.deleted.my",
-			status:    iUser.User.Settings.ShowMyDeleted,
-			data:      consts.SETTINGS_SHOW_MY_DELETED,
+			MessageID: "settings.deleted.my",
+			Status:    user.Settings.ShowMyDeleted,
+			Data:      consts.SETTINGS_SHOW_MY_DELETED,
 		},
 		{
-			messageID: "settings.deleted.partner",
-			status:    iUser.User.Settings.ShowPartnerDeleted,
-			data:      consts.SETTINGS_SHOW_PARTNER_DELETED,
+			MessageID: "settings.deleted.partner",
+			Status:    user.Settings.ShowPartnerDeleted,
+			Data:      consts.SETTINGS_SHOW_PARTNER_DELETED,
 		},
 	}
 
@@ -157,13 +152,13 @@ func (h *Handler) HandleSettingsDeleted(c *th.Context, update telego.Update) err
 	messageText := loc.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "settings.deleted.message",
 		TemplateData: map[string]string{
-			"My":      status[iUser.User.Settings.ShowMyDeleted],
-			"Partner": status[iUser.User.Settings.ShowPartnerDeleted],
+			"My":      status[user.Settings.ShowMyDeleted],
+			"Partner": status[user.Settings.ShowPartnerDeleted],
 		},
 	})
 
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
-		tu.ID(iUser.User.ID),
+		tu.ID(user.ID),
 		query.Message.GetMessageID(),
 		messageText,
 	).WithParseMode(telego.ModeHTML).WithReplyMarkup(tu.InlineKeyboard(makeSettingsRows(loc, consts.CALLBACK_PREFIX_SETTINGS_DELETED, settings)...)))
@@ -173,7 +168,7 @@ func (h *Handler) HandleSettingsDeleted(c *th.Context, update telego.Update) err
 func (h *Handler) HandleSettingsEdited(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 
 	needUpdate := true
 	data, err := callbacks.NewHandleSettingsDataFromString(query.Data)
@@ -188,34 +183,34 @@ func (h *Handler) HandleSettingsEdited(c *th.Context, update telego.Update) erro
 	if needUpdate {
 		switch data {
 		case consts.SETTINGS_SHOW_MY_EDITS:
-			iUser.User.Settings.ShowMyEdits = !iUser.User.Settings.ShowMyEdits
+			user.Settings.ShowMyEdits = !user.Settings.ShowMyEdits
 		case consts.SETTINGS_SHOW_PARTNER_EDITS:
-			iUser.User.Settings.ShowPartnerEdits = !iUser.User.Settings.ShowPartnerEdits
+			user.Settings.ShowPartnerEdits = !user.Settings.ShowPartnerEdits
 		default:
 			utils.OnDataError(c, query.ID, loc)
 			return fmt.Errorf("no seting found")
 		}
 
-		err = h.service.UpdateUserSettings(
+		err = h.repository.Mongo.UpdateUserSettings(
 			c,
-			iUser.User.ID,
-			iUser.User.Settings,
+			user.ID,
+			user.Settings,
 		)
 		if err != nil {
 			return err
 		}
 	}
 
-	settings := []settingMeta{
+	settings := []types.SettingMeta{
 		{
-			messageID: "settings.edited.my",
-			status:    iUser.User.Settings.ShowMyEdits,
-			data:      consts.SETTINGS_SHOW_MY_EDITS,
+			MessageID: "settings.edited.my",
+			Status:    user.Settings.ShowMyEdits,
+			Data:      consts.SETTINGS_SHOW_MY_EDITS,
 		},
 		{
-			messageID: "settings.edited.partner",
-			status:    iUser.User.Settings.ShowPartnerEdits,
-			data:      consts.SETTINGS_SHOW_PARTNER_EDITS,
+			MessageID: "settings.edited.partner",
+			Status:    user.Settings.ShowPartnerEdits,
+			Data:      consts.SETTINGS_SHOW_PARTNER_EDITS,
 		},
 	}
 
@@ -231,13 +226,13 @@ func (h *Handler) HandleSettingsEdited(c *th.Context, update telego.Update) erro
 	messageText := loc.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "settings.edited.message",
 		TemplateData: map[string]string{
-			"My":      status[iUser.User.Settings.ShowMyEdits],
-			"Partner": status[iUser.User.Settings.ShowPartnerEdits],
+			"My":      status[user.Settings.ShowMyEdits],
+			"Partner": status[user.Settings.ShowPartnerEdits],
 		},
 	})
 
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
-		tu.ID(iUser.User.ID),
+		tu.ID(user.ID),
 		query.Message.GetMessageID(),
 		messageText,
 	).WithParseMode(telego.ModeHTML).WithReplyMarkup(tu.InlineKeyboard(makeSettingsRows(loc, consts.CALLBACK_PREFIX_SETTINGS_EDITED, settings)...)))

@@ -1,16 +1,15 @@
 package metrics
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog/log"
 )
 
-func RunMetrics(mux *http.ServeMux) {
+func RunMetrics(port int) error {
+	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
-	if err := http.ListenAndServe(":8080", mux); err != nil && err != http.ErrServerClosed {
-		log.Fatal().Err(err).Msg("web server server down")
-	}
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 }

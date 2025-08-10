@@ -5,6 +5,8 @@ WORKDIR /workspace
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,source=business_bot/go.sum,target=business_bot/go.sum \
     --mount=type=bind,source=business_bot/go.mod,target=business_bot/go.mod \
+    --mount=type=bind,source=migrations/go.sum,target=migrations/go.sum \
+    --mount=type=bind,source=migrations/go.mod,target=migrations/go.mod \
     --mount=type=bind,source=creator_bot/go.mod,target=creator_bot/go.mod \
     --mount=type=bind,source=creator_bot/go.sum,target=creator_bot/go.sum \
     --mount=type=bind,source=api/go.mod,target=api/go.mod \

@@ -1,7 +1,6 @@
 version: v2
 modules:
   - path: shared
-  - path: private_api
   - path: api
   - path: business_bot
 lint:

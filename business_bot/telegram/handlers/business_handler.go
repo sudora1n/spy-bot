@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,23 +12,29 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"ssuspy-bot/consts"
-	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
+	"ssuspy-bot/repository/redis"
 	"ssuspy-bot/telegram/callbacks"
+	lFormat "ssuspy-bot/telegram/format"
 	"ssuspy-bot/telegram/utils"
 	"ssuspy-bot/types"
+	"ssuspy-common/repository/mongoRepository"
 	"ssuspy-common/telegram/format"
+	commonTypes "ssuspy-common/types"
 )
 
 func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 	message := update.BusinessMessage
 
+	internalUser := c.Value("internalUser").(commonTypes.InternalUser)
+
 	message.Text = format.TruncateText(message.Text, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
 	message.Caption = format.TruncateText(message.Caption, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
 
-	err := h.service.SaveMessage(context.Background(), message)
+	err := h.repository.Mongo.SaveMessage(context.Background(), message, internalUser.ID)
 	if err != nil {
 		log.Warn().
 			Err(err).
@@ -37,20 +42,6 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 			Int("messageID", message.MessageID).
 			Msg("error saving message")
 		return nil
-	}
-
-	name := format.Name(
-		message.Chat.FirstName,
-		message.Chat.LastName,
-	)
-
-	err = h.service.UpdateChatName(
-		c,
-		message.Chat.ID,
-		name,
-	)
-	if err != nil {
-		log.Warn().Err(err).Msg("failed save/update chat name")
 	}
 
 	replyToMessage := message.ReplyToMessage
@@ -66,12 +57,12 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	iUser := c.Value("iUser").(*repository.IUser)
 
-	file := utils.GetFile(replyToMessage)
+	file := lUtils.GetFile(replyToMessage)
 	if file == nil {
 		return nil
 	}
 
-	fileExists, err := h.service.CreateFileIfNotExists(c, file.FileID, iUser.User.ID, message.Chat.ID)
+	fileExists, err := h.repository.Mongo.CreateFileIfNotExists(c, file.FileID, iUser.User.ID, message.Chat.ID)
 	if err != nil || !fileExists {
 		return err
 	}
@@ -86,7 +77,7 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	err = h.rdb.EnqueueJob(c, consts.REDIS_QUEUE_FILES, redis.Job{
+	err = h.repository.LRedis.EnqueueJob(c, consts.REDIS_QUEUE_FILES, redis.Job{
 		File:             file,
 		UserID:           iUser.User.ID,
 		ChatID:           message.Chat.ID,
@@ -104,7 +95,7 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 
 func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	log := c.Value("log").(*zerolog.Logger)
 
 	itsCallbackQuery := c.Value("itsCallbackQuery").(bool)
@@ -115,7 +106,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		limit              int
 		offset             int
 		typeOfPagination   string
-		dataID             int64
+		dataID             primitive.ObjectID
 		correctMessagesLen uint8
 		correctFilesLen    uint8
 	)
@@ -126,9 +117,9 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			return fmt.Errorf("invalid callback data")
 		}
 
-		result, err := h.service.GetDataDeleted(context.Background(), update.CallbackQuery.From.ID, data.DataID)
+		result, err := h.repository.Mongo.GetDataDeleted(context.Background(), update.CallbackQuery.From.ID, data.DataID)
 		if err != nil {
-			log.Error().Err(err).Int64("dataID", data.DataID).Msg("error GetDataFullDeletedLogByUUID")
+			log.Error().Err(err).Str("dataID", data.DataID.Hex()).Msg("error GetDataFullDeletedLogByUUID")
 
 			return err
 		}
@@ -144,33 +135,33 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		offset = max(offset-consts.MAX_BUTTONS, 0)
 	}
 
-	unfilteredOldMsgs, pagination, err := h.service.GetMessages(
+	msgRes, err := h.repository.Mongo.GetMessages(
 		context.Background(),
-		&repository.GetMessagesOptions{
-			ChatID:        chatID,
-			MessageIDs:    messageIDs,
-			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
-			Limit:         limit,
-			Offset:        offset,
+		&mongoRepository.GetMessagesOptions{
+			UserID:     user.ID,
+			PeerID:     chatID,
+			MessageIDs: messageIDs,
+			Limit:      limit,
+			Offset:     offset,
 		},
 	)
 	if err != nil {
 		return err
 	}
 
-	if len(unfilteredOldMsgs) == 0 {
+	if len(msgRes.Messages) == 0 {
 		log.Warn().Ints("messageIDs", messageIDs).Int("offset", offset).Str("typeOfPagination", typeOfPagination).Msg("no messages found in the database")
 		return nil
 	}
 
 	var oldMsgs []*telego.Message
 	filesLen := 0
-	for _, msg := range unfilteredOldMsgs {
+	for _, msg := range msgRes.Messages {
 		switch {
-		case !iUser.User.Settings.ShowMyDeleted && iUser.User.ID == msg.From.ID:
+		case !user.Settings.ShowMyDeleted && user.ID == msg.From.ID:
 			log.Debug().Msg("skip due user settings (self)")
 			continue
-		case !iUser.User.Settings.ShowPartnerDeleted && iUser.User.ID != msg.From.ID:
+		case !user.Settings.ShowPartnerDeleted && user.ID != msg.From.ID:
 			log.Debug().Msg("skip due user settings (partner)")
 			continue
 		}
@@ -189,7 +180,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 	if !itsCallbackQuery {
 		correctMessagesLen, correctFilesLen = uint8(len(oldMsgs)), uint8(filesLen)
-		dataID, err = h.service.SetDataDeleted(context.TODO(), iUser.User.ID, messageIDs, correctMessagesLen, correctFilesLen)
+		dataID, err = h.repository.Mongo.SetDataDeleted(context.TODO(), iUser.User.ID, messageIDs, correctMessagesLen, correctFilesLen)
 		if err != nil {
 			return err
 		}
@@ -202,131 +193,127 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	}
 
 	rows := [][]telego.InlineKeyboardButton{}
-	if len(oldMsgs) > 0 {
-		data := types.HandleDeletedLogData{
+	data := callbacks.HandleDeletedLogData{
+		DataID: dataID,
+		ChatID: chatID,
+		Offset: offset,
+	}
+	rows = append(rows,
+		tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton(
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "business.deleted.fullMessages",
+				}),
+			).WithCallbackData(data.ToString()),
+		),
+	)
+
+	if correctFilesLen != 0 {
+		callbackData := callbacks.HandleDeletedFilesData{
 			DataID: dataID,
 			ChatID: chatID,
-			Offset: offset,
+			Type:   callbacks.HandleDeletedFilesDataTypeData,
 		}
 		rows = append(rows,
 			tu.InlineKeyboardRow(
 				tu.InlineKeyboardButton(
 					loc.MustLocalize(&i18n.LocalizeConfig{
-						MessageID: "business.deleted.fullMessages",
+						MessageID: "business.deleted.request.files",
+						TemplateData: map[string]int{
+							"Count": int(correctFilesLen),
+						},
+						PluralCount: int(correctFilesLen),
 					}),
-				).WithCallbackData(data.ToString()),
+				).WithCallbackData(callbackData.ToString()),
 			),
 		)
+	}
 
-		if correctFilesLen != 0 {
-			callbackData := types.HandleDeletedFilesData{
-				DataID: dataID,
-				ChatID: chatID,
-				Type:   types.HandleDeletedFilesDataTypeData,
+	if len(oldMsgs) > 1 {
+		for i := 0; i < len(oldMsgs); i += 2 {
+			row := make([]telego.InlineKeyboardButton, 0, 2)
+			data := callbacks.HandleDeletedMessageData{
+				MessageID:  oldMsgs[i].MessageID,
+				ChatID:     chatID,
+				DataID:     dataID,
+				BackOffset: offset,
 			}
-			rows = append(rows,
-				tu.InlineKeyboardRow(
-					tu.InlineKeyboardButton(
-						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "business.deleted.request.files",
-							TemplateData: map[string]int{
-								"Count": int(correctFilesLen),
-							},
-							PluralCount: int(correctFilesLen),
-						}),
-					).WithCallbackData(callbackData.ToString()),
-				),
-			)
-		}
 
-		if len(oldMsgs) > 1 {
-			for i := 0; i < len(oldMsgs); i += 2 {
-				row := make([]telego.InlineKeyboardButton, 0, 2)
-				data := types.HandleDeletedMessageData{
-					MessageID:  oldMsgs[i].MessageID,
-					ChatID:     chatID,
-					DataID:     dataID,
-					BackOffset: offset,
-				}
+			row = append(row, tu.InlineKeyboardButton(
+				loc.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: "business.deleted.messageItem",
+					TemplateData: map[string]int{
+						"Count": i + 1 + offset,
+					},
+				}),
+			).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
 
+			if i+1 < len(oldMsgs) {
+				data.MessageID = oldMsgs[i+1].MessageID
 				row = append(row, tu.InlineKeyboardButton(
 					loc.MustLocalize(&i18n.LocalizeConfig{
 						MessageID: "business.deleted.messageItem",
 						TemplateData: map[string]int{
-							"Count": i + 1 + offset,
+							"Count": i + 2 + offset,
 						},
 					}),
 				).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
+			}
 
-				if i+1 < len(oldMsgs) {
-					data.MessageID = oldMsgs[i+1].MessageID
-					row = append(row, tu.InlineKeyboardButton(
+			rows = append(rows, row)
+		}
+
+		if len(oldMsgs) > consts.MAX_BUTTONS || pagination.Backward || pagination.Forward {
+			row := make([]telego.InlineKeyboardButton, 0, 2)
+
+			paginationData := callbacks.HandleDeletedPaginationData{
+				DataID: dataID,
+				ChatID: chatID,
+				Offset: offset,
+			}
+
+			if pagination.Backward {
+				paginationData.TypeOfPagination = "b"
+				row = append(
+					row,
+					tu.InlineKeyboardButton(
 						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "business.deleted.messageItem",
-							TemplateData: map[string]int{
-								"Count": i + 2 + offset,
-							},
+							MessageID: "arrow.backward",
 						}),
-					).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
-				}
-
-				rows = append(rows, row)
+					).
+						WithCallbackData(paginationData.ToString()),
+				)
+			}
+			if pagination.Forward {
+				paginationData.TypeOfPagination = "f"
+				row = append(
+					row,
+					tu.InlineKeyboardButton(
+						loc.MustLocalize(&i18n.LocalizeConfig{
+							MessageID: "arrow.forward",
+						}),
+					).
+						WithCallbackData(paginationData.ToString()),
+				)
 			}
 
-			if len(oldMsgs) > consts.MAX_BUTTONS || pagination.Backward || pagination.Forward {
-				row := make([]telego.InlineKeyboardButton, 0, 2)
-
-				paginationData := types.HandleDeletedPaginationData{
-					DataID: dataID,
-					ChatID: chatID,
-					Offset: offset,
-				}
-
-				if pagination.Backward {
-					paginationData.TypeOfPagination = "b"
-					row = append(
-						row,
-						tu.InlineKeyboardButton(
-							loc.MustLocalize(&i18n.LocalizeConfig{
-								MessageID: "arrow.backward",
-							}),
-						).
-							WithCallbackData(paginationData.ToString()),
-					)
-				}
-				if pagination.Forward {
-					paginationData.TypeOfPagination = "f"
-					row = append(
-						row,
-						tu.InlineKeyboardButton(
-							loc.MustLocalize(&i18n.LocalizeConfig{
-								MessageID: "arrow.forward",
-							}),
-						).
-							WithCallbackData(paginationData.ToString()),
-					)
-				}
-
-				rows = append(rows, row)
-			}
+			rows = append(rows, row)
 		}
 	}
 
 	var name string
 	if itsCallbackQuery {
-		chatResolve, err := h.service.FindChatName(c, chatID)
-		if err != nil {
-			name = strconv.FormatInt(chatID, 10)
-		} else {
-			name = chatResolve.Name
-		}
+		name = format.Name(
+			oldMsgs[0].Chat.FirstName,
+			oldMsgs[0].Chat.LastName,
+		)
 	} else {
 		name = format.Name(
 			update.DeletedBusinessMessages.Chat.FirstName,
 			update.DeletedBusinessMessages.Chat.LastName,
 		)
 	}
-	summaryText := format.SummarizeDeletedMessages(oldMsgs, name, loc, true, offset, int(correctMessagesLen))
+	summaryText := lFormat.SummarizeDeletedMessages(oldMsgs, name, loc, true, offset, int(correctMessagesLen))
 	summaryText = format.CustomTruncateText(
 		summaryText,
 		consts.MAX_LEN,
@@ -338,7 +325,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 	if itsCallbackQuery {
 		_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
-			tu.ID(iUser.User.ID),
+			tu.ID(user.ID),
 			update.CallbackQuery.Message.GetMessageID(),
 			summaryText,
 		).
@@ -352,7 +339,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(update.CallbackQuery.ID))
 	}
 	_, err = c.Bot().SendMessage(c, tu.Message(
-		tu.ID(iUser.User.ID),
+		tu.ID(user.ID),
 		summaryText,
 	).
 		WithParseMode(telego.ModeHTML).
@@ -396,10 +383,10 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		return nil
 	}
 
-	changes, mediaDiff := format.EditedDiff(oldMsg, message, loc, true)
+	changes, mediaDiff := lFormat.EditedDiff(oldMsg, message, loc, true)
 
 	if len(changes) == 0 {
-		err = h.service.SaveMessage(context.Background(), message)
+		err = h.repository.Mongo.SaveMessage(context.Background(), message)
 		if err != nil {
 			log.Error().Err(err).
 				Int("message_id", message.MessageID).
@@ -436,7 +423,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		date, dateIsEdit = oldMsg.EditDate, true
 	}
 
-	dataID, err := h.service.SetDataEdited(context.TODO(), &repository.SetDataEditedOptions{
+	dataID, err := h.repository.Mongo.SetDataEdited(context.TODO(), &repository.SetDataEditedOptions{
 		MessageID:     message.MessageID,
 		UserID:        iUser.User.ID,
 		OldDate:       date,
@@ -447,7 +434,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	callbackData := types.HandleEditedData{
+	callbackData := callbacks.HandleEditedData{
 		DataID: dataID,
 		ChatID: message.Chat.ID,
 	}
@@ -457,7 +444,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 				loc.MustLocalize(&i18n.LocalizeConfig{
 					MessageID: "business.edited.buttons.log",
 				}),
-			).WithCallbackData(callbackData.ToString(types.HandleEditedDataTypeLog)),
+			).WithCallbackData(callbackData.ToString(callbacks.HandleEditedDataTypeLog)),
 		),
 	)
 
@@ -468,7 +455,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 					loc.MustLocalize(&i18n.LocalizeConfig{
 						MessageID: "business.edited.buttons.getFile",
 					}),
-				).WithCallbackData(callbackData.ToString(types.HandleEditedDataTypeFiles)),
+				).WithCallbackData(callbackData.ToString(callbacks.HandleEditedDataTypeFiles)),
 			),
 		)
 	}
@@ -496,7 +483,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 			WithParseMode(telego.ModeHTML).WithReplyMarkup(replyMarkup))
 	}
 
-	errSave := h.service.SaveMessage(context.Background(), message)
+	errSave := h.repository.Mongo.SaveMessage(context.Background(), message)
 	if errSave != nil {
 		log.Error().Err(errSave).
 			Int("message_id", message.MessageID).
@@ -518,7 +505,7 @@ func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	botID := c.Value("botID").(int64)
 
-	isUpdated, err := h.service.UpdateBotUserConnection(context.Background(), connection, botID)
+	isUpdated, err := h.repository.Mongo.UpdateBotUserConnection(context.Background(), connection, botID)
 	if err != nil {
 		return err
 	}
@@ -526,11 +513,6 @@ func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
 	var text string
 	if connection.IsEnabled {
 		name := format.Name(connection.User.FirstName, connection.User.LastName)
-
-		err = h.service.UpdateBotUserSendMessages(c, connection.User.ID, botID, true)
-		if err != nil {
-			return err
-		}
 
 		text = loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.connection.on",

@@ -33,12 +33,6 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// MessagesServiceCreateMessageProcedure is the fully-qualified name of the MessagesService's
-	// CreateMessage RPC.
-	MessagesServiceCreateMessageProcedure = "/messages.v1.MessagesService/CreateMessage"
-	// MessagesServiceGetMessageProcedure is the fully-qualified name of the MessagesService's
-	// GetMessage RPC.
-	MessagesServiceGetMessageProcedure = "/messages.v1.MessagesService/GetMessage"
 	// MessagesServiceGetMessagesProcedure is the fully-qualified name of the MessagesService's
 	// GetMessages RPC.
 	MessagesServiceGetMessagesProcedure = "/messages.v1.MessagesService/GetMessages"
@@ -46,8 +40,6 @@ const (
 
 // MessagesServiceClient is a client for the messages.v1.MessagesService service.
 type MessagesServiceClient interface {
-	CreateMessage(context.Context, *connect.Request[v1.CreateMessageRequest]) (*connect.Response[v1.CreateMessageResponse], error)
-	GetMessage(context.Context, *connect.Request[v1.GetMessageRequest]) (*connect.Response[v1.GetMessageResponse], error)
 	GetMessages(context.Context, *connect.Request[v1.GetMessagesRequest]) (*connect.Response[v1.GetMessagesResponse], error)
 }
 
@@ -62,18 +54,6 @@ func NewMessagesServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 	baseURL = strings.TrimRight(baseURL, "/")
 	messagesServiceMethods := v1.File_messages_v1_messages_proto.Services().ByName("MessagesService").Methods()
 	return &messagesServiceClient{
-		createMessage: connect.NewClient[v1.CreateMessageRequest, v1.CreateMessageResponse](
-			httpClient,
-			baseURL+MessagesServiceCreateMessageProcedure,
-			connect.WithSchema(messagesServiceMethods.ByName("CreateMessage")),
-			connect.WithClientOptions(opts...),
-		),
-		getMessage: connect.NewClient[v1.GetMessageRequest, v1.GetMessageResponse](
-			httpClient,
-			baseURL+MessagesServiceGetMessageProcedure,
-			connect.WithSchema(messagesServiceMethods.ByName("GetMessage")),
-			connect.WithClientOptions(opts...),
-		),
 		getMessages: connect.NewClient[v1.GetMessagesRequest, v1.GetMessagesResponse](
 			httpClient,
 			baseURL+MessagesServiceGetMessagesProcedure,
@@ -85,19 +65,7 @@ func NewMessagesServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 
 // messagesServiceClient implements MessagesServiceClient.
 type messagesServiceClient struct {
-	createMessage *connect.Client[v1.CreateMessageRequest, v1.CreateMessageResponse]
-	getMessage    *connect.Client[v1.GetMessageRequest, v1.GetMessageResponse]
-	getMessages   *connect.Client[v1.GetMessagesRequest, v1.GetMessagesResponse]
-}
-
-// CreateMessage calls messages.v1.MessagesService.CreateMessage.
-func (c *messagesServiceClient) CreateMessage(ctx context.Context, req *connect.Request[v1.CreateMessageRequest]) (*connect.Response[v1.CreateMessageResponse], error) {
-	return c.createMessage.CallUnary(ctx, req)
-}
-
-// GetMessage calls messages.v1.MessagesService.GetMessage.
-func (c *messagesServiceClient) GetMessage(ctx context.Context, req *connect.Request[v1.GetMessageRequest]) (*connect.Response[v1.GetMessageResponse], error) {
-	return c.getMessage.CallUnary(ctx, req)
+	getMessages *connect.Client[v1.GetMessagesRequest, v1.GetMessagesResponse]
 }
 
 // GetMessages calls messages.v1.MessagesService.GetMessages.
@@ -107,8 +75,6 @@ func (c *messagesServiceClient) GetMessages(ctx context.Context, req *connect.Re
 
 // MessagesServiceHandler is an implementation of the messages.v1.MessagesService service.
 type MessagesServiceHandler interface {
-	CreateMessage(context.Context, *connect.Request[v1.CreateMessageRequest]) (*connect.Response[v1.CreateMessageResponse], error)
-	GetMessage(context.Context, *connect.Request[v1.GetMessageRequest]) (*connect.Response[v1.GetMessageResponse], error)
 	GetMessages(context.Context, *connect.Request[v1.GetMessagesRequest]) (*connect.Response[v1.GetMessagesResponse], error)
 }
 
@@ -119,18 +85,6 @@ type MessagesServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewMessagesServiceHandler(svc MessagesServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	messagesServiceMethods := v1.File_messages_v1_messages_proto.Services().ByName("MessagesService").Methods()
-	messagesServiceCreateMessageHandler := connect.NewUnaryHandler(
-		MessagesServiceCreateMessageProcedure,
-		svc.CreateMessage,
-		connect.WithSchema(messagesServiceMethods.ByName("CreateMessage")),
-		connect.WithHandlerOptions(opts...),
-	)
-	messagesServiceGetMessageHandler := connect.NewUnaryHandler(
-		MessagesServiceGetMessageProcedure,
-		svc.GetMessage,
-		connect.WithSchema(messagesServiceMethods.ByName("GetMessage")),
-		connect.WithHandlerOptions(opts...),
-	)
 	messagesServiceGetMessagesHandler := connect.NewUnaryHandler(
 		MessagesServiceGetMessagesProcedure,
 		svc.GetMessages,
@@ -139,10 +93,6 @@ func NewMessagesServiceHandler(svc MessagesServiceHandler, opts ...connect.Handl
 	)
 	return "/messages.v1.MessagesService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case MessagesServiceCreateMessageProcedure:
-			messagesServiceCreateMessageHandler.ServeHTTP(w, r)
-		case MessagesServiceGetMessageProcedure:
-			messagesServiceGetMessageHandler.ServeHTTP(w, r)
 		case MessagesServiceGetMessagesProcedure:
 			messagesServiceGetMessagesHandler.ServeHTTP(w, r)
 		default:
@@ -153,14 +103,6 @@ func NewMessagesServiceHandler(svc MessagesServiceHandler, opts ...connect.Handl
 
 // UnimplementedMessagesServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedMessagesServiceHandler struct{}
-
-func (UnimplementedMessagesServiceHandler) CreateMessage(context.Context, *connect.Request[v1.CreateMessageRequest]) (*connect.Response[v1.CreateMessageResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("messages.v1.MessagesService.CreateMessage is not implemented"))
-}
-
-func (UnimplementedMessagesServiceHandler) GetMessage(context.Context, *connect.Request[v1.GetMessageRequest]) (*connect.Response[v1.GetMessageResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("messages.v1.MessagesService.GetMessage is not implemented"))
-}
 
 func (UnimplementedMessagesServiceHandler) GetMessages(context.Context, *connect.Request[v1.GetMessagesRequest]) (*connect.Response[v1.GetMessagesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("messages.v1.MessagesService.GetMessages is not implemented"))

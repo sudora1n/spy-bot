@@ -19,26 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UsersService_UpdateUserLanguage_FullMethodName        = "/users.v1.UsersService/UpdateUserLanguage"
-	UsersService_UpdateBotUserConnection_FullMethodName   = "/users.v1.UsersService/UpdateBotUserConnection"
-	UsersService_UpdateBotUserSendMessages_FullMethodName = "/users.v1.UsersService/UpdateBotUserSendMessages"
-	UsersService_GetIUser_FullMethodName                  = "/users.v1.UsersService/GetIUser"
-	UsersService_CreateIUser_FullMethodName               = "/users.v1.UsersService/CreateIUser"
-	UsersService_CreateUser_FullMethodName                = "/users.v1.UsersService/CreateUser"
-	UsersService_GetUser_FullMethodName                   = "/users.v1.UsersService/GetUser"
+	UsersService_UpdateLanguage_FullMethodName = "/users.v1.UsersService/UpdateLanguage"
+	UsersService_GetMe_FullMethodName          = "/users.v1.UsersService/GetMe"
 )
 
 // UsersServiceClient is the client API for UsersService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersServiceClient interface {
-	UpdateUserLanguage(ctx context.Context, in *UpdateUserLanguageRequest, opts ...grpc.CallOption) (*UpdateUserLanguageResponse, error)
-	UpdateBotUserConnection(ctx context.Context, in *UpdateBotUserConnectionRequest, opts ...grpc.CallOption) (*UpdateBotUserConnectionResponse, error)
-	UpdateBotUserSendMessages(ctx context.Context, in *UpdateBotUserSendMessagesRequest, opts ...grpc.CallOption) (*UpdateBotUserSendMessagesResponse, error)
-	GetIUser(ctx context.Context, in *GetIUserRequest, opts ...grpc.CallOption) (*GetIUserResponse, error)
-	CreateIUser(ctx context.Context, in *CreateIUserRequest, opts ...grpc.CallOption) (*CreateIUserResponse, error)
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
-	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	UpdateLanguage(ctx context.Context, in *UpdateLanguageRequest, opts ...grpc.CallOption) (*UpdateLanguageResponse, error)
+	GetMe(ctx context.Context, in *GetMeRequest, opts ...grpc.CallOption) (*GetMeResponse, error)
 }
 
 type usersServiceClient struct {
@@ -49,70 +39,20 @@ func NewUsersServiceClient(cc grpc.ClientConnInterface) UsersServiceClient {
 	return &usersServiceClient{cc}
 }
 
-func (c *usersServiceClient) UpdateUserLanguage(ctx context.Context, in *UpdateUserLanguageRequest, opts ...grpc.CallOption) (*UpdateUserLanguageResponse, error) {
+func (c *usersServiceClient) UpdateLanguage(ctx context.Context, in *UpdateLanguageRequest, opts ...grpc.CallOption) (*UpdateLanguageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateUserLanguageResponse)
-	err := c.cc.Invoke(ctx, UsersService_UpdateUserLanguage_FullMethodName, in, out, cOpts...)
+	out := new(UpdateLanguageResponse)
+	err := c.cc.Invoke(ctx, UsersService_UpdateLanguage_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *usersServiceClient) UpdateBotUserConnection(ctx context.Context, in *UpdateBotUserConnectionRequest, opts ...grpc.CallOption) (*UpdateBotUserConnectionResponse, error) {
+func (c *usersServiceClient) GetMe(ctx context.Context, in *GetMeRequest, opts ...grpc.CallOption) (*GetMeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateBotUserConnectionResponse)
-	err := c.cc.Invoke(ctx, UsersService_UpdateBotUserConnection_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *usersServiceClient) UpdateBotUserSendMessages(ctx context.Context, in *UpdateBotUserSendMessagesRequest, opts ...grpc.CallOption) (*UpdateBotUserSendMessagesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateBotUserSendMessagesResponse)
-	err := c.cc.Invoke(ctx, UsersService_UpdateBotUserSendMessages_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *usersServiceClient) GetIUser(ctx context.Context, in *GetIUserRequest, opts ...grpc.CallOption) (*GetIUserResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetIUserResponse)
-	err := c.cc.Invoke(ctx, UsersService_GetIUser_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *usersServiceClient) CreateIUser(ctx context.Context, in *CreateIUserRequest, opts ...grpc.CallOption) (*CreateIUserResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateIUserResponse)
-	err := c.cc.Invoke(ctx, UsersService_CreateIUser_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *usersServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateUserResponse)
-	err := c.cc.Invoke(ctx, UsersService_CreateUser_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *usersServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserResponse)
-	err := c.cc.Invoke(ctx, UsersService_GetUser_FullMethodName, in, out, cOpts...)
+	out := new(GetMeResponse)
+	err := c.cc.Invoke(ctx, UsersService_GetMe_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,13 +63,8 @@ func (c *usersServiceClient) GetUser(ctx context.Context, in *GetUserRequest, op
 // All implementations must embed UnimplementedUsersServiceServer
 // for forward compatibility.
 type UsersServiceServer interface {
-	UpdateUserLanguage(context.Context, *UpdateUserLanguageRequest) (*UpdateUserLanguageResponse, error)
-	UpdateBotUserConnection(context.Context, *UpdateBotUserConnectionRequest) (*UpdateBotUserConnectionResponse, error)
-	UpdateBotUserSendMessages(context.Context, *UpdateBotUserSendMessagesRequest) (*UpdateBotUserSendMessagesResponse, error)
-	GetIUser(context.Context, *GetIUserRequest) (*GetIUserResponse, error)
-	CreateIUser(context.Context, *CreateIUserRequest) (*CreateIUserResponse, error)
-	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	UpdateLanguage(context.Context, *UpdateLanguageRequest) (*UpdateLanguageResponse, error)
+	GetMe(context.Context, *GetMeRequest) (*GetMeResponse, error)
 	mustEmbedUnimplementedUsersServiceServer()
 }
 
@@ -140,26 +75,11 @@ type UsersServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUsersServiceServer struct{}
 
-func (UnimplementedUsersServiceServer) UpdateUserLanguage(context.Context, *UpdateUserLanguageRequest) (*UpdateUserLanguageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserLanguage not implemented")
+func (UnimplementedUsersServiceServer) UpdateLanguage(context.Context, *UpdateLanguageRequest) (*UpdateLanguageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateLanguage not implemented")
 }
-func (UnimplementedUsersServiceServer) UpdateBotUserConnection(context.Context, *UpdateBotUserConnectionRequest) (*UpdateBotUserConnectionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateBotUserConnection not implemented")
-}
-func (UnimplementedUsersServiceServer) UpdateBotUserSendMessages(context.Context, *UpdateBotUserSendMessagesRequest) (*UpdateBotUserSendMessagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateBotUserSendMessages not implemented")
-}
-func (UnimplementedUsersServiceServer) GetIUser(context.Context, *GetIUserRequest) (*GetIUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetIUser not implemented")
-}
-func (UnimplementedUsersServiceServer) CreateIUser(context.Context, *CreateIUserRequest) (*CreateIUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateIUser not implemented")
-}
-func (UnimplementedUsersServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
-}
-func (UnimplementedUsersServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+func (UnimplementedUsersServiceServer) GetMe(context.Context, *GetMeRequest) (*GetMeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMe not implemented")
 }
 func (UnimplementedUsersServiceServer) mustEmbedUnimplementedUsersServiceServer() {}
 func (UnimplementedUsersServiceServer) testEmbeddedByValue()                      {}
@@ -182,128 +102,38 @@ func RegisterUsersServiceServer(s grpc.ServiceRegistrar, srv UsersServiceServer)
 	s.RegisterService(&UsersService_ServiceDesc, srv)
 }
 
-func _UsersService_UpdateUserLanguage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateUserLanguageRequest)
+func _UsersService_UpdateLanguage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateLanguageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsersServiceServer).UpdateUserLanguage(ctx, in)
+		return srv.(UsersServiceServer).UpdateLanguage(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UsersService_UpdateUserLanguage_FullMethodName,
+		FullMethod: UsersService_UpdateLanguage_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).UpdateUserLanguage(ctx, req.(*UpdateUserLanguageRequest))
+		return srv.(UsersServiceServer).UpdateLanguage(ctx, req.(*UpdateLanguageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UsersService_UpdateBotUserConnection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateBotUserConnectionRequest)
+func _UsersService_GetMe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsersServiceServer).UpdateBotUserConnection(ctx, in)
+		return srv.(UsersServiceServer).GetMe(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UsersService_UpdateBotUserConnection_FullMethodName,
+		FullMethod: UsersService_GetMe_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).UpdateBotUserConnection(ctx, req.(*UpdateBotUserConnectionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UsersService_UpdateBotUserSendMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateBotUserSendMessagesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsersServiceServer).UpdateBotUserSendMessages(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UsersService_UpdateBotUserSendMessages_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).UpdateBotUserSendMessages(ctx, req.(*UpdateBotUserSendMessagesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UsersService_GetIUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetIUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsersServiceServer).GetIUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UsersService_GetIUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).GetIUser(ctx, req.(*GetIUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UsersService_CreateIUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateIUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsersServiceServer).CreateIUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UsersService_CreateIUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).CreateIUser(ctx, req.(*CreateIUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UsersService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsersServiceServer).CreateUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UsersService_CreateUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UsersService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsersServiceServer).GetUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UsersService_GetUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).GetUser(ctx, req.(*GetUserRequest))
+		return srv.(UsersServiceServer).GetMe(ctx, req.(*GetMeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -316,32 +146,12 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UsersServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UpdateUserLanguage",
-			Handler:    _UsersService_UpdateUserLanguage_Handler,
+			MethodName: "UpdateLanguage",
+			Handler:    _UsersService_UpdateLanguage_Handler,
 		},
 		{
-			MethodName: "UpdateBotUserConnection",
-			Handler:    _UsersService_UpdateBotUserConnection_Handler,
-		},
-		{
-			MethodName: "UpdateBotUserSendMessages",
-			Handler:    _UsersService_UpdateBotUserSendMessages_Handler,
-		},
-		{
-			MethodName: "GetIUser",
-			Handler:    _UsersService_GetIUser_Handler,
-		},
-		{
-			MethodName: "CreateIUser",
-			Handler:    _UsersService_CreateIUser_Handler,
-		},
-		{
-			MethodName: "CreateUser",
-			Handler:    _UsersService_CreateUser_Handler,
-		},
-		{
-			MethodName: "GetUser",
-			Handler:    _UsersService_GetUser_Handler,
+			MethodName: "GetMe",
+			Handler:    _UsersService_GetMe_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

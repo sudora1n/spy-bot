@@ -33,35 +33,17 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// UsersServiceUpdateUserLanguageProcedure is the fully-qualified name of the UsersService's
-	// UpdateUserLanguage RPC.
-	UsersServiceUpdateUserLanguageProcedure = "/users.v1.UsersService/UpdateUserLanguage"
-	// UsersServiceUpdateBotUserConnectionProcedure is the fully-qualified name of the UsersService's
-	// UpdateBotUserConnection RPC.
-	UsersServiceUpdateBotUserConnectionProcedure = "/users.v1.UsersService/UpdateBotUserConnection"
-	// UsersServiceUpdateBotUserSendMessagesProcedure is the fully-qualified name of the UsersService's
-	// UpdateBotUserSendMessages RPC.
-	UsersServiceUpdateBotUserSendMessagesProcedure = "/users.v1.UsersService/UpdateBotUserSendMessages"
-	// UsersServiceGetIUserProcedure is the fully-qualified name of the UsersService's GetIUser RPC.
-	UsersServiceGetIUserProcedure = "/users.v1.UsersService/GetIUser"
-	// UsersServiceCreateIUserProcedure is the fully-qualified name of the UsersService's CreateIUser
-	// RPC.
-	UsersServiceCreateIUserProcedure = "/users.v1.UsersService/CreateIUser"
-	// UsersServiceCreateUserProcedure is the fully-qualified name of the UsersService's CreateUser RPC.
-	UsersServiceCreateUserProcedure = "/users.v1.UsersService/CreateUser"
-	// UsersServiceGetUserProcedure is the fully-qualified name of the UsersService's GetUser RPC.
-	UsersServiceGetUserProcedure = "/users.v1.UsersService/GetUser"
+	// UsersServiceUpdateLanguageProcedure is the fully-qualified name of the UsersService's
+	// UpdateLanguage RPC.
+	UsersServiceUpdateLanguageProcedure = "/users.v1.UsersService/UpdateLanguage"
+	// UsersServiceGetMeProcedure is the fully-qualified name of the UsersService's GetMe RPC.
+	UsersServiceGetMeProcedure = "/users.v1.UsersService/GetMe"
 )
 
 // UsersServiceClient is a client for the users.v1.UsersService service.
 type UsersServiceClient interface {
-	UpdateUserLanguage(context.Context, *connect.Request[v1.UpdateUserLanguageRequest]) (*connect.Response[v1.UpdateUserLanguageResponse], error)
-	UpdateBotUserConnection(context.Context, *connect.Request[v1.UpdateBotUserConnectionRequest]) (*connect.Response[v1.UpdateBotUserConnectionResponse], error)
-	UpdateBotUserSendMessages(context.Context, *connect.Request[v1.UpdateBotUserSendMessagesRequest]) (*connect.Response[v1.UpdateBotUserSendMessagesResponse], error)
-	GetIUser(context.Context, *connect.Request[v1.GetIUserRequest]) (*connect.Response[v1.GetIUserResponse], error)
-	CreateIUser(context.Context, *connect.Request[v1.CreateIUserRequest]) (*connect.Response[v1.CreateIUserResponse], error)
-	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
-	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
+	UpdateLanguage(context.Context, *connect.Request[v1.UpdateLanguageRequest]) (*connect.Response[v1.UpdateLanguageResponse], error)
+	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 }
 
 // NewUsersServiceClient constructs a client for the users.v1.UsersService service. By default, it
@@ -75,46 +57,16 @@ func NewUsersServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 	baseURL = strings.TrimRight(baseURL, "/")
 	usersServiceMethods := v1.File_users_v1_users_proto.Services().ByName("UsersService").Methods()
 	return &usersServiceClient{
-		updateUserLanguage: connect.NewClient[v1.UpdateUserLanguageRequest, v1.UpdateUserLanguageResponse](
+		updateLanguage: connect.NewClient[v1.UpdateLanguageRequest, v1.UpdateLanguageResponse](
 			httpClient,
-			baseURL+UsersServiceUpdateUserLanguageProcedure,
-			connect.WithSchema(usersServiceMethods.ByName("UpdateUserLanguage")),
+			baseURL+UsersServiceUpdateLanguageProcedure,
+			connect.WithSchema(usersServiceMethods.ByName("UpdateLanguage")),
 			connect.WithClientOptions(opts...),
 		),
-		updateBotUserConnection: connect.NewClient[v1.UpdateBotUserConnectionRequest, v1.UpdateBotUserConnectionResponse](
+		getMe: connect.NewClient[v1.GetMeRequest, v1.GetMeResponse](
 			httpClient,
-			baseURL+UsersServiceUpdateBotUserConnectionProcedure,
-			connect.WithSchema(usersServiceMethods.ByName("UpdateBotUserConnection")),
-			connect.WithClientOptions(opts...),
-		),
-		updateBotUserSendMessages: connect.NewClient[v1.UpdateBotUserSendMessagesRequest, v1.UpdateBotUserSendMessagesResponse](
-			httpClient,
-			baseURL+UsersServiceUpdateBotUserSendMessagesProcedure,
-			connect.WithSchema(usersServiceMethods.ByName("UpdateBotUserSendMessages")),
-			connect.WithClientOptions(opts...),
-		),
-		getIUser: connect.NewClient[v1.GetIUserRequest, v1.GetIUserResponse](
-			httpClient,
-			baseURL+UsersServiceGetIUserProcedure,
-			connect.WithSchema(usersServiceMethods.ByName("GetIUser")),
-			connect.WithClientOptions(opts...),
-		),
-		createIUser: connect.NewClient[v1.CreateIUserRequest, v1.CreateIUserResponse](
-			httpClient,
-			baseURL+UsersServiceCreateIUserProcedure,
-			connect.WithSchema(usersServiceMethods.ByName("CreateIUser")),
-			connect.WithClientOptions(opts...),
-		),
-		createUser: connect.NewClient[v1.CreateUserRequest, v1.CreateUserResponse](
-			httpClient,
-			baseURL+UsersServiceCreateUserProcedure,
-			connect.WithSchema(usersServiceMethods.ByName("CreateUser")),
-			connect.WithClientOptions(opts...),
-		),
-		getUser: connect.NewClient[v1.GetUserRequest, v1.GetUserResponse](
-			httpClient,
-			baseURL+UsersServiceGetUserProcedure,
-			connect.WithSchema(usersServiceMethods.ByName("GetUser")),
+			baseURL+UsersServiceGetMeProcedure,
+			connect.WithSchema(usersServiceMethods.ByName("GetMe")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -122,59 +74,24 @@ func NewUsersServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // usersServiceClient implements UsersServiceClient.
 type usersServiceClient struct {
-	updateUserLanguage        *connect.Client[v1.UpdateUserLanguageRequest, v1.UpdateUserLanguageResponse]
-	updateBotUserConnection   *connect.Client[v1.UpdateBotUserConnectionRequest, v1.UpdateBotUserConnectionResponse]
-	updateBotUserSendMessages *connect.Client[v1.UpdateBotUserSendMessagesRequest, v1.UpdateBotUserSendMessagesResponse]
-	getIUser                  *connect.Client[v1.GetIUserRequest, v1.GetIUserResponse]
-	createIUser               *connect.Client[v1.CreateIUserRequest, v1.CreateIUserResponse]
-	createUser                *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
-	getUser                   *connect.Client[v1.GetUserRequest, v1.GetUserResponse]
+	updateLanguage *connect.Client[v1.UpdateLanguageRequest, v1.UpdateLanguageResponse]
+	getMe          *connect.Client[v1.GetMeRequest, v1.GetMeResponse]
 }
 
-// UpdateUserLanguage calls users.v1.UsersService.UpdateUserLanguage.
-func (c *usersServiceClient) UpdateUserLanguage(ctx context.Context, req *connect.Request[v1.UpdateUserLanguageRequest]) (*connect.Response[v1.UpdateUserLanguageResponse], error) {
-	return c.updateUserLanguage.CallUnary(ctx, req)
+// UpdateLanguage calls users.v1.UsersService.UpdateLanguage.
+func (c *usersServiceClient) UpdateLanguage(ctx context.Context, req *connect.Request[v1.UpdateLanguageRequest]) (*connect.Response[v1.UpdateLanguageResponse], error) {
+	return c.updateLanguage.CallUnary(ctx, req)
 }
 
-// UpdateBotUserConnection calls users.v1.UsersService.UpdateBotUserConnection.
-func (c *usersServiceClient) UpdateBotUserConnection(ctx context.Context, req *connect.Request[v1.UpdateBotUserConnectionRequest]) (*connect.Response[v1.UpdateBotUserConnectionResponse], error) {
-	return c.updateBotUserConnection.CallUnary(ctx, req)
-}
-
-// UpdateBotUserSendMessages calls users.v1.UsersService.UpdateBotUserSendMessages.
-func (c *usersServiceClient) UpdateBotUserSendMessages(ctx context.Context, req *connect.Request[v1.UpdateBotUserSendMessagesRequest]) (*connect.Response[v1.UpdateBotUserSendMessagesResponse], error) {
-	return c.updateBotUserSendMessages.CallUnary(ctx, req)
-}
-
-// GetIUser calls users.v1.UsersService.GetIUser.
-func (c *usersServiceClient) GetIUser(ctx context.Context, req *connect.Request[v1.GetIUserRequest]) (*connect.Response[v1.GetIUserResponse], error) {
-	return c.getIUser.CallUnary(ctx, req)
-}
-
-// CreateIUser calls users.v1.UsersService.CreateIUser.
-func (c *usersServiceClient) CreateIUser(ctx context.Context, req *connect.Request[v1.CreateIUserRequest]) (*connect.Response[v1.CreateIUserResponse], error) {
-	return c.createIUser.CallUnary(ctx, req)
-}
-
-// CreateUser calls users.v1.UsersService.CreateUser.
-func (c *usersServiceClient) CreateUser(ctx context.Context, req *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error) {
-	return c.createUser.CallUnary(ctx, req)
-}
-
-// GetUser calls users.v1.UsersService.GetUser.
-func (c *usersServiceClient) GetUser(ctx context.Context, req *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
-	return c.getUser.CallUnary(ctx, req)
+// GetMe calls users.v1.UsersService.GetMe.
+func (c *usersServiceClient) GetMe(ctx context.Context, req *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error) {
+	return c.getMe.CallUnary(ctx, req)
 }
 
 // UsersServiceHandler is an implementation of the users.v1.UsersService service.
 type UsersServiceHandler interface {
-	UpdateUserLanguage(context.Context, *connect.Request[v1.UpdateUserLanguageRequest]) (*connect.Response[v1.UpdateUserLanguageResponse], error)
-	UpdateBotUserConnection(context.Context, *connect.Request[v1.UpdateBotUserConnectionRequest]) (*connect.Response[v1.UpdateBotUserConnectionResponse], error)
-	UpdateBotUserSendMessages(context.Context, *connect.Request[v1.UpdateBotUserSendMessagesRequest]) (*connect.Response[v1.UpdateBotUserSendMessagesResponse], error)
-	GetIUser(context.Context, *connect.Request[v1.GetIUserRequest]) (*connect.Response[v1.GetIUserResponse], error)
-	CreateIUser(context.Context, *connect.Request[v1.CreateIUserRequest]) (*connect.Response[v1.CreateIUserResponse], error)
-	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
-	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
+	UpdateLanguage(context.Context, *connect.Request[v1.UpdateLanguageRequest]) (*connect.Response[v1.UpdateLanguageResponse], error)
+	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 }
 
 // NewUsersServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -184,64 +101,24 @@ type UsersServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewUsersServiceHandler(svc UsersServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	usersServiceMethods := v1.File_users_v1_users_proto.Services().ByName("UsersService").Methods()
-	usersServiceUpdateUserLanguageHandler := connect.NewUnaryHandler(
-		UsersServiceUpdateUserLanguageProcedure,
-		svc.UpdateUserLanguage,
-		connect.WithSchema(usersServiceMethods.ByName("UpdateUserLanguage")),
+	usersServiceUpdateLanguageHandler := connect.NewUnaryHandler(
+		UsersServiceUpdateLanguageProcedure,
+		svc.UpdateLanguage,
+		connect.WithSchema(usersServiceMethods.ByName("UpdateLanguage")),
 		connect.WithHandlerOptions(opts...),
 	)
-	usersServiceUpdateBotUserConnectionHandler := connect.NewUnaryHandler(
-		UsersServiceUpdateBotUserConnectionProcedure,
-		svc.UpdateBotUserConnection,
-		connect.WithSchema(usersServiceMethods.ByName("UpdateBotUserConnection")),
-		connect.WithHandlerOptions(opts...),
-	)
-	usersServiceUpdateBotUserSendMessagesHandler := connect.NewUnaryHandler(
-		UsersServiceUpdateBotUserSendMessagesProcedure,
-		svc.UpdateBotUserSendMessages,
-		connect.WithSchema(usersServiceMethods.ByName("UpdateBotUserSendMessages")),
-		connect.WithHandlerOptions(opts...),
-	)
-	usersServiceGetIUserHandler := connect.NewUnaryHandler(
-		UsersServiceGetIUserProcedure,
-		svc.GetIUser,
-		connect.WithSchema(usersServiceMethods.ByName("GetIUser")),
-		connect.WithHandlerOptions(opts...),
-	)
-	usersServiceCreateIUserHandler := connect.NewUnaryHandler(
-		UsersServiceCreateIUserProcedure,
-		svc.CreateIUser,
-		connect.WithSchema(usersServiceMethods.ByName("CreateIUser")),
-		connect.WithHandlerOptions(opts...),
-	)
-	usersServiceCreateUserHandler := connect.NewUnaryHandler(
-		UsersServiceCreateUserProcedure,
-		svc.CreateUser,
-		connect.WithSchema(usersServiceMethods.ByName("CreateUser")),
-		connect.WithHandlerOptions(opts...),
-	)
-	usersServiceGetUserHandler := connect.NewUnaryHandler(
-		UsersServiceGetUserProcedure,
-		svc.GetUser,
-		connect.WithSchema(usersServiceMethods.ByName("GetUser")),
+	usersServiceGetMeHandler := connect.NewUnaryHandler(
+		UsersServiceGetMeProcedure,
+		svc.GetMe,
+		connect.WithSchema(usersServiceMethods.ByName("GetMe")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/users.v1.UsersService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case UsersServiceUpdateUserLanguageProcedure:
-			usersServiceUpdateUserLanguageHandler.ServeHTTP(w, r)
-		case UsersServiceUpdateBotUserConnectionProcedure:
-			usersServiceUpdateBotUserConnectionHandler.ServeHTTP(w, r)
-		case UsersServiceUpdateBotUserSendMessagesProcedure:
-			usersServiceUpdateBotUserSendMessagesHandler.ServeHTTP(w, r)
-		case UsersServiceGetIUserProcedure:
-			usersServiceGetIUserHandler.ServeHTTP(w, r)
-		case UsersServiceCreateIUserProcedure:
-			usersServiceCreateIUserHandler.ServeHTTP(w, r)
-		case UsersServiceCreateUserProcedure:
-			usersServiceCreateUserHandler.ServeHTTP(w, r)
-		case UsersServiceGetUserProcedure:
-			usersServiceGetUserHandler.ServeHTTP(w, r)
+		case UsersServiceUpdateLanguageProcedure:
+			usersServiceUpdateLanguageHandler.ServeHTTP(w, r)
+		case UsersServiceGetMeProcedure:
+			usersServiceGetMeHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -251,30 +128,10 @@ func NewUsersServiceHandler(svc UsersServiceHandler, opts ...connect.HandlerOpti
 // UnimplementedUsersServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedUsersServiceHandler struct{}
 
-func (UnimplementedUsersServiceHandler) UpdateUserLanguage(context.Context, *connect.Request[v1.UpdateUserLanguageRequest]) (*connect.Response[v1.UpdateUserLanguageResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.UpdateUserLanguage is not implemented"))
+func (UnimplementedUsersServiceHandler) UpdateLanguage(context.Context, *connect.Request[v1.UpdateLanguageRequest]) (*connect.Response[v1.UpdateLanguageResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.UpdateLanguage is not implemented"))
 }
 
-func (UnimplementedUsersServiceHandler) UpdateBotUserConnection(context.Context, *connect.Request[v1.UpdateBotUserConnectionRequest]) (*connect.Response[v1.UpdateBotUserConnectionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.UpdateBotUserConnection is not implemented"))
-}
-
-func (UnimplementedUsersServiceHandler) UpdateBotUserSendMessages(context.Context, *connect.Request[v1.UpdateBotUserSendMessagesRequest]) (*connect.Response[v1.UpdateBotUserSendMessagesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.UpdateBotUserSendMessages is not implemented"))
-}
-
-func (UnimplementedUsersServiceHandler) GetIUser(context.Context, *connect.Request[v1.GetIUserRequest]) (*connect.Response[v1.GetIUserResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.GetIUser is not implemented"))
-}
-
-func (UnimplementedUsersServiceHandler) CreateIUser(context.Context, *connect.Request[v1.CreateIUserRequest]) (*connect.Response[v1.CreateIUserResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.CreateIUser is not implemented"))
-}
-
-func (UnimplementedUsersServiceHandler) CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.CreateUser is not implemented"))
-}
-
-func (UnimplementedUsersServiceHandler) GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.GetUser is not implemented"))
+func (UnimplementedUsersServiceHandler) GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("users.v1.UsersService.GetMe is not implemented"))
 }

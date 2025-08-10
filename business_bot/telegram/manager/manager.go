@@ -2,12 +2,12 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
 	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/handlers"
 	"ssuspy-bot/telegram/middleware"
@@ -15,7 +15,10 @@ import (
 	"sync"
 	"time"
 
+	commonMiddlewares "ssuspy-common/telegram/middlewares"
+
 	"github.com/mymmrac/telego"
+	"github.com/mymmrac/telego/telegoapi"
 	ta "github.com/mymmrac/telego/telegoapi"
 	th "github.com/mymmrac/telego/telegohandler"
 	"github.com/rs/zerolog/log"
@@ -31,8 +34,7 @@ type BotInstance struct {
 }
 
 type BotManager struct {
-	service *repository.MongoRepository
-	rdb     *redis.Redis
+	repository *repository.Repository
 
 	bots    map[int64]*BotInstance
 	mutex   sync.RWMutex
@@ -40,13 +42,16 @@ type BotManager struct {
 	baseURL string
 }
 
-func NewBotManager(service *repository.MongoRepository, rdb *redis.Redis, mux *http.ServeMux, baseURL string) *BotManager {
+func NewBotManager(
+	repository *repository.Repository,
+	mux *http.ServeMux,
+	baseURL string,
+) *BotManager {
 	return &BotManager{
-		bots:    make(map[int64]*BotInstance),
-		mux:     mux,
-		baseURL: baseURL,
-		service: service,
-		rdb:     rdb,
+		bots:       make(map[int64]*BotInstance),
+		mux:        mux,
+		baseURL:    baseURL,
+		repository: repository,
 	}
 }
 
@@ -75,6 +80,11 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 
 	botUser, err := bot.GetMe(ctx)
 	if err != nil {
+		var apiErr *telegoapi.Error
+		if errors.As(err, &apiErr) && apiErr.ErrorCode == 401 {
+			// need retry caller and after delete from db
+		}
+
 		return fmt.Errorf("error when executing GetMe request: %w", err)
 	}
 	if !botUser.CanConnectToBusiness {
@@ -87,13 +97,6 @@ func (b *BotManager) AddBot(ctx context.Context, botID int64, token string) erro
 			Command:     "start",
 			Description: "main menu",
 		},
-	}
-
-	if config.Config.BusinessGithubURL != "" {
-		commands = append(commands, telego.BotCommand{
-			Command:     "github",
-			Description: "bot source code",
-		})
 	}
 
 	err = bot.SetMyCommands(ctx, &telego.SetMyCommandsParams{
@@ -218,19 +221,20 @@ func (b *BotManager) ListBots() []int64 {
 	return botIDs
 }
 
-func (b *BotManager) setupBotHandlers(instance *BotInstance) {
-	instance.Handler.Use(th.PanicRecoveryHandler(middleware.LogPanicHandler))
+func (b *BotManager) setupBotHandlers(i *BotInstance) {
+	i.Handler.Use(th.PanicRecoveryHandler(middleware.LogPanicHandler))
 
-	middlewareGroup := middleware.NewMiddlewareGroup(b.service, b.rdb)
-	instance.Handler.Use(middlewareGroup.BotContextMiddleware(instance.ID))
-	instance.Handler.Use(middleware.SkipNonPrivateChatsMiddleware)
-	instance.Handler.Use(middlewareGroup.GetInternalUserMiddleware)
+	middlewareGroup := middleware.NewMiddlewareGroup(b.repository)
+	i.Handler.Use(middlewareGroup.BotContextMiddleware(i.ID))
+	i.Handler.Use(middleware.SkipNonPrivateChatsMiddleware)
+	i.Handler.Use(middlewareGroup.GetInternalUserMiddleware)
+	i.Handler.Use(commonMiddlewares.AutoRespond)
 
-	handlerGroup := handlers.NewHandlerGroup(b.service, b.rdb)
-	instance.Handler.Handle(utils.WithProm("handleBlocked", handlerGroup.HandleBlocked), th.AnyMyChatMember())
+	handlerGroup := handlers.NewHandlerGroup(b.repository)
+	i.Handler.Handle(utils.WithProm("handleBlocked", handlerGroup.HandleBlocked), th.AnyMyChatMember())
 
 	{
-		inline := instance.Handler.Group(th.AnyInlineQuery())
+		inline := i.Handler.Group(th.AnyInlineQuery())
 		// inline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
 		// 	Window: 5 * time.Second,
 		// 	Limit:  10,
@@ -243,7 +247,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	}
 
 	{
-		chosenInline := instance.Handler.Group(th.AnyChosenInlineResult())
+		chosenInline := i.Handler.Group(th.AnyChosenInlineResult())
 		// chosenInline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
 		// 	Window: 10 * time.Second,
 		// 	Limit:  5,
@@ -259,7 +263,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	}
 
 	{
-		standard := instance.Handler.Group(th.Or(
+		standard := i.Handler.Group(th.Or(
 			th.And(
 				th.AnyCallbackQueryWithMessage(),
 				th.CallbackDataPrefix("_"),
@@ -279,9 +283,6 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 				th.CommandEqual("start"),
 			),
 		)
-		if config.Config.BusinessGithubURL != "" {
-			standard.Handle(utils.WithProm("handleGithub", handlers.HandleGithub), th.CommandEqual("github"))
-		}
 		standard.Handle(
 			utils.WithProm("handleSettings", handlerGroup.HandleSettings),
 			th.CallbackDataPrefix(consts.CALLBACK_PREFIX_SETTINGS),
@@ -344,7 +345,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	}
 
 	{
-		businessConnection := instance.Handler.Group(th.AnyBusinessConnection())
+		businessConnection := i.Handler.Group(th.AnyBusinessConnection())
 		businessConnection.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION, 5))
 		businessConnection.Use(middlewareGroup.SyncUserMiddleware)
 		businessConnection.Handle(
@@ -354,7 +355,7 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	}
 
 	{
-		business := instance.Handler.Group(th.Or(
+		business := i.Handler.Group(th.Or(
 			th.AnyDeletedBusinessMessages(),
 			th.AnyEditedBusinessMessage(),
 			th.And(
@@ -377,11 +378,12 @@ func (b *BotManager) setupBotHandlers(instance *BotInstance) {
 	}
 
 	{
-		businessMessage := instance.Handler.Group(th.AnyBusinessMessage())
+		businessMessage := i.Handler.Group(th.AnyBusinessMessage())
 		businessMessage.Use(middlewareGroup.BusinessGetUserMiddleware)
 
 		startsWith := regexp.MustCompile(`^\..*`)
 		userCommands := businessMessage.Group(th.AnyBusinessMessage(), utils.BusinessMessageMatches(startsWith))
+		userCommands.Use(middlewareGroup.SyncUserMiddleware)
 		userCommands.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
 			Window:    10 * time.Second,
 			Limit:     3,

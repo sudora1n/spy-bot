@@ -19,17 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MessagesService_CreateMessage_FullMethodName = "/messages.v1.MessagesService/CreateMessage"
-	MessagesService_GetMessage_FullMethodName    = "/messages.v1.MessagesService/GetMessage"
-	MessagesService_GetMessages_FullMethodName   = "/messages.v1.MessagesService/GetMessages"
+	MessagesService_GetMessages_FullMethodName = "/messages.v1.MessagesService/GetMessages"
 )
 
 // MessagesServiceClient is the client API for MessagesService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessagesServiceClient interface {
-	CreateMessage(ctx context.Context, in *CreateMessageRequest, opts ...grpc.CallOption) (*CreateMessageResponse, error)
-	GetMessage(ctx context.Context, in *GetMessageRequest, opts ...grpc.CallOption) (*GetMessageResponse, error)
 	GetMessages(ctx context.Context, in *GetMessagesRequest, opts ...grpc.CallOption) (*GetMessagesResponse, error)
 }
 
@@ -39,26 +35,6 @@ type messagesServiceClient struct {
 
 func NewMessagesServiceClient(cc grpc.ClientConnInterface) MessagesServiceClient {
 	return &messagesServiceClient{cc}
-}
-
-func (c *messagesServiceClient) CreateMessage(ctx context.Context, in *CreateMessageRequest, opts ...grpc.CallOption) (*CreateMessageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateMessageResponse)
-	err := c.cc.Invoke(ctx, MessagesService_CreateMessage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *messagesServiceClient) GetMessage(ctx context.Context, in *GetMessageRequest, opts ...grpc.CallOption) (*GetMessageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetMessageResponse)
-	err := c.cc.Invoke(ctx, MessagesService_GetMessage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *messagesServiceClient) GetMessages(ctx context.Context, in *GetMessagesRequest, opts ...grpc.CallOption) (*GetMessagesResponse, error) {
@@ -75,8 +51,6 @@ func (c *messagesServiceClient) GetMessages(ctx context.Context, in *GetMessages
 // All implementations must embed UnimplementedMessagesServiceServer
 // for forward compatibility.
 type MessagesServiceServer interface {
-	CreateMessage(context.Context, *CreateMessageRequest) (*CreateMessageResponse, error)
-	GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error)
 	GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error)
 	mustEmbedUnimplementedMessagesServiceServer()
 }
@@ -88,12 +62,6 @@ type MessagesServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMessagesServiceServer struct{}
 
-func (UnimplementedMessagesServiceServer) CreateMessage(context.Context, *CreateMessageRequest) (*CreateMessageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateMessage not implemented")
-}
-func (UnimplementedMessagesServiceServer) GetMessage(context.Context, *GetMessageRequest) (*GetMessageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMessage not implemented")
-}
 func (UnimplementedMessagesServiceServer) GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessages not implemented")
 }
@@ -116,42 +84,6 @@ func RegisterMessagesServiceServer(s grpc.ServiceRegistrar, srv MessagesServiceS
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&MessagesService_ServiceDesc, srv)
-}
-
-func _MessagesService_CreateMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateMessageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagesServiceServer).CreateMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MessagesService_CreateMessage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagesServiceServer).CreateMessage(ctx, req.(*CreateMessageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MessagesService_GetMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMessageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessagesServiceServer).GetMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MessagesService_GetMessage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessagesServiceServer).GetMessage(ctx, req.(*GetMessageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _MessagesService_GetMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -179,14 +111,6 @@ var MessagesService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "messages.v1.MessagesService",
 	HandlerType: (*MessagesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreateMessage",
-			Handler:    _MessagesService_CreateMessage_Handler,
-		},
-		{
-			MethodName: "GetMessage",
-			Handler:    _MessagesService_GetMessage_Handler,
-		},
 		{
 			MethodName: "GetMessages",
 			Handler:    _MessagesService_GetMessages_Handler,

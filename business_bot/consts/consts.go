@@ -41,6 +41,7 @@ const (
 	CALLBACK_PREFIX_SETTINGS         = "__11"
 	CALLBACK_PREFIX_SETTINGS_EDITED  = "__12"
 	CALLBACK_PREFIX_SETTINGS_DELETED = "__13"
+	CALLBACK_PREFIX_ADMIN_BC         = "__14"
 )
 
 const REDIS_IGNORE = "ignore"
@@ -53,8 +54,6 @@ const REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION = "rl_queue_business_connection"
 
 const REDIS_TTL_IGNORE = time.Minute
 const REDIS_TTL_PUBLIC_GIFTS = time.Minute * 15
-
-const MonthInSeconds = 30 * 24 * 60 * 60
 
 const (
 	SETTINGS_SHOW_MY_EDITS = iota

@@ -1,18 +1,15 @@
 package handlers
 
 import (
-	"ssuspy-bot/redis"
 	"ssuspy-bot/repository"
 )
 
 type Handler struct {
-	service *repository.MongoRepository
-	rdb     *redis.Redis
+	repository *repository.Repository
 }
 
-func NewHandlerGroup(service *repository.MongoRepository, rdb *redis.Redis) *Handler {
+func NewHandlerGroup(repository *repository.Repository) *Handler {
 	return &Handler{
-		service: service,
-		rdb:     rdb,
+		repository: repository,
 	}
 }

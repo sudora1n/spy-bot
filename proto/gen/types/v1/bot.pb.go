@@ -23,15 +23,14 @@ const (
 )
 
 type Bot struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Username        string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	SecretToken     string                 `protobuf:"bytes,3,opt,name=secret_token,json=secretToken,proto3" json:"secret_token,omitempty"`
-	SecretTokenHash string                 `protobuf:"bytes,4,opt,name=secret_token_hash,json=secretTokenHash,proto3" json:"secret_token_hash,omitempty"`
-	UserId          int64                  `protobuf:"varint,5,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	SecretToken   *string                `protobuf:"bytes,3,opt,name=secret_token,json=secretToken,proto3,oneof" json:"secret_token,omitempty"`
+	UserId        int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Bot) Reset() {
@@ -79,15 +78,8 @@ func (x *Bot) GetUsername() string {
 }
 
 func (x *Bot) GetSecretToken() string {
-	if x != nil {
-		return x.SecretToken
-	}
-	return ""
-}
-
-func (x *Bot) GetSecretTokenHash() string {
-	if x != nil {
-		return x.SecretTokenHash
+	if x != nil && x.SecretToken != nil {
+		return *x.SecretToken
 	}
 	return ""
 }
@@ -110,15 +102,15 @@ var File_types_v1_bot_proto protoreflect.FileDescriptor
 
 const file_types_v1_bot_proto_rawDesc = "" +
 	"\n" +
-	"\x12types/v1/bot.proto\x12\btypes.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd4\x01\n" +
+	"\x12types/v1/bot.proto\x12\btypes.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbe\x01\n" +
 	"\x03Bot\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\fsecret_token\x18\x03 \x01(\tR\vsecretToken\x12*\n" +
-	"\x11secret_token_hash\x18\x04 \x01(\tR\x0fsecretTokenHash\x12\x17\n" +
-	"\auser_id\x18\x05 \x01(\x03R\x06userId\x129\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12&\n" +
+	"\fsecret_token\x18\x03 \x01(\tH\x00R\vsecretToken\x88\x01\x01\x12\x17\n" +
+	"\auser_id\x18\x04 \x01(\x03R\x06userId\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB#Z!ssuspy-proto/gen/types/v1;typesv1b\x06proto3"
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\x0f\n" +
+	"\r_secret_tokenB#Z!ssuspy-proto/gen/types/v1;typesv1b\x06proto3"
 
 var (
 	file_types_v1_bot_proto_rawDescOnce sync.Once
@@ -151,6 +143,7 @@ func file_types_v1_bot_proto_init() {
 	if File_types_v1_bot_proto != nil {
 		return
 	}
+	file_types_v1_bot_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

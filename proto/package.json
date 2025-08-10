@@ -1,0 +1,17 @@
+{
+  "name": "proto",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "format": "buf format -w",
+    "lint": "buf lint",
+    "generate": "buf generate"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.56.0",
+    "@bufbuild/protoc-gen-es": "^2.6.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

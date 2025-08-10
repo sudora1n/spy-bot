@@ -9,3 +9,7 @@ plugins:
   - local: protoc-gen-go-grpc
     out: gen
     opt: paths=source_relative
+  - local: protoc-gen-es
+    out: gen
+    include_imports: true
+    opt: target=ts
