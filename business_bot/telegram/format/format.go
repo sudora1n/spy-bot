@@ -9,7 +9,6 @@ import (
 	commonUtils "ssuspy-common/telegram/utils"
 	"strconv"
 	"strings"
-	"sync"
 
 	htmltomarkdown "github.com/JohannesKaufmann/html-to-markdown/v2"
 	"github.com/mymmrac/telego"
@@ -218,39 +217,30 @@ func SummarizeDeletedMessage(message *telego.Message, loc *i18n.Localizer, trunc
 	return strings.Join(summary, "\n")
 }
 
-func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n.Localizer, truncate bool, offset int, messagesLen int) string {
+func SummarizeDeletedMessages(messages []*telego.Message, name string, chatId int64, loc *i18n.Localizer, truncate bool, offset int, messagesLen int) string {
 	if messagesLen == 1 {
 		return loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.deleted.format.message",
-			TemplateData: map[string]string{
+			TemplateData: map[string]any{
 				"Result":           SummarizeDeletedMessage(messages[0], loc, truncate),
 				"ResolvedChatName": name,
+				"ChatID":           chatId,
 			},
 			PluralCount: messagesLen,
 		})
 	}
 
-	var (
-		wg      sync.WaitGroup
-		results = make([]string, len(messages))
-	)
+	results := make([]string, len(messages))
 	for i, message := range messages {
-		wg.Add(1)
-		go func(i int, message *telego.Message) {
-			defer wg.Done()
-
-			summary := SummarizeDeletedMessage(message, loc, truncate)
-			results[i] = loc.MustLocalize(&i18n.LocalizeConfig{
-				MessageID: "business.deleted.format.messageItem",
-				TemplateData: map[string]any{
-					"Count":   i + 1 + offset,
-					"Message": summary,
-				},
-			})
-		}(i, message)
+		summary := SummarizeDeletedMessage(message, loc, truncate)
+		results[i] = loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "business.deleted.format.messageItem",
+			TemplateData: map[string]any{
+				"Count":   i + 1 + offset,
+				"Message": summary,
+			},
+		})
 	}
-
-	wg.Wait()
 
 	return loc.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "business.deleted.format.message",
@@ -258,6 +248,7 @@ func SummarizeDeletedMessages(messages []*telego.Message, name string, loc *i18n
 			"Count":            messagesLen,
 			"Result":           strings.Join(results, ""),
 			"ResolvedChatName": name,
+			"ChatID":           chatId,
 		},
 		PluralCount: messagesLen,
 	})

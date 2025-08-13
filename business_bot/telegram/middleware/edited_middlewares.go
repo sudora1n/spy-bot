@@ -1,11 +1,10 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
-	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/callbacks"
 	"ssuspy-bot/telegram/utils"
+	"ssuspy-common/repository/mongoRepository"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -18,7 +17,7 @@ import (
 func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 
 	data, err := callbacks.NewHandleEditedLogDataFromString(query.Data)
 	if err != nil {
@@ -27,29 +26,29 @@ func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update)
 		return fmt.Errorf("invalid callback data")
 	}
 
-	result, err := h.service.GetDataEdited(context.Background(), update.CallbackQuery.From.ID, data.DataID)
+	result, err := h.repository.Mongo.GetDataEdited(c, update.CallbackQuery.From.ID, data.DataID)
 	if err != nil {
-		log.Error().Err(err).Int64("dataID", data.DataID).Msg("error GetDataFullDeletedLogByUUID")
+		log.Error().Err(err).Str("dataID", data.DataID.Hex()).Msg("error GetDataFullDeletedLogByUUID")
 		utils.OnDataError(c, query.ID, loc)
 		return err
 	}
 
-	msgs, _, err := h.service.GetMessages(
-		context.Background(),
-		&repository.GetMessagesOptions{
-			ChatID:        data.ChatID,
-			MessageIDs:    []int{result.MessageID},
-			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
-			WithEdits:     true,
+	msgRes, err := h.repository.Mongo.GetMessages(
+		c,
+		&mongoRepository.GetMessagesOptions{
+			UserID:     user.Id,
+			PeerID:     data.ChatID,
+			MessageIDs: []int{result.MessageID},
+			WithEdits:  true,
 		},
 	)
 	if err != nil {
-		log.Error().Err(err).Int64("userID", iUser.User.ID).Msg("Error GetMessages for edited log")
+		log.Error().Err(err).Int64("userID", user.Id).Msg("Error GetMessages for edited log")
 		utils.OnDataError(c, query.ID, loc)
 		return err
 	}
 
-	if len(msgs) < 2 {
+	if len(msgRes.Messages) < 2 {
 		utils.OnDataError(c, query.ID, loc)
 		return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
 	}
@@ -59,7 +58,7 @@ func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update)
 		oldMsg *telego.Message
 	)
 
-	for _, msg := range msgs {
+	for _, msg := range msgRes.Messages {
 		if oldMsg == nil {
 			if (result.OldDateIsEdit && msg.EditDate == result.OldDate) ||
 				(!result.OldDateIsEdit && msg.Date == result.OldDate && msg.EditDate == 0) {
@@ -81,7 +80,7 @@ func (h *MiddlewareGroup) EditedGetMessages(c *th.Context, update telego.Update)
 	}
 
 	c = c.WithValue("chatID", data.ChatID)
-	c = c.WithValue("allEditedMessages", msgs)
+	c = c.WithValue("allEditedMessages", msgRes)
 	c = c.WithValue("editedMessage", newMsg)
 	c = c.WithValue("oldEditedMessage", oldMsg)
 

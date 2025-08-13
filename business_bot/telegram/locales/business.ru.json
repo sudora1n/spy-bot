@@ -76,7 +76,7 @@
       "off": ":(\nбот был отключен от аккаунта, поэтому он больше не сможет отслеживать изменения"
     },
     "deleted": {
-      "fullMessages": "получить JSON",
+      "fullMessages": "подробный отчет",
       "files": {
         "one": "получить файл",
         "few": "получить {{.Count}} файла",
@@ -87,10 +87,10 @@
       "messageItem": "{{.Count}} сообщение",
       "format": {
         "message": {
-          "one": "<b>удалённое сообщение:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
-          "few": "<b>{{.Count}} удалённых сообщения:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
-          "many": "<b>{{.Count}} удалённых сообщений:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}",
-          "other": "<b>{{.Count}} удалённых сообщений:</b>\nчат: {{.ResolvedChatName}}\n\n{{.Result}}"
+          "one": "<b>сообщение удалено:</b>\n└ чат: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Result}}",
+          "few": "<b>{{.Count}} сообщения удалено:</b>\n└ чат: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Result}}",
+          "many": "<b>{{.Count}} сообщений удалено:</b>\n└ чат: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Result}}",
+          "other": "<b>{{.Count}} сообщений удалено:</b>\n└ чат: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Result}}"
         },
         "messageItem": "<b>сообщение №{{.Count}}:</b>\n{{.Message}}\n\n",
         "forwardInfo": {
@@ -121,10 +121,10 @@
       }
     },
     "edited": {
-      "message": "<b>отредактированное сообщение</b>\nчат: {{.ResolvedChatName}}\n<i>chatID: {{.ChatID}}</i>\n<i>время редактирования: {{.Date}}</i>\n\n{{.Diff}}",
-      "messageOverflow": "<b>сообщение отредактировано</b>\nчат: {{.ResolvedChatName}}\n<i>ID чата: {{.ChatID}}</i>\n<i>время редактирования: {{.Date}}</i>\nСлишком много деталей, пожалуйста, смотрите детали по кнопке ниже...",
+      "message": "<b>сообщение отредактировано:</b>\n└ чат: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Diff}}",
+      "messageOverflow": "<b>сообщение отредактировано:</b>\n└ чат: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\nСлишком много деталей, пожалуйста, смотрите детали по кнопке ниже...",
       "buttons": {
-        "log": "получить JSON",
+        "log": "подробный отчет",
         "getFile": "получить файл"
       },
       "text": {

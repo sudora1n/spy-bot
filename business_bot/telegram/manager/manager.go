@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"ssuspy-common/repository/redisRepository"
 	commonMiddlewares "ssuspy-common/telegram/middlewares"
 
 	"github.com/mymmrac/telego"
@@ -230,37 +231,42 @@ func (b *BotManager) setupBotHandlers(i *BotInstance) {
 	i.Handler.Use(middlewareGroup.GetInternalUserMiddleware)
 	i.Handler.Use(commonMiddlewares.AutoRespond)
 
+	rateLimitGroup := commonMiddlewares.NewMiddlewareGroup(b.repository.CRedis)
+
 	handlerGroup := handlers.NewHandlerGroup(b.repository)
 	i.Handler.Handle(utils.WithProm("handleBlocked", handlerGroup.HandleBlocked), th.AnyMyChatMember())
 
-	{
-		inline := i.Handler.Group(th.AnyInlineQuery())
-		// inline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
-		// 	Window: 5 * time.Second,
-		// 	Limit:  10,
-		// }))
-		inline.Use(middlewareGroup.SyncUserMiddleware)
-		inline.Handle(
-			utils.WithProm("handleInlineQuery", handlers.HandleInlineQuery),
-			th.AnyInlineQuery(),
-		)
-	}
+	// funcs deprecated in telegram right now
+	// https://t.me/adurovleaks/898
+	//
+	// {
+	// 	inline := i.Handler.Group(th.AnyInlineQuery())
+	// 	// inline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
+	// 	// 	Window: 5 * time.Second,
+	// 	// 	Limit:  10,
+	// 	// }))
+	// 	inline.Use(middlewareGroup.SyncUserMiddleware)
+	// 	inline.Handle(
+	// 		utils.WithProm("handleInlineQuery", handlers.HandleInlineQuery),
+	// 		th.AnyInlineQuery(),
+	// 	)
+	// }
 
-	{
-		chosenInline := i.Handler.Group(th.AnyChosenInlineResult())
-		// chosenInline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
-		// 	Window: 10 * time.Second,
-		// 	Limit:  5,
-		// }))
-		chosenInline.Use(middlewareGroup.SyncUserMiddleware)
-		chosenInline.Handle(
-			utils.WithProm(
-				"handleUserGiftUpgrade",
-				handlers.HandleUserGiftUpgrade,
-			),
-			th.AnyChosenInlineResult(),
-		)
-	}
+	// {
+	// 	chosenInline := i.Handler.Group(th.AnyChosenInlineResult())
+	// 	// chosenInline.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
+	// 	// 	Window: 10 * time.Second,
+	// 	// 	Limit:  5,
+	// 	// }))
+	// 	chosenInline.Use(middlewareGroup.SyncUserMiddleware)
+	// 	chosenInline.Handle(
+	// 		utils.WithProm(
+	// 			"handleUserGiftUpgrade",
+	// 			handlers.HandleUserGiftUpgrade,
+	// 		),
+	// 		th.AnyChosenInlineResult(),
+	// 	)
+	// }
 
 	{
 		standard := i.Handler.Group(th.Or(
@@ -270,10 +276,11 @@ func (b *BotManager) setupBotHandlers(i *BotInstance) {
 			),
 			th.AnyCommand(),
 		))
-		standard.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
-			Window:    10 * time.Second,
-			Limit:     5,
-			QueueSize: 3,
+		standard.Use(rateLimitGroup.ConcurrencyMiddleware(redisRepository.LimitConfig{
+			Mode:       redisRepository.ModeRateLimit,
+			Window:     60 * time.Second,
+			Limit:      25,
+			HandlerKey: "standard",
 		}))
 		standard.Use(middlewareGroup.SyncUserMiddleware)
 		standard.Handle(
@@ -346,7 +353,11 @@ func (b *BotManager) setupBotHandlers(i *BotInstance) {
 
 	{
 		businessConnection := i.Handler.Group(th.AnyBusinessConnection())
-		businessConnection.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS_CONNECTION, 5))
+		businessConnection.Use(rateLimitGroup.ConcurrencyMiddleware(redisRepository.LimitConfig{
+			Mode:       redisRepository.ModeIsolation,
+			QueueSize:  3,
+			HandlerKey: "business_connection",
+		}))
 		businessConnection.Use(middlewareGroup.SyncUserMiddleware)
 		businessConnection.Handle(
 			utils.WithProm("handleConnection", handlerGroup.HandleConnection),
@@ -363,7 +374,11 @@ func (b *BotManager) setupBotHandlers(i *BotInstance) {
 				th.CallbackDataPrefix("-"),
 			),
 		))
-		business.Use(middlewareGroup.IsolationMiddleware(consts.REDIS_RATELIMIT_QUEUE_BUSINESS, 20))
+		business.Use(rateLimitGroup.ConcurrencyMiddleware(redisRepository.LimitConfig{
+			Mode:       redisRepository.ModeIsolation,
+			QueueSize:  20,
+			HandlerKey: "business",
+		}))
 		business.Use(middlewareGroup.BusinessGetUserMiddleware)
 		business.Handle(
 			utils.WithProm("handleDeleted", handlerGroup.HandleDeleted),
@@ -384,10 +399,10 @@ func (b *BotManager) setupBotHandlers(i *BotInstance) {
 		startsWith := regexp.MustCompile(`^\..*`)
 		userCommands := businessMessage.Group(th.AnyBusinessMessage(), utils.BusinessMessageMatches(startsWith))
 		userCommands.Use(middlewareGroup.SyncUserMiddleware)
-		userCommands.Use(middlewareGroup.RateLimitMiddleware(middleware.RateLimitConfig{
-			Window:    10 * time.Second,
-			Limit:     3,
-			QueueSize: 1,
+		userCommands.Use(rateLimitGroup.ConcurrencyMiddleware(redisRepository.LimitConfig{
+			Mode:   redisRepository.ModeRateLimit,
+			Window: 10 * time.Second,
+			Limit:  3,
 		}))
 		userCommands.Use(middlewareGroup.BusinessIsFromUser)
 		userCommands.Use(middlewareGroup.BusinessIgnoreMessage)

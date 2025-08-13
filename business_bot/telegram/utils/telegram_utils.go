@@ -118,7 +118,7 @@ func GetBusinessRights(c *th.Context, localConnection *mongoRepository.BotUserBu
 	connection, err := c.Bot().GetBusinessConnection(
 		c,
 		&telego.GetBusinessConnectionParams{
-			BusinessConnectionID: localConnection.ID,
+			BusinessConnectionID: localConnection.Id,
 		},
 	)
 	if err != nil {

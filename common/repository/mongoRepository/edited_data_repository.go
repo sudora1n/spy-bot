@@ -51,7 +51,7 @@ func (r *MongoRepository) SetDataEdited(ctx context.Context, options *SetDataEdi
 	return objectID, err
 }
 
-func (r *MongoRepository) GetDataEdited(ctx context.Context, userId int64, id int64) (*DataEdited, error) {
+func (r *MongoRepository) GetDataEdited(ctx context.Context, userId int64, id primitive.ObjectID) (*DataEdited, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

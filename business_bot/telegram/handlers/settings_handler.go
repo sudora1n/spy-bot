@@ -64,7 +64,7 @@ func (h *Handler) HandleSettings(c *th.Context, update telego.Update) error {
 	})
 
 	_, err := c.Bot().EditMessageText(c, tu.EditMessageText(
-		tu.ID(user.ID),
+		tu.ID(user.Id),
 		query.Message.GetMessageID(),
 		messageText,
 	).WithParseMode(telego.ModeHTML).WithReplyMarkup(
@@ -117,9 +117,9 @@ func (h *Handler) HandleSettingsDeleted(c *th.Context, update telego.Update) err
 			return fmt.Errorf("no seting found")
 		}
 
-		err = h.repository.Mongo.UpdateUserSettings(
+		err = h.repo.Mongo.UpdateUserSettings(
 			c,
-			user.ID,
+			user.Id,
 			user.Settings,
 		)
 		if err != nil {
@@ -158,7 +158,7 @@ func (h *Handler) HandleSettingsDeleted(c *th.Context, update telego.Update) err
 	})
 
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
-		tu.ID(user.ID),
+		tu.ID(user.Id),
 		query.Message.GetMessageID(),
 		messageText,
 	).WithParseMode(telego.ModeHTML).WithReplyMarkup(tu.InlineKeyboard(makeSettingsRows(loc, consts.CALLBACK_PREFIX_SETTINGS_DELETED, settings)...)))
@@ -191,9 +191,9 @@ func (h *Handler) HandleSettingsEdited(c *th.Context, update telego.Update) erro
 			return fmt.Errorf("no seting found")
 		}
 
-		err = h.repository.Mongo.UpdateUserSettings(
+		err = h.repo.Mongo.UpdateUserSettings(
 			c,
-			user.ID,
+			user.Id,
 			user.Settings,
 		)
 		if err != nil {
@@ -232,7 +232,7 @@ func (h *Handler) HandleSettingsEdited(c *th.Context, update telego.Update) erro
 	})
 
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
-		tu.ID(user.ID),
+		tu.ID(user.Id),
 		query.Message.GetMessageID(),
 		messageText,
 	).WithParseMode(telego.ModeHTML).WithReplyMarkup(tu.InlineKeyboard(makeSettingsRows(loc, consts.CALLBACK_PREFIX_SETTINGS_EDITED, settings)...)))

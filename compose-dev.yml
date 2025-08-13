@@ -15,6 +15,7 @@ services:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/init.js
       - ./migrations:/migrations
       - mongo-data:/data/db
+    command: ["mongod", "--replSet", "rs0"]
     healthcheck:
       test: mongosh --quiet --eval "db.adminCommand('ping')"
       interval: 10s
@@ -142,6 +143,7 @@ services:
       - GRPC_SERVER_HOST=business-bot
     expose:
       - 8080:8080
+      - 8081:8081
     networks:
       - ssuspy
     depends_on:
@@ -180,6 +182,8 @@ services:
     image: grafana/grafana:latest
     container_name: ssuspy-grafana
     profiles: ["prod"]
+    enviroment:
+      - GF_INSTALL_PLUGINS=grafana-mongodb-datasource
     ports:
       - "3000:3000"
     volumes:

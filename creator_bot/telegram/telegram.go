@@ -89,6 +89,8 @@ func RunTelegram(
 
 	defer func() { _ = bh.Stop() }()
 
+	rateLimitGroup := commonMiddleware.NewMiddlewareGroup(repo.Redis)
+
 	bh.Use(th.PanicRecoveryHandler(middleware.LogPanicHandler))
 	bh.Use(commonMiddleware.AutoRespond)
 
@@ -106,13 +108,10 @@ func RunTelegram(
 			),
 			th.AnyMessageWithText(),
 		))
-		starndard.Use(middlewareGroup.RateLimitMiddleware(&redisRepository.RateLimitConfig{
-			Window:    10 * time.Second,
-			Limit:     5,
-			QueueSize: 3,
-
-			COUNT_KEY: consts.REDIS_RATELIMIT_COUNT,
-			QUEUE_KEY: consts.REDIS_RATELIMIT_QUEUE,
+		starndard.Use(rateLimitGroup.ConcurrencyMiddleware(redisRepository.LimitConfig{
+			Mode:   redisRepository.ModeRateLimit,
+			Window: 10 * time.Second,
+			Limit:  5,
 		}))
 		starndard.Use(middlewareGroup.SyncUserMiddleware)
 		starndard.Handle(utils.WithProm("handleStart", handlers.HandleStart), th.Or(

@@ -82,7 +82,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 		user, botUser = &userWithBotUser.User, userWithBotUser.BotUser
 
 		internalUser = types.InternalUser{
-			ID:                   user.ID,
+			ID:                   user.Id,
 			LanguageCode:         user.LanguageCode,
 			BusinessConnectionID: update.BusinessMessage.BusinessConnectionID,
 			SendMessages:         botUser.SendMessages,
@@ -100,7 +100,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 		user, botUser = &userWithBotUser.User, userWithBotUser.BotUser
 
 		internalUser = types.InternalUser{
-			ID:                   user.ID,
+			ID:                   user.Id,
 			LanguageCode:         user.LanguageCode,
 			BusinessConnectionID: update.DeletedBusinessMessages.BusinessConnectionID,
 			SendMessages:         botUser.SendMessages,
@@ -118,7 +118,7 @@ func (h *MiddlewareGroup) GetInternalUserMiddleware(c *th.Context, update telego
 		user, botUser = &userWithBotUser.User, userWithBotUser.BotUser
 
 		internalUser = types.InternalUser{
-			ID:                   user.ID,
+			ID:                   user.Id,
 			LanguageCode:         user.LanguageCode,
 			BusinessConnectionID: update.EditedBusinessMessage.BusinessConnectionID,
 			SendMessages:         botUser.SendMessages,

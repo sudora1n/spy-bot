@@ -97,7 +97,7 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 
 func (h *MiddlewareGroup) BusinessIsFromUser(ctx *th.Context, update telego.Update) (err error) {
 	user := ctx.Value("user").(*mongoRepository.User)
-	if update.BusinessMessage != nil && update.BusinessMessage.From.ID == user.ID {
+	if update.BusinessMessage != nil && update.BusinessMessage.From.ID == user.Id {
 		return ctx.Next(update)
 	}
 	return nil

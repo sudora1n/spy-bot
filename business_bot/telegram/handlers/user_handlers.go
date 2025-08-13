@@ -30,14 +30,14 @@ func (h *Handler) HandleUserHelp(c *th.Context, update telego.Update) error {
 	connection := c.Value("userConnection").(*mongoRepository.BotUserBusinessConnection)
 
 	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, user.ID, ".help")
+		return utils.OnCantReply(c, loc, user.Id, ".help")
 	}
 
 	_, err := c.Bot().EditMessageText(
 		c,
 		tu.EditMessageText(tu.ID(message.Chat.ID), message.MessageID, loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "userHandlers.help",
-		})).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+		})).WithBusinessConnectionID(connection.Id).WithParseMode(telego.ModeHTML),
 	)
 	return err
 }
@@ -57,7 +57,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 	}
 
 	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, user.ID, ".(a|anim)")
+		return utils.OnCantReply(c, loc, user.Id, ".(a|anim)")
 	}
 
 	frames := utils.GenerateBatchAnimationFrames(text, 10)
@@ -79,7 +79,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 				tu.ID(message.Chat.ID),
 				message.MessageID,
 				html.EscapeString(frame),
-			).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+			).WithBusinessConnectionID(connection.Id).WithParseMode(telego.ModeHTML),
 		)
 		if err != nil {
 			return err
@@ -98,7 +98,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 				tu.ID(message.Chat.ID),
 				message.MessageID,
 				html.EscapeString(text),
-			).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+			).WithBusinessConnectionID(connection.Id).WithParseMode(telego.ModeHTML),
 		)
 		return err
 	}
@@ -133,7 +133,7 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	}
 
 	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, user.ID, command)
+		return utils.OnCantReply(c, loc, user.Id, command)
 	}
 
 	for range repeat {
@@ -144,7 +144,7 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 					tu.ID(message.Chat.ID),
 					message.MessageID,
 					frame,
-				).WithBusinessConnectionID(connection.ID),
+				).WithBusinessConnectionID(connection.Id),
 			)
 			if err != nil {
 				return err

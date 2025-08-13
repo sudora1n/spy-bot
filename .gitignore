@@ -26,3 +26,8 @@
 
 prometheus.yml
 compose.yml
+
+keys/
+
+node_modules
+*.zip

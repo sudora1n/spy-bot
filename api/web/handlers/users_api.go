@@ -17,7 +17,7 @@ import (
 
 func userToProto(user *mongo_repository.User) *usersv1.User {
 	return &usersv1.User{
-		Id:           user.ID,
+		Id:           user.Id,
 		LanguageCode: user.LanguageCode,
 		Settings: &usersv1.UserSettings{
 			ShowMyEdits:        user.Settings.ShowMyEdits,

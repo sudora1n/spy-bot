@@ -133,7 +133,7 @@ func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) erro
 	parts := strings.Split(query.Data, "|")
 	lang := parts[1]
 
-	err := h.repository.Mongo.UpdateUserLanguage(c, internalUser.ID, lang)
+	err := h.repo.Mongo.UpdateUserLanguage(c, internalUser.ID, lang)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func (h *Handler) HandleBlocked(ctx *th.Context, update telego.Update) error {
 		canSendMessages = true
 	}
 
-	return h.repository.Mongo.UpdateBotUserSendMessages(
+	return h.repo.Mongo.UpdateBotUserSendMessages(
 		ctx,
 		myChatMember.From.ID,
 		botID,

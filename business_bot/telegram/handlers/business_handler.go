@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -15,14 +14,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"ssuspy-bot/consts"
-	"ssuspy-bot/repository"
 	"ssuspy-bot/repository/redis"
 	"ssuspy-bot/telegram/callbacks"
 	lFormat "ssuspy-bot/telegram/format"
-	"ssuspy-bot/telegram/utils"
-	"ssuspy-bot/types"
 	"ssuspy-common/repository/mongoRepository"
 	"ssuspy-common/telegram/format"
+	"ssuspy-common/telegram/utils"
 	commonTypes "ssuspy-common/types"
 )
 
@@ -34,7 +31,7 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 	message.Text = format.TruncateText(message.Text, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
 	message.Caption = format.TruncateText(message.Caption, consts.MAX_USER_MESSAGE_TEXT_LEN, false)
 
-	err := h.repository.Mongo.SaveMessage(context.Background(), message, internalUser.ID)
+	err := h.repo.Mongo.SaveMessage(context.Background(), message, internalUser.ID)
 	if err != nil {
 		log.Warn().
 			Err(err).
@@ -55,20 +52,20 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 
 	botID := c.Value("botID").(int64)
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 
-	file := lUtils.GetFile(replyToMessage)
+	file := utils.GetFile(replyToMessage)
 	if file == nil {
 		return nil
 	}
 
-	fileExists, err := h.repository.Mongo.CreateFileIfNotExists(c, file.FileID, iUser.User.ID, message.Chat.ID)
+	fileExists, err := h.repo.Mongo.CreateFileIfNotExists(c, file.FileID, user.Id, message.Chat.ID)
 	if err != nil || !fileExists {
 		return err
 	}
 
 	protectedMessage, err := c.Bot().SendMessage(c, tu.Message(
-		tu.ID(iUser.User.ID),
+		tu.ID(user.Id),
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "business.restrictedMedia",
 		}),
@@ -77,13 +74,13 @@ func (h *Handler) HandleMessage(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	err = h.repository.LRedis.EnqueueJob(c, consts.REDIS_QUEUE_FILES, redis.Job{
+	err = h.repo.LRedis.EnqueueJob(c, consts.REDIS_QUEUE_FILES, redis.Job{
 		File:             file,
-		UserID:           iUser.User.ID,
+		UserID:           user.Id,
 		ChatID:           message.Chat.ID,
 		MessageID:        protectedMessage.MessageID,
 		Caption:          replyToMessage.Caption,
-		UserLanguageCode: iUser.User.LanguageCode,
+		UserLanguageCode: user.LanguageCode,
 		BotID:            botID,
 	})
 	if err != nil {
@@ -117,7 +114,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			return fmt.Errorf("invalid callback data")
 		}
 
-		result, err := h.repository.Mongo.GetDataDeleted(context.Background(), update.CallbackQuery.From.ID, data.DataID)
+		result, err := h.repo.Mongo.GetDataDeleted(context.Background(), update.CallbackQuery.From.ID, data.DataID)
 		if err != nil {
 			log.Error().Err(err).Str("dataID", data.DataID.Hex()).Msg("error GetDataFullDeletedLogByUUID")
 
@@ -135,10 +132,10 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		offset = max(offset-consts.MAX_BUTTONS, 0)
 	}
 
-	msgRes, err := h.repository.Mongo.GetMessages(
+	msgRes, err := h.repo.Mongo.GetMessages(
 		context.Background(),
 		&mongoRepository.GetMessagesOptions{
-			UserID:     user.ID,
+			UserID:     user.Id,
 			PeerID:     chatID,
 			MessageIDs: messageIDs,
 			Limit:      limit,
@@ -158,10 +155,10 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 	filesLen := 0
 	for _, msg := range msgRes.Messages {
 		switch {
-		case !user.Settings.ShowMyDeleted && user.ID == msg.From.ID:
+		case !user.Settings.ShowMyDeleted && user.Id == msg.From.ID:
 			log.Debug().Msg("skip due user settings (self)")
 			continue
-		case !user.Settings.ShowPartnerDeleted && user.ID != msg.From.ID:
+		case !user.Settings.ShowPartnerDeleted && user.Id != msg.From.ID:
 			log.Debug().Msg("skip due user settings (partner)")
 			continue
 		}
@@ -180,7 +177,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 	if !itsCallbackQuery {
 		correctMessagesLen, correctFilesLen = uint8(len(oldMsgs)), uint8(filesLen)
-		dataID, err = h.repository.Mongo.SetDataDeleted(context.TODO(), iUser.User.ID, messageIDs, correctMessagesLen, correctFilesLen)
+		dataID, err = h.repo.Mongo.SetDataDeleted(c, user.Id, messageIDs, correctMessagesLen, correctFilesLen)
 		if err != nil {
 			return err
 		}
@@ -188,8 +185,6 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		if len(oldMsgs) > consts.MAX_BUTTONS {
 			oldMsgs = oldMsgs[:consts.MAX_BUTTONS]
 		}
-
-		pagination.Forward = true
 	}
 
 	rows := [][]telego.InlineKeyboardButton{}
@@ -246,7 +241,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 						"Count": i + 1 + offset,
 					},
 				}),
-			).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
+			).WithCallbackData(data.ToString(callbacks.HandleDeletedMessageDataTypeMessage)))
 
 			if i+1 < len(oldMsgs) {
 				data.MessageID = oldMsgs[i+1].MessageID
@@ -257,13 +252,13 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 							"Count": i + 2 + offset,
 						},
 					}),
-				).WithCallbackData(data.ToString(types.HandleDeletedMessageDataTypeMessage)))
+				).WithCallbackData(data.ToString(callbacks.HandleDeletedMessageDataTypeMessage)))
 			}
 
 			rows = append(rows, row)
 		}
 
-		if len(oldMsgs) > consts.MAX_BUTTONS || pagination.Backward || pagination.Forward {
+		if len(oldMsgs) > consts.MAX_BUTTONS || msgRes.Pagination.Backward || msgRes.Pagination.Forward {
 			row := make([]telego.InlineKeyboardButton, 0, 2)
 
 			paginationData := callbacks.HandleDeletedPaginationData{
@@ -272,7 +267,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 				Offset: offset,
 			}
 
-			if pagination.Backward {
+			if msgRes.Pagination.Backward {
 				paginationData.TypeOfPagination = "b"
 				row = append(
 					row,
@@ -284,7 +279,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 						WithCallbackData(paginationData.ToString()),
 				)
 			}
-			if pagination.Forward {
+			if msgRes.Pagination.Forward {
 				paginationData.TypeOfPagination = "f"
 				row = append(
 					row,
@@ -313,7 +308,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 			update.DeletedBusinessMessages.Chat.LastName,
 		)
 	}
-	summaryText := lFormat.SummarizeDeletedMessages(oldMsgs, name, loc, true, offset, int(correctMessagesLen))
+	summaryText := lFormat.SummarizeDeletedMessages(oldMsgs, name, oldMsgs[0].Chat.ID, loc, true, offset, int(correctMessagesLen))
 	summaryText = format.CustomTruncateText(
 		summaryText,
 		consts.MAX_LEN,
@@ -325,7 +320,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 
 	if itsCallbackQuery {
 		_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
-			tu.ID(user.ID),
+			tu.ID(user.Id),
 			update.CallbackQuery.Message.GetMessageID(),
 			summaryText,
 		).
@@ -339,7 +334,7 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 		return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(update.CallbackQuery.ID))
 	}
 	_, err = c.Bot().SendMessage(c, tu.Message(
-		tu.ID(user.ID),
+		tu.ID(user.Id),
 		summaryText,
 	).
 		WithParseMode(telego.ModeHTML).
@@ -352,22 +347,22 @@ func (h *Handler) HandleDeleted(c *th.Context, update telego.Update) error {
 func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 	message := update.EditedBusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	log := c.Value("log").(*zerolog.Logger)
 
-	oldMsg, err := h.service.GetMessage(
+	oldMsg, err := h.repo.Mongo.GetMessage(
 		context.Background(),
-		&repository.GetMessageOptions{
-			ChatID:        message.Chat.ID,
-			MessageID:     message.MessageID,
-			ConnectionIDs: iUser.BotUser.GetUserCurrentConnectionIDs(),
+		&mongoRepository.GetMessageOptions{
+			UserID:    user.Id,
+			PeerID:    message.Chat.ID,
+			MessageID: message.MessageID,
 		},
 	)
 	if err != nil {
 		log.Error().Err(err).
 			Int("message_id", message.MessageID).
 			Msg("failed GetMessage")
-		errSave := h.service.SaveMessage(context.Background(), message)
+		errSave := h.repo.Mongo.SaveMessage(context.Background(), message, user.Id)
 		if errSave != nil {
 			log.Error().Err(errSave).Msg("error saving edited business message after failing to retrieve old message")
 		}
@@ -375,10 +370,10 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 	}
 
 	switch {
-	case !iUser.User.Settings.ShowMyEdits && iUser.User.ID == oldMsg.From.ID:
+	case !user.Settings.ShowMyEdits && user.Id == oldMsg.From.ID:
 		log.Debug().Msg("skip due user settings (self)")
 		return nil
-	case !iUser.User.Settings.ShowPartnerEdits && iUser.User.ID != oldMsg.From.ID:
+	case !user.Settings.ShowPartnerEdits && user.Id != oldMsg.From.ID:
 		log.Debug().Msg("skip due user settings (partner)")
 		return nil
 	}
@@ -386,7 +381,7 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 	changes, mediaDiff := lFormat.EditedDiff(oldMsg, message, loc, true)
 
 	if len(changes) == 0 {
-		err = h.repository.Mongo.SaveMessage(context.Background(), message)
+		err = h.repo.Mongo.SaveMessage(context.Background(), message, user.Id)
 		if err != nil {
 			log.Error().Err(err).
 				Int("message_id", message.MessageID).
@@ -400,18 +395,6 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		message.Chat.LastName,
 	)
 
-	diffText := strings.Join(changes, "\n\n")
-	editedAt := time.Unix(int64(message.EditDate), 0).Format(consts.DATETIME_FOR_MESSAGE)
-	formattedText := loc.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "business.edited.message",
-		TemplateData: map[string]any{
-			"ChatID":           message.Chat.ID,
-			"Date":             editedAt,
-			"Diff":             diffText,
-			"ResolvedChatName": name,
-		},
-	})
-
 	var (
 		date       int64
 		dateIsEdit bool
@@ -423,9 +406,9 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		date, dateIsEdit = oldMsg.EditDate, true
 	}
 
-	dataID, err := h.repository.Mongo.SetDataEdited(context.TODO(), &repository.SetDataEditedOptions{
+	dataID, err := h.repo.Mongo.SetDataEdited(context.TODO(), &mongoRepository.SetDataEditedOptions{
 		MessageID:     message.MessageID,
-		UserID:        iUser.User.ID,
+		UserID:        user.Id,
 		OldDate:       date,
 		OldDateIsEdit: dateIsEdit,
 		NewDate:       message.EditDate,
@@ -460,30 +443,34 @@ func (h *Handler) HandleEdited(c *th.Context, update telego.Update) error {
 		)
 	}
 
-	if len(formattedText) <= consts.MAX_LEN {
-		_, err = c.Bot().SendMessage(
-			c,
-			tu.Message(
-				tu.ID(iUser.User.ID),
-				formattedText,
-			).WithParseMode(telego.ModeHTML).WithReplyMarkup(replyMarkup),
-		)
-	} else {
-		_, err = c.Bot().SendMessage(c, tu.Message(
-			tu.ID(iUser.User.ID),
-			loc.MustLocalize(&i18n.LocalizeConfig{
-				MessageID: "business.edited.messageOverflow",
-				TemplateData: map[string]any{
-					"ChatID":           message.Chat.ID,
-					"Date":             editedAt,
-					"ResolvedChatName": name,
-				},
-			}),
-		).
-			WithParseMode(telego.ModeHTML).WithReplyMarkup(replyMarkup))
+	diffText := strings.Join(changes, "\n\n")
+	resultText := loc.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "business.edited.message",
+		TemplateData: map[string]any{
+			"ChatID":           message.Chat.ID,
+			"Diff":             diffText,
+			"ResolvedChatName": name,
+		},
+	})
+	if len(resultText) <= consts.MAX_LEN {
+		resultText = loc.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: "business.edited.messageOverflow",
+			TemplateData: map[string]any{
+				"ChatID":           message.Chat.ID,
+				"ResolvedChatName": name,
+			},
+		})
 	}
+	_, err = c.Bot().SendMessage(c,
+		tu.Message(
+			tu.ID(user.Id),
+			resultText,
+		).
+			WithParseMode(telego.ModeHTML).
+			WithReplyMarkup(replyMarkup),
+	)
 
-	errSave := h.repository.Mongo.SaveMessage(context.Background(), message)
+	errSave := h.repo.Mongo.SaveMessage(context.Background(), message, user.Id)
 	if errSave != nil {
 		log.Error().Err(errSave).
 			Int("message_id", message.MessageID).
@@ -505,7 +492,7 @@ func (h *Handler) HandleConnection(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
 	botID := c.Value("botID").(int64)
 
-	isUpdated, err := h.repository.Mongo.UpdateBotUserConnection(context.Background(), connection, botID)
+	isUpdated, err := h.repo.Mongo.UpdateBotUserConnection(c, connection, botID)
 	if err != nil {
 		return err
 	}

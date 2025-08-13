@@ -120,7 +120,7 @@ func HandleUserGiftUpgrade(c *th.Context, update telego.Update) error {
 	}
 
 	gifts, err := c.Bot().GetBusinessAccountGifts(c, &telego.GetBusinessAccountGiftsParams{
-		BusinessConnectionID: connection.ID,
+		BusinessConnectionID: connection.Id,
 		ExcludeUnlimited:     true,
 		ExcludeUnique:        true,
 	})
@@ -130,7 +130,7 @@ func HandleUserGiftUpgrade(c *th.Context, update telego.Update) error {
 	}
 
 	userBalance, err := c.Bot().GetBusinessAccountStarBalance(c, &telego.GetBusinessAccountStarBalanceParams{
-		BusinessConnectionID: connection.ID,
+		BusinessConnectionID: connection.Id,
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("error getting user balance")
@@ -181,7 +181,7 @@ func HandleUserGiftUpgrade(c *th.Context, update telego.Update) error {
 		}
 
 		err = c.Bot().UpgradeGift(c, &telego.UpgradeGiftParams{
-			BusinessConnectionID: connection.ID,
+			BusinessConnectionID: connection.Id,
 			OwnedGiftID:          gift.OwnedGiftID,
 			KeepOriginalDetails:  true,
 			StarCount:            amount,

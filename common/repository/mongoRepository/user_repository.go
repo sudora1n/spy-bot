@@ -24,7 +24,7 @@ type UserSettings struct {
 }
 
 type User struct {
-	ID int64 `bson:"_id"`
+	Id int64 `bson:"_id"`
 
 	SendMessages bool          `bson:"creator_send_messages"`
 	LanguageCode string        `bson:"language_code"`
@@ -34,14 +34,14 @@ type User struct {
 }
 
 type BotUserBusinessConnection struct {
-	ID       string                    `bson:"id"`
+	Id       string                    `bson:"id"`
 	Rights   *telego.BusinessBotRights `bson:"rights,omitempty"`
 	Enabled  bool                      `bson:"enabled"`
 	Unixtime int64                     `bson:"date"`
 }
 
 type BotUser struct {
-	InternalID          int64                       `bson:"_id"`
+	InternalId          int64                       `bson:"_id"`
 	BusinessConnections []BotUserBusinessConnection `bson:"business_connections"`
 	SendMessages        bool                        `bson:"send_messages"`
 
@@ -77,7 +77,12 @@ func (r *MongoRepository) UpdateUserLanguage(ctx context.Context, userId int64, 
 	return err
 }
 
-func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connection *telego.BusinessConnection, botID int64) (isUpdated bool, err error) {
+func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connection *telego.BusinessConnection, botID int64) (
+	// не совсем isUpdated в привычном понимании, было ли обновлено isEnabled подключение,
+	// если обновлено выключенное подключение, то все равно будет возвращено false
+	isUpdated bool,
+	err error,
+) {
 	currentTime := time.Now().Unix()
 
 	if connection.IsEnabled {
@@ -110,7 +115,7 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 			update := bson.M{
 				"$push": bson.M{
 					"business_connections": BotUserBusinessConnection{
-						ID:       connection.ID,
+						Id:       connection.ID,
 						Enabled:  true,
 						Unixtime: currentTime,
 						Rights:   connection.Rights,
@@ -152,12 +157,12 @@ func (r *MongoRepository) UpdateBotUserConnection(ctx context.Context, connectio
 		update := bson.M{
 			"$set": updateFields,
 		}
-		result, err := r.botUsers.UpdateOne(ctx, filter, update)
+		_, err := r.botUsers.UpdateOne(ctx, filter, update)
 		if err != nil {
 			return false, err
 		}
 
-		return result.ModifiedCount > 0, nil
+		return false, nil
 	}
 }
 

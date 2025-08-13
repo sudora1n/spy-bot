@@ -16,6 +16,7 @@ import (
 	lFormat "ssuspy-bot/telegram/format"
 	sendMedia "ssuspy-bot/telegram/service/send_media"
 	lUtils "ssuspy-bot/telegram/utils"
+	"ssuspy-common/repository/mongoRepository"
 	"ssuspy-common/telegram/format"
 	"ssuspy-common/telegram/utils"
 	"ssuspy-common/types"
@@ -27,7 +28,7 @@ func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	chatID := c.Value("chatID").(int64)
-	msgs := c.Value("allEditedMessages").([]*telego.Message)
+	msgs := c.Value("allEditedMessages").(*mongoRepository.GetMessagesResponse)
 	newMsg := c.Value("editedMessage").(*telego.Message)
 	oldMsg := c.Value("oldEditedMessage").(*telego.Message)
 
@@ -50,7 +51,7 @@ func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 	files := []telego.InputMedia{
 		tu.MediaDocument(lFormat.GetMDInputFile(diffText, fmt.Sprintf("%d-diff-%s", chatID, now))),
 	}
-	if len(msgs) > 2 {
+	if len(msgs.Messages) > 2 {
 		jsonBytesWithAll, _ := json.MarshalIndent(msgs, "", "  ")
 		files = append(files, tu.MediaDocument(tu.FileFromBytes(jsonBytesWithAll, fmt.Sprintf("%d-all-json-%s.json", chatID, now))))
 	}
@@ -61,7 +62,7 @@ func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.request",
 				TemplateData: map[string]bool{
-					"WithEdits": len(msgs) > 2,
+					"WithEdits": len(msgs.Messages) > 2,
 				},
 			}),
 		).WithParseMode(telego.ModeHTML),

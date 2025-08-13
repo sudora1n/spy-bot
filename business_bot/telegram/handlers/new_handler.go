@@ -5,11 +5,11 @@ import (
 )
 
 type Handler struct {
-	repository *repository.Repository
+	repo *repository.Repository
 }
 
 func NewHandlerGroup(repository *repository.Repository) *Handler {
 	return &Handler{
-		repository: repository,
+		repo: repository,
 	}
 }
