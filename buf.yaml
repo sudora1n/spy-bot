@@ -1,5 +1,0 @@
-version: v2
-
-modules:
-  - path: proto
-    name: github.com/sudora1n/spy-bot

@@ -1,15 +1,13 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
-	"ssuspy-bot/config"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/keyboard"
 	"ssuspy-bot/telegram/locales"
-	"ssuspy-bot/types"
+	"ssuspy-common/repository/mongoRepository"
 	"ssuspy-common/telegram/format"
+	"ssuspy-common/types"
 
 	"strings"
 
@@ -59,7 +57,7 @@ func buildStartReplyMarkup(loc *i18n.Localizer, isConnected bool) *telego.Inline
 
 func HandleStart(c *th.Context, update telego.Update) error {
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	botUser := c.Value("botUser").(*mongoRepository.BotUser)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	var (
@@ -71,11 +69,7 @@ func HandleStart(c *th.Context, update telego.Update) error {
 		queryID, messageID = update.CallbackQuery.ID, update.CallbackQuery.Message.GetMessageID()
 	}
 
-	connection := iUser.BotUser.GetUserCurrentConnection()
-	enabled := false
-	if connection != nil {
-		enabled = connection.Enabled
-	}
+	enabled := botUser.GetUserCurrentConnection() != nil
 
 	text := buildStartText(loc, internalUser.FirstName, internalUser.LastName, enabled)
 	replyMarkup := buildStartReplyMarkup(loc, enabled)
@@ -133,23 +127,20 @@ func HandleLanguage(c *th.Context, update telego.Update) error {
 
 func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) error {
 	query := update.CallbackQuery
-	iUser := c.Value("iUser").(*repository.IUser)
+	botUser := c.Value("botUser").(*mongoRepository.BotUser)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	parts := strings.Split(query.Data, "|")
+	lang := parts[1]
 
-	err := h.service.UpdateUserLanguage(context.Background(), query.From.ID, parts[1])
+	err := h.repo.Mongo.UpdateUserLanguage(c, internalUser.ID, lang)
 	if err != nil {
 		return err
 	}
 
-	loc := locales.NewLocalizer(parts[1])
+	loc := locales.NewLocalizer(lang)
 
-	connection := iUser.BotUser.GetUserCurrentConnection()
-	enabled := false
-	if connection != nil {
-		enabled = connection.Enabled
-	}
+	enabled := botUser.GetUserCurrentConnection() != nil
 
 	text := buildStartText(loc, internalUser.FirstName, internalUser.LastName, enabled)
 	replyMarkup := buildStartReplyMarkup(loc, enabled)
@@ -161,38 +152,23 @@ func (h *Handler) HandleLanguageChange(c *th.Context, update telego.Update) erro
 	return err
 }
 
-func HandleGithub(c *th.Context, update telego.Update) error {
-	message := update.Message
-	loc := c.Value("loc").(*i18n.Localizer)
+func (h *Handler) HandleBlocked(ctx *th.Context, update telego.Update) error {
+	myChatMember := update.MyChatMember
 
-	_, err := c.Bot().SendMessage(c, tu.Message(
-		tu.ID(message.From.ID),
-		loc.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: "github.message",
-		}),
-	).
-		WithReplyMarkup(
-			tu.InlineKeyboard(
-				tu.InlineKeyboardRow(
-					tu.InlineKeyboardButton(
-						loc.MustLocalize(&i18n.LocalizeConfig{
-							MessageID: "github.buttons.open",
-						}),
-					).WithURL(config.Config.BusinessGithubURL),
-				),
-			),
-		).WithParseMode(telego.ModeHTML))
-	return err
-}
+	botID := ctx.Value("botID").(int64)
 
-func (h *Handler) HandleBlocked(c *th.Context, update telego.Update) error {
-	chatMember := update.MyChatMember
-	botID := c.Value("botID").(int64)
-	internalUser := c.Value("internalUser").(*types.InternalUser)
-
-	if chatMember.NewChatMember.MemberStatus() == telego.MemberStatusBanned &&
-		chatMember.Chat.Type == "private" {
-		return h.service.UpdateBotUserSendMessages(context.Background(), internalUser.ID, botID, false)
+	var canSendMessages bool
+	switch myChatMember.NewChatMember.MemberStatus() {
+	case telego.MemberStatusBanned:
+		canSendMessages = false
+	case telego.MemberStatusMember:
+		canSendMessages = true
 	}
-	return nil
+
+	return h.repo.Mongo.UpdateBotUserSendMessages(
+		ctx,
+		myChatMember.From.ID,
+		botID,
+		canSendMessages,
+	)
 }

@@ -13,9 +13,13 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"ssuspy-bot/consts"
-	"ssuspy-bot/telegram/utils"
-	"ssuspy-bot/types"
+	lFormat "ssuspy-bot/telegram/format"
+	sendMedia "ssuspy-bot/telegram/service/send_media"
+	lUtils "ssuspy-bot/telegram/utils"
+	"ssuspy-common/repository/mongoRepository"
 	"ssuspy-common/telegram/format"
+	"ssuspy-common/telegram/utils"
+	"ssuspy-common/types"
 )
 
 func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
@@ -24,11 +28,11 @@ func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
 	chatID := c.Value("chatID").(int64)
-	msgs := c.Value("allEditedMessages").([]*telego.Message)
+	msgs := c.Value("allEditedMessages").(*mongoRepository.GetMessagesResponse)
 	newMsg := c.Value("editedMessage").(*telego.Message)
 	oldMsg := c.Value("oldEditedMessage").(*telego.Message)
 
-	changes, _ := format.EditedDiff(oldMsg, newMsg, loc, false)
+	changes, _ := lFormat.EditedDiff(oldMsg, newMsg, loc, false)
 	if len(changes) == 0 {
 		log.Warn().
 			Int64("chat_id", newMsg.Chat.ID).
@@ -45,9 +49,9 @@ func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 	now := time.Now().Format(consts.DATETIME_FOR_FILES)
 	diffText := strings.Join(changes, "\n\n")
 	files := []telego.InputMedia{
-		tu.MediaDocument(format.GetMDInputFile(diffText, fmt.Sprintf("%d-diff-%s", chatID, now))),
+		tu.MediaDocument(lFormat.GetMDInputFile(diffText, fmt.Sprintf("%d-diff-%s", chatID, now))),
 	}
-	if len(msgs) > 2 {
+	if len(msgs.Messages) > 2 {
 		jsonBytesWithAll, _ := json.MarshalIndent(msgs, "", "  ")
 		files = append(files, tu.MediaDocument(tu.FileFromBytes(jsonBytesWithAll, fmt.Sprintf("%d-all-json-%s.json", chatID, now))))
 	}
@@ -58,15 +62,15 @@ func (h *Handler) HandleEditedLog(c *th.Context, update telego.Update) error {
 			loc.MustLocalize(&i18n.LocalizeConfig{
 				MessageID: "business.edited.request",
 				TemplateData: map[string]bool{
-					"WithEdits": len(msgs) > 2,
+					"WithEdits": len(msgs.Messages) > 2,
 				},
 			}),
 		).WithParseMode(telego.ModeHTML),
 	)
 
-	if err := utils.SendMediaInGroups(c.Bot(), c, internalUser.ID, files, query.Message.GetMessageID()); err != nil {
+	if err := sendMedia.SendMediaInGroups(c.Bot(), c, internalUser.ID, files, query.Message.GetMessageID()); err != nil {
 		log.Warn().Err(err).Msg("Error sending media to user")
-		utils.OnFilesError(c, internalUser.ID, loc, query.Message.GetMessageID())
+		lUtils.OnFilesError(c, internalUser.ID, loc, query.Message.GetMessageID())
 	}
 
 	return c.Bot().AnswerCallbackQuery(c, tu.CallbackQuery(query.ID))
@@ -81,10 +85,10 @@ func (h *Handler) HandleEditedFiles(c *th.Context, update telego.Update) error {
 
 	newMedia := utils.GetFile(newMsg)
 	oldMedia := utils.GetFile(oldMsg)
-	mediaDiff := format.CompareMedia(oldMedia, newMedia)
+	mediaDiff := lFormat.CompareMedia(oldMedia, newMedia)
 
 	if mediaDiff.Removed == nil {
-		utils.OnDataError(c, query.ID, loc)
+		lUtils.OnDataError(c, query.ID, loc)
 		return fmt.Errorf("HandleEditedFiles error: no file found")
 	}
 
@@ -98,9 +102,9 @@ func (h *Handler) HandleEditedFiles(c *th.Context, update telego.Update) error {
 		})
 	}
 
-	file := utils.CreateInputMediaFromFileInfo(mediaDiff.Removed.FileID, mediaDiff.Removed.Type, caption)
-	if err := utils.SendMediaInGroups(c.Bot(), c, internalUser.ID, []telego.InputMedia{file}, query.Message.GetMessageID()); err != nil {
-		utils.OnDataError(c, query.ID, loc)
+	file := lUtils.CreateInputMediaFromFileInfo(mediaDiff.Removed.FileID, mediaDiff.Removed.Type, caption)
+	if err := sendMedia.SendOneMedia(c, c.Bot(), internalUser.ID, file, query.Message.GetMessageID()); err != nil {
+		lUtils.OnDataError(c, query.ID, loc)
 		return err
 	}
 

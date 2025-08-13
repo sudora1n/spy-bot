@@ -76,7 +76,7 @@
       "off": ":(\nthe bot has been disconnected from the account, so it will no longer be able to log changes"
     },
     "deleted": {
-      "fullMessages": "get JSON",
+      "fullMessages": "detailed report",
       "files": {
         "one": "get {{.Count}} file",
         "other": "get {{.Count}} files"
@@ -85,9 +85,9 @@
       "messageItem": "{{.Count}} message",
       "format": {
         "message": {
-          "one": "<b>deleted message:</b>\nchat: {{.ResolvedChatName}}\n\n{{.Result}}",
-          "many": "<b>{{.Count}} deleted messages:</b>\nchat: {{.ResolvedChatName}}\n\n{{.Result}}",
-          "other": "<b>{{.Count}} deleted messages:</b>\nchat: {{.ResolvedChatName}}\n\n{{.Result}}"
+          "one": "<b>the message has been deleted:</b>\n└ chat: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Result}}",
+          "many": "<b>{{.Count}} messages have been deleted:</b>\n└ chat: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Result}}",
+          "other": "<b>{{.Count}} messages have been deleted:</b>\n└ chat: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Result}}"
         },
         "messageItem": "<b>message #{{.Count}}:</b>\n{{.Message}}\n\n",
         "forwardInfo": {
@@ -107,7 +107,7 @@
       },
       "request": {
         "message": "<b>full deleted messages</b>\n{{if .WithEdits}}summary, latest versions (JSON), and all versions with edits (JSON){{else}}summary and latest versions (JSON) (JSON){{end}}",
-        "oneDetails": "get JSON",
+        "oneDetails": "detailed report",
         "file": "get file",
         "files": {
           "one": "get {{.Count}} file",
@@ -116,10 +116,10 @@
       }
     },
     "edited": {
-      "message": "<b>message edited</b>\nchat: {{.ResolvedChatName}}\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\n\n{{.Diff}}",
-      "messageOverflow": "<b>message edited</b>\nchat: {{.ResolvedChatName}}\n<i>chatID: {{.ChatID}}</i>\n<i>edited at: {{.Date}}</i>\nToo many details, please see log via the button below...",
+      "message": "<b>the message has been edited:</b>\n└ chat: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\n\n{{.Diff}}",
+      "messageOverflow": "<b>the message has been edited:</b>\n└ chat: <a href='tg://user?id={{.ChatID}}'>{{.ResolvedChatName}}</a> (#id{{.ChatID}})\nToo many details, please see log via the button below...",
       "buttons": {
-        "log": "get JSON",
+        "log": "detailed report",
         "getFile": "get file"
       },
       "text": {

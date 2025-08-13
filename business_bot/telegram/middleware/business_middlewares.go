@@ -2,10 +2,9 @@ package middleware
 
 import (
 	"errors"
-	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/locales"
 	"ssuspy-bot/telegram/utils"
-	"ssuspy-bot/types"
+	"ssuspy-common/repository/mongoRepository"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -16,9 +15,7 @@ import (
 
 func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update telego.Update) (err error) {
 	log := ctx.Value("log").(*zerolog.Logger)
-	iUser := ctx.Value("iUser").(*repository.IUser)
-	internalUser := ctx.Value("internalUser").(*types.InternalUser)
-	botID := ctx.Value("botID").(int64)
+	user := ctx.Value("user").(*mongoRepository.User)
 
 	var (
 		messageIDs       []int
@@ -38,7 +35,7 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 
 			filtered := make([]int, 0, len(messageIDs))
 			for _, messageID := range messageIDs {
-				ignore, err := h.rdb.IsMessageIgnore(
+				ignore, err := h.repository.LRedis.IsMessageIgnore(
 					ctx,
 					messageID,
 					update.DeletedBusinessMessages.Chat.ID,
@@ -61,7 +58,7 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 		case update.EditedBusinessMessage != nil:
 			chatID = update.EditedBusinessMessage.Chat.ID
 
-			ignore, err := h.rdb.IsMessageIgnore(
+			ignore, err := h.repository.LRedis.IsMessageIgnore(
 				ctx,
 				update.EditedBusinessMessage.MessageID,
 				chatID,
@@ -76,13 +73,6 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 			break
 		case update.CallbackQuery != nil:
 			itsCallbackQuery = true
-
-			iUser = utils.ProcessBusinessBot(h.service, "", update.CallbackQuery.From.ID, botID)
-			if iUser == nil {
-				return nil
-			}
-
-			ctx = ctx.WithValue("iUser", iUser)
 		default:
 			return errors.New("unsupported update type.")
 		}
@@ -94,12 +84,10 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 	ctx = ctx.WithValue("messageIDs", messageIDs)
 
 	var loc *i18n.Localizer
-	if iUser == nil {
-		loc = locales.NewLocalizer(internalUser.LanguageCode)
-	} else {
-		loc = locales.NewLocalizer(iUser.User.LanguageCode)
+	if user != nil {
+		loc = locales.NewLocalizer(user.LanguageCode)
+		ctx = ctx.WithValue("loc", loc)
 	}
-	ctx = ctx.WithValue("loc", loc)
 
 	logger := log.With().Int64("chatID", chatID).Logger()
 	ctx = ctx.WithValue("log", &logger)
@@ -107,38 +95,22 @@ func (h *MiddlewareGroup) BusinessGetUserMiddleware(ctx *th.Context, update tele
 	return ctx.Next(update)
 }
 
-// func (h *MiddlewareGroup) BusinessIsIgnore(ctx *th.Context, update telego.Update) (err error) {
-// 	log := ctx.Value("log").(*zerolog.Logger)
-
-// 	if update.BusinessMessage != nil {
-// 		ignore, err := h.rdb.IsMessageIgnore(
-// 			ctx,
-// 			update.BusinessMessage.MessageID,
-// 			update.BusinessMessage.Chat.ID,
-// 		)
-// 		if err != nil {
-// 			log.Warn().Err(err).Msg("failed get ignore message")
-// 		}
-// 		if ignore {
-// 			return nil
-// 		}
-// 	}
-
-// 	return ctx.Next(update)
-// }
-
 func (h *MiddlewareGroup) BusinessIsFromUser(ctx *th.Context, update telego.Update) (err error) {
-	iUser := ctx.Value("iUser").(*repository.IUser)
-	if update.BusinessMessage != nil && update.BusinessMessage.From.ID == iUser.User.ID {
+	user := ctx.Value("user").(*mongoRepository.User)
+	if update.BusinessMessage != nil && update.BusinessMessage.From.ID == user.Id {
 		return ctx.Next(update)
 	}
 	return nil
 }
 
 func (h *MiddlewareGroup) BusinessUserSetRights(ctx *th.Context, update telego.Update) (err error) {
-	iUser := ctx.Value("iUser").(*repository.IUser)
+	botUser := ctx.Value("botUser").(*mongoRepository.BotUser)
 
-	connection := iUser.BotUser.GetUserCurrentConnection()
+	connection := botUser.GetUserCurrentConnection()
+	if connection == nil {
+		return err
+	}
+
 	rights, err := utils.GetBusinessRights(ctx, connection)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed get business connection")
@@ -154,7 +126,7 @@ func (h *MiddlewareGroup) BusinessIgnoreMessage(ctx *th.Context, update telego.U
 	log := ctx.Value("log").(*zerolog.Logger)
 
 	if update.BusinessMessage != nil {
-		err = h.rdb.IgnoreMessage(
+		err = h.repository.LRedis.IgnoreMessage(
 			ctx,
 			update.BusinessMessage.MessageID,
 			update.BusinessMessage.Chat.ID,

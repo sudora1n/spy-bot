@@ -8,7 +8,7 @@ scrape_configs:
 
   - job_name: "creator-bot"
     static_configs:
-      - targets: ["creator-bot:8080"]
+      - targets: ["creator-bot:8081"]
 
   - job_name: "prometheus"
     static_configs:

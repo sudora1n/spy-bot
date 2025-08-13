@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "ssuspy-proto/gen/auth/v1;authv1";
+
+service AuthService {
+  rpc AuthViaTelegramInitData(AuthViaTelegramInitDataRequest) returns (AuthViaTelegramInitDataResponse);
+}
+
+message AuthViaTelegramInitDataRequest {
+  string raw_init_data = 1;
+  int64 bot_id = 2;
+}
+
+message AuthViaTelegramInitDataResponse {}

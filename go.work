@@ -1,7 +1,10 @@
 go 1.24.4
 
 use (
+	./api
 	./business_bot
 	./common
 	./creator_bot
+	./migrations
+	./proto
 )

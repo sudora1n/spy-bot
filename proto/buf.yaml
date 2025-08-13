@@ -1,0 +1,11 @@
+version: v2
+modules:
+  - path: shared
+  - path: api
+  - path: business_bot
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package types.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "ssuspy-proto/gen/types/v1;typesv1";
+
+message Bot {
+  int64 id = 1;
+  string username = 2;
+  optional string secret_token = 3;
+  int64 user_id = 4;
+  google.protobuf.Timestamp created_at = 5;
+}

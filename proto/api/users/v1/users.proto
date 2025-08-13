@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "ssuspy-proto/gen/users/v1;usersv1";
+
+service UsersService {
+  rpc UpdateLanguage(UpdateLanguageRequest) returns (UpdateLanguageResponse);
+
+  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+}
+
+message UserSettings {
+  bool show_my_edits = 1;
+  bool show_partner_edits = 2;
+  bool show_my_deleted = 3;
+  bool show_partner_deleted = 4;
+}
+
+message User {
+  int64 id = 1;
+  string language_code = 2;
+  bool send_messages = 3;
+  UserSettings settings = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message UpdateLanguageRequest {
+  string language_code = 1;
+}
+
+message UpdateLanguageResponse {}
+
+message GetMeRequest {}
+
+message GetMeResponse {
+  User user = 1;
+}

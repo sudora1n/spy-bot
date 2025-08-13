@@ -3,8 +3,8 @@ package handlers
 import (
 	"html"
 	"ssuspy-bot/consts"
-	"ssuspy-bot/repository"
 	"ssuspy-bot/telegram/utils"
+	"ssuspy-common/repository/mongoRepository"
 	"strings"
 	"time"
 
@@ -25,19 +25,19 @@ const (
 func (h *Handler) HandleUserHelp(c *th.Context, update telego.Update) error {
 	message := update.BusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
+	connection := c.Value("userConnection").(*mongoRepository.BotUserBusinessConnection)
 
 	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, iUser.User.ID, ".help")
+		return utils.OnCantReply(c, loc, user.Id, ".help")
 	}
 
 	_, err := c.Bot().EditMessageText(
 		c,
 		tu.EditMessageText(tu.ID(message.Chat.ID), message.MessageID, loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "userHandlers.help",
-		})).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+		})).WithBusinessConnectionID(connection.Id).WithParseMode(telego.ModeHTML),
 	)
 	return err
 }
@@ -46,9 +46,9 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 	message := update.BusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
 	log := c.Value("log").(*zerolog.Logger)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
+	connection := c.Value("userConnection").(*mongoRepository.BotUserBusinessConnection)
 
 	var text string
 	parts := strings.SplitN(message.Text, " ", 2)
@@ -57,7 +57,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 	}
 
 	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, iUser.User.ID, ".(a|anim)")
+		return utils.OnCantReply(c, loc, user.Id, ".(a|anim)")
 	}
 
 	frames := utils.GenerateBatchAnimationFrames(text, 10)
@@ -79,7 +79,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 				tu.ID(message.Chat.ID),
 				message.MessageID,
 				html.EscapeString(frame),
-			).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+			).WithBusinessConnectionID(connection.Id).WithParseMode(telego.ModeHTML),
 		)
 		if err != nil {
 			return err
@@ -98,7 +98,7 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 				tu.ID(message.Chat.ID),
 				message.MessageID,
 				html.EscapeString(text),
-			).WithBusinessConnectionID(connection.ID).WithParseMode(telego.ModeHTML),
+			).WithBusinessConnectionID(connection.Id).WithParseMode(telego.ModeHTML),
 		)
 		return err
 	}
@@ -109,9 +109,9 @@ func (h *Handler) HandleUserAnimation(c *th.Context, update telego.Update) error
 func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	message := update.BusinessMessage
 	loc := c.Value("loc").(*i18n.Localizer)
-	iUser := c.Value("iUser").(*repository.IUser)
+	user := c.Value("user").(*mongoRepository.User)
 	rights := c.Value("rights").(*telego.BusinessBotRights)
-	connection := c.Value("userConnection").(*repository.BotUserBusinessConnection)
+	connection := c.Value("userConnection").(*mongoRepository.BotUserBusinessConnection)
 
 	var text string
 	parts := strings.SplitN(message.Text, " ", 2)
@@ -133,7 +133,7 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 	}
 
 	if !rights.CanReply {
-		return utils.OnCantReply(c, loc, iUser.User.ID, command)
+		return utils.OnCantReply(c, loc, user.Id, command)
 	}
 
 	for range repeat {
@@ -144,7 +144,7 @@ func (h *Handler) HandleUserLove(c *th.Context, update telego.Update) error {
 					tu.ID(message.Chat.ID),
 					message.MessageID,
 					frame,
-				).WithBusinessConnectionID(connection.ID),
+				).WithBusinessConnectionID(connection.Id),
 			)
 			if err != nil {
 				return err

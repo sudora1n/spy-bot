@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package messages.v1;
+
+option go_package = "ssuspy-proto/gen/messages/v1;messagesv1";
+
+service MessagesService {
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+}
+
+message Chat {
+  int64 id = 1;
+  string type = 2;
+  string title = 3; // optional
+  string first_name = 4;
+  string last_name = 5; // optional
+  string username = 6; // optional
+}
+
+message MessageEntity {
+  string type = 1;
+  int64 offset = 2;
+  int64 length = 3;
+  string url = 4; // for text_link only
+  optional Chat user = 5; // for text_mention only
+  string language = 6; // for pre only
+}
+
+message ForwardOriginUser {
+  int64 date = 1;
+  Chat sender_user = 2;
+}
+
+message ForwardOriginHiddenUser {
+  int64 date = 1;
+  string sender_username = 2;
+}
+
+message ForwardOriginChat {
+  int64 date = 1;
+  Chat sender_chat = 2;
+  string author_signature = 3; // optional
+}
+
+message ForwardOriginChannel {
+  int64 date = 1;
+  Chat chat = 2;
+  int64 message_id = 3;
+  string author_signature = 4; // optional
+}
+
+message ForwardOrigin {
+  oneof forward_origin {
+    ForwardOriginUser user = 1;
+    ForwardOriginHiddenUser hidden_user = 2;
+    ForwardOriginChat chat = 3;
+    ForwardOriginChannel channel = 4;
+  }
+}
+
+message Story {
+  Chat chat = 1;
+  int64 id = 2;
+}
+
+message Quote {
+  string text = 1;
+  repeated MessageEntity entities = 2;
+  int64 position = 3;
+  bool is_manual = 4;
+}
+
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+enum MediaType {
+  MEDIA_TYPE_UNSPECIFIED = 0;
+  MEDIA_TYPE_PHOTO = 1;
+  MEDIA_TYPE_VIDEO = 2;
+  MEDIA_TYPE_ANIMATION = 3;
+  MEDIA_TYPE_AUDIO = 4;
+  MEDIA_TYPE_VOICE = 5;
+  MEDIA_TYPE_DOCUMENT = 6;
+  MEDIA_TYPE_VIDEO_NOTE = 7;
+  MEDIA_TYPE_STICKER = 8;
+}
+
+message Media {
+  MediaType type = 1;
+  string file_id = 2;
+  int64 file_size = 3;
+}
+
+message Message {
+  int64 message_id = 1;
+  Chat from = 2;
+  optional Chat sender_chat = 3;
+  int64 date = 4;
+  Chat chat = 5;
+  optional ForwardOrigin forward_origin = 6;
+  optional Message reply_to_message = 7;
+  optional Quote quote = 8;
+  optional Story reply_to_story = 9;
+  optional Story story = 10;
+  optional Chat via_bot = 11;
+  int64 edit_date = 12; // optional
+  bool has_protected_content = 13;
+  bool has_media_spoiler = 14;
+  string media_group_id = 15; // optional
+  string text = 16; // optional
+  repeated MessageEntity entities = 17;
+  optional Location location = 18;
+  optional Media media = 19;
+}
+
+message GetMessagesRequest {
+  int64 chat_id = 1;
+  repeated int64 message_ids = 2;
+  bool with_edits = 3;
+  int64 offset = 4;
+  int64 limit = 5;
+}
+
+message GetMessagesResponse {
+  repeated Message messages = 1;
+  bool has_forward = 2;
+  bool has_backward = 3;
+}

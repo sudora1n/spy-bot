@@ -1,26 +1,26 @@
 package handlers
 
 import (
-	"context"
+	"errors"
 	"fmt"
+	"strings"
 
-	"ssuspy-creator-bot/config"
 	"ssuspy-creator-bot/consts"
-	proto "ssuspy-creator-bot/pb"
+	createBot "ssuspy-creator-bot/service/create_bot"
 	"ssuspy-creator-bot/telegram/callbacks"
 	"ssuspy-creator-bot/telegram/keyboard"
 	"ssuspy-creator-bot/telegram/utils"
 	"ssuspy-creator-bot/types"
-
-	"time"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"go.mongodb.org/mongo-driver/mongo"
+)
+
+var (
+	ERRORS_NOT_FOUND = errors.New("code of create bot not found")
 )
 
 func onCreatingBotFail(c *th.Context, loc *i18n.Localizer, userID int64) error {
@@ -42,96 +42,72 @@ func (h *Handler) HandleToken(c *th.Context, update telego.Update) error {
 		MessageID: message.MessageID,
 	})
 
-	botsLen, err := h.service.LenBots(c, internalUser.ID)
-	if err != nil {
-		log.Warn().Err(err).Int64("userID", internalUser.ID).Msg("failed get len of bots")
-		return onCreatingBotFail(c, loc, internalUser.ID)
-	}
+	username, err := createBot.CreateBot(c, h.repository, internalUser.ID, message.Text)
 
-	if botsLen > config.Config.MaxBotsByUser {
-		_, err := c.Bot().SendMessage(c, tu.Message(tu.ID(internalUser.ID), loc.MustLocalize(
-			&i18n.LocalizeConfig{
-				MessageID: "errors.tooManyBots",
-			}),
-		))
-		return err
-	}
+	var botErr *createBot.CreateBotError
+	if errors.As(err, &botErr) {
+		switch botErr.Code {
+		case createBot.STATUS_CREATEBOT_ERROR_INTERNAL:
+			return onCreatingBotFail(c, loc, internalUser.ID)
+		case createBot.STATUS_CREATEBOT_ERROR_TOO_MANY_BOTS:
+			_, err := c.Bot().SendMessage(c, tu.Message(tu.ID(internalUser.ID), loc.MustLocalize(
+				&i18n.LocalizeConfig{
+					MessageID: "errors.tooManyBots",
+				}),
+			))
 
-	botExists, err := h.service.FindBotByToken(c, internalUser.ID, message.Text)
-	if err != nil && err != mongo.ErrNoDocuments {
-		return onCreatingBotFail(c, loc, internalUser.ID)
-	}
-	if botExists != nil {
-		_, err := c.Bot().SendMessage(c, tu.Message(tu.ID(internalUser.ID), loc.MustLocalize(
-			&i18n.LocalizeConfig{
-				MessageID: "errors.botExists",
-			}),
-		))
-		return err
-	}
+			return err
+		case createBot.STATUS_CREATEBOT_ERROR_BOT_ALREADY_EXISTS:
+			_, err := c.Bot().SendMessage(c, tu.Message(tu.ID(internalUser.ID), loc.MustLocalize(
+				&i18n.LocalizeConfig{
+					MessageID: "errors.botExists",
+				}),
+			))
 
-	newBot, err := telego.NewBot(message.Text, telego.WithAPIServer(config.Config.TelegramBot.ApiURL))
-	if err != nil {
-		if err == telego.ErrInvalidToken {
+			return err
+		case createBot.STATUS_CREATEBOT_ERROR_BOT_INVALID:
 			_, err := c.Bot().SendMessage(c, tu.Message(tu.ID(internalUser.ID), loc.MustLocalize(
 				&i18n.LocalizeConfig{
 					MessageID: "errors.noMatch",
 				}),
 			))
+
 			return err
-		}
-		return onCreatingBotFail(c, loc, internalUser.ID)
-	}
+		case createBot.STATUS_CREATEBOT_ERROR_BOT_INVALID_SETTINGS:
+			var errStrings []string
 
-	botUser, err := newBot.GetMe(c)
-	if err != nil {
-		return onCreatingBotFail(c, loc, internalUser.ID)
-	}
-	if !botUser.CanConnectToBusiness || !botUser.SupportsInlineQueries {
-		var messages []string
-		if !botUser.CanConnectToBusiness {
-			messages = append(messages, "noBusiness")
-		}
-		if !botUser.SupportsInlineQueries {
-			messages = append(messages, "noInline")
-		}
+			for _, violation := range botErr.InvalidSettings {
+				errStrings = append(
+					errStrings,
+					loc.MustLocalize(&i18n.LocalizeConfig{
+						MessageID: fmt.Sprintf("errors.%s", violation),
+					}),
+				)
+			}
 
-		for _, message := range messages {
-			_, err = c.Bot().SendMessage(
+			_, err := c.Bot().SendMessage(
 				c,
 				tu.Message(
 					tu.ID(internalUser.ID),
 					loc.MustLocalize(&i18n.LocalizeConfig{
-						MessageID: fmt.Sprintf("errors.%s", message),
+						MessageID: "errors.botNotMatch",
+						TemplateData: map[string]string{
+							"Errors": strings.Join(errStrings, "\n"),
+						},
 					}),
 				).WithReplyMarkup(tu.InlineKeyboard(
 					keyboard.ButtonsToRows(keyboard.BuildInstructionsKeyboardRows(loc))...,
 				)))
-			if err != nil {
-				return err
-			}
+
+			return err
 		}
-		return nil
-	}
-
-	err = h.service.InsertBot(c, botUser.ID, internalUser.ID, message.Text, botUser.Username)
-	if err != nil {
-		return onCreatingBotFail(c, loc, internalUser.ID)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	resp, err := h.grpcClient.AddBot(ctx, &proto.AddBotRequest{Id: botUser.ID})
-	if err != nil {
-		return onCreatingBotFail(c, loc, internalUser.ID)
 	}
 
 	_, err = c.Bot().SendMessage(c, tu.Message(tu.ID(internalUser.ID), loc.MustLocalize(
 		&i18n.LocalizeConfig{
 			MessageID: "handleToken",
 			TemplateData: map[string]string{
-				"Username": resp.GetUsername(),
+				"Username": username,
 			},
 		}),
 	).WithReplyMarkup(tu.InlineKeyboard(
@@ -160,7 +136,7 @@ func (h *Handler) HandleBotsList(c *th.Context, update telego.Update) error {
 	log := c.Value("log").(*zerolog.Logger)
 	internalUser := c.Value("internalUser").(*types.InternalUser)
 
-	bots, err := h.service.FindBots(c, internalUser.ID)
+	bots, err := h.repository.Mongo.FindBots(c, internalUser.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get bots")
 		utils.OnDataError(c, query.ID, loc)
@@ -171,7 +147,7 @@ func (h *Handler) HandleBotsList(c *th.Context, update telego.Update) error {
 	for i := 0; i < len(bots); i += 2 {
 		row := make([]telego.InlineKeyboardButton, 0, 2)
 		data := types.HandleBotItem{
-			BotID: bots[i].ID,
+			BotID: bots[i].Id,
 		}
 
 		row = append(row, tu.InlineKeyboardButton(
@@ -185,7 +161,7 @@ func (h *Handler) HandleBotsList(c *th.Context, update telego.Update) error {
 		).WithCallbackData(data.String()))
 
 		if i+1 < len(bots) {
-			data.BotID = bots[i+1].ID
+			data.BotID = bots[i+1].Id
 			row = append(row, tu.InlineKeyboardButton(
 				loc.MustLocalize(&i18n.LocalizeConfig{
 					MessageID: "handleBotsList.item",
@@ -245,8 +221,7 @@ func (h *Handler) HandleBotItem(c *th.Context, update telego.Update) error {
 		utils.OnDataError(c, query.ID, loc)
 		return err
 	}
-
-	botInfo, err := h.service.FindBotWithUserCounts(c, internalUser.ID, data.BotID)
+	botStat, err := h.repository.Mongo.FindBotWithUserCounts(c, internalUser.ID, data.BotID)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed get data")
 		utils.OnDataError(c, query.ID, loc)
@@ -263,9 +238,9 @@ func (h *Handler) HandleBotItem(c *th.Context, update telego.Update) error {
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "handleBotItem.message",
 			TemplateData: map[string]any{
-				"Username":      botInfo.Username,
-				"Users":         botInfo.TotalUsers,
-				"BusinessUsers": botInfo.TotalBusinessUsers,
+				"Username":      botStat.Bot.Username,
+				"Users":         botStat.TotalUsers,
+				"BusinessUsers": botStat.TotalBusinessUsers,
 			},
 		}),
 	).WithReplyMarkup(tu.InlineKeyboard(
@@ -296,16 +271,18 @@ func (h *Handler) HandleBotRemove(c *th.Context, update telego.Update) error {
 		return err
 	}
 
-	resp, err := h.grpcClient.RemoveBot(c, &proto.RemoveBotRequest{Id: data.BotID})
+	bot, err := h.repository.Mongo.BotByID(c, data.BotID)
 	if err != nil {
 		return onCreatingBotFail(c, loc, internalUser.ID)
 	}
 
-	err = h.service.RemoveBot(c, internalUser.ID, data.BotID)
+	if bot.UserID != internalUser.ID {
+		return onCreatingBotFail(c, loc, internalUser.ID)
+	}
+
+	err = h.repository.Mongo.RemoveBot(c, internalUser.ID, data.BotID)
 	if err != nil {
-		log.Warn().Err(err).Msg("failed remove bot")
-		utils.OnDataError(c, query.ID, loc)
-		return err
+		return onCreatingBotFail(c, loc, internalUser.ID)
 	}
 
 	_, err = c.Bot().EditMessageText(c, tu.EditMessageText(
@@ -314,7 +291,7 @@ func (h *Handler) HandleBotRemove(c *th.Context, update telego.Update) error {
 		loc.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: "handleBotRemove",
 			TemplateData: map[string]string{
-				"Username": resp.GetUsername(),
+				"Username": bot.Username,
 			},
 		}),
 	).WithReplyMarkup(tu.InlineKeyboard(
